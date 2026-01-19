@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Menu, FolderKanban } from "lucide-react";
+import { ChevronDown, Menu, FolderKanban, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -12,10 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CreateProjectModal } from "@/components/modals/CreateProjectModal";
 import { fetchProjects, getProjectById, type Project } from "@/services/projectApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface TopHeaderProps {
   onMenuClick?: () => void;
@@ -25,11 +36,32 @@ interface TopHeaderProps {
 
 export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps) => {
   const { selectedProject, setSelectedProject } = useAppState();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const { toast } = useToast();
   const hasLoadedProjects = useRef(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+  };
+
+  const getInitials = (email: string) => {
+    return email
+      .split("@")[0]
+      .split(".")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || email[0].toUpperCase();
+  };
 
   // Load projects only once on mount
   useEffect(() => {
@@ -111,6 +143,35 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
           <span className="hidden sm:inline">{selectedProject?.project_name || "Project Workspace"}</span>
           <span className="sm:hidden">{selectedProject?.project_name || "Workspace"}</span>
         </Button>
+        
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getInitials(user.email)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">Signed in as</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
     </>

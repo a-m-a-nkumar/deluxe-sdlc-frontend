@@ -3,8 +3,9 @@ import { BRDProgress } from "../brd/BRDProgress";
 import { ChatInterface } from "../chat/ChatInterface";
 import { FileUploadSection } from "../files/FileUploadSection";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
+import { useNavigate } from "react-router-dom";
 const sectionContent = {
   "Executive Summary": {
     title: "Executive Summary Assistant",
@@ -53,6 +54,7 @@ export const BRDDashboard = ({
   selectedProject,
   selectedBRDTemplate
 }: BRDDashboardProps) => {
+  const navigate = useNavigate();
   const { 
     chatMessages, 
     setChatMessages, 
@@ -234,11 +236,22 @@ export const BRDDashboard = ({
   };
   return <div className="p-4 sm:p-6 lg:p-8 bg-white">
       <div className="mb-4 lg:mb-2">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="p-2 hover:bg-accent">
-            <ArrowLeft className="w-4 h-4" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={onBack} className="p-2 hover:bg-accent">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-xl font-bold sm:text-base">{contextProject?.project_name || "No Project Selected"}</h1>
+          </div>
+          <Button 
+            onClick={() => navigate("/analyst-agent")} 
+            className="flex items-center gap-2"
+            variant="outline"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">Create BRD with Analyst</span>
+            <span className="sm:hidden">Analyst</span>
           </Button>
-          <h1 className="text-xl font-bold sm:text-base">{contextProject?.project_name || "No Project Selected"}</h1>
         </div>
       </div>
       

@@ -186,8 +186,8 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      // Backend returns .txt, so use that extension
-      const extension = brdId && brdId !== "none" ? ".txt" : ".docx";
+      // Backend returns .docx format now
+      const extension = brdId && brdId !== "none" ? ".docx" : ".docx";
       a.download = `${filename}${extension}`;
       document.body.appendChild(a);
       a.click();

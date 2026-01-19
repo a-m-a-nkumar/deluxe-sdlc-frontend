@@ -9,6 +9,9 @@ export const API_CONFIG = {
   // Chat API URL
   CHATBOT_API_URL: `${BASE_URL_ENDPOINT}/chat`,
   
+  // Analyst API URL
+  ANALYST_API_URL: `${BASE_URL_ENDPOINT}/analyst-chat`,
+  
   // Request timeout in milliseconds
   TIMEOUT: 30000
 };

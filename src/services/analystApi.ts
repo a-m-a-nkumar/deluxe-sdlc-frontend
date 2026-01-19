@@ -1,17 +1,15 @@
 import { API_CONFIG } from "@/config/api";
-import { useMutation } from "@tanstack/react-query";
 
-export interface ChatRequest {
+export interface AnalystChatRequest {
   message: string;
   session_id: string | null;
-  include_context?: boolean;
-  max_tokens?: number;
-  temperature?: number;
+  project_id?: string | null;
 }
 
-export interface ChatResponse {
+export interface AnalystChatResponse {
   response: string;
   session_id: string;
+  brd_id?: string;
   timestamp?: string;
   message_count?: number;
   model_used?: string;
@@ -19,8 +17,9 @@ export interface ChatResponse {
   message?: string;
 }
 
-export class SessionManager {
-  private static readonly SESSION_KEY = "chatbot_session_id";
+export class AnalystSessionManager {
+  private static readonly SESSION_KEY = "analyst_session_id";
+  private static readonly BRD_ID_KEY = "analyst_brd_id";
 
   static getSessionId(): string | null {
     return localStorage.getItem(this.SESSION_KEY);
@@ -29,32 +28,34 @@ export class SessionManager {
   static setSessionId(sessionId: string): void {
     localStorage.setItem(this.SESSION_KEY, sessionId);
   }
-}
 
-// AgentCore backend returns JSON; stream generator yields a single message
-export async function* streamChatMessage(
-  message: string,
-  sectionContext?: string,
-  _streamOverride?: boolean,
-  brdId?: string | null
-): AsyncGenerator<string, void, unknown> {
-  const API_BASE_URL = API_CONFIG.CHATBOT_API_URL;
-
-  let enhancedMessage = message;
-  if (sectionContext) {
-    // If section context includes "SECTION" prefix, it already has the section info
-    // Otherwise, format it clearly for the agent
-    if (sectionContext.startsWith("SECTION")) {
-      enhancedMessage = `${sectionContext}\n\nUSER REQUEST: ${message}\n\nIMPORTANT: The user is currently viewing the section shown above. When they say "here", "this section", or make edits without specifying a section number, they are referring to that specific section. Please update that section accordingly.`;
-    } else {
-      enhancedMessage = `BRD CONTEXT:\n${sectionContext}\n\nUSER REQUEST: ${message}`;
-    }
+  static getBrdId(): string | null {
+    return localStorage.getItem(this.BRD_ID_KEY);
   }
 
+  static setBrdId(brdId: string): void {
+    localStorage.setItem(this.BRD_ID_KEY, brdId);
+  }
+
+  static clearSession(): void {
+    localStorage.removeItem(this.SESSION_KEY);
+    localStorage.removeItem(this.BRD_ID_KEY);
+  }
+}
+
+// Stream chat message from analyst agent
+export async function* streamAnalystMessage(
+  message: string,
+  projectId?: string | null
+): AsyncGenerator<string, void, unknown> {
+  const API_BASE_URL = API_CONFIG.ANALYST_API_URL || API_CONFIG.CHATBOT_API_URL.replace('/chat', '/analyst-chat');
+
   const formData = new FormData();
-  formData.append("message", enhancedMessage);
-  formData.append("brd_id", brdId || "none");
-  formData.append("session_id", SessionManager.getSessionId() || "none");
+  formData.append("message", message);
+  formData.append("session_id", AnalystSessionManager.getSessionId() || "none");
+  if (projectId) {
+    formData.append("project_id", projectId);
+  }
 
   const { apiPost } = await import("./api");
   const response = await apiPost(API_BASE_URL, formData);
@@ -66,8 +67,16 @@ export async function* streamChatMessage(
 
   const data = await response.json().catch(() => ({}));
 
-  if (data.session_id) {
-    SessionManager.setSessionId(data.session_id);
+  // Store session_id if present (analyst agent returns it in JSON)
+  if (data.session_id && data.session_id !== "none") {
+    console.log(`[analystApi] Storing session_id: ${data.session_id}`);
+    AnalystSessionManager.setSessionId(data.session_id);
+  } else {
+    console.log(`[analystApi] No valid session_id in response. Data keys:`, Object.keys(data));
+  }
+
+  if (data.brd_id) {
+    AnalystSessionManager.setBrdId(data.brd_id);
   }
 
   // Extract text content, handling nested JSON structures
@@ -77,20 +86,17 @@ export async function* streamChatMessage(
   const extractTextFromJson = (obj: any): string | null => {
     if (!obj || typeof obj !== 'object') return null;
     
-    // Check for direct text fields
     if (obj.text && typeof obj.text === 'string') return obj.text;
     if (obj.message && typeof obj.message === 'string') return obj.message;
     if (obj.result && typeof obj.result === 'string') return obj.result;
     if (obj.response && typeof obj.response === 'string') return obj.response;
     
-    // Check for content array: {'role': 'assistant', 'content': [{'text': '...'}]}
     if (obj.content && Array.isArray(obj.content) && obj.content.length > 0) {
       const firstContent = obj.content[0];
       if (firstContent && typeof firstContent === 'object') {
         if (firstContent.text && typeof firstContent.text === 'string') {
           return firstContent.text;
         }
-        // Recursively check nested content
         const nested = extractTextFromJson(firstContent);
         if (nested) return nested;
       }
@@ -99,30 +105,23 @@ export async function* streamChatMessage(
     return null;
   };
   
-  // If content is a string that looks like JSON (Python dict or JSON format), try to parse it
   if (typeof content === 'string') {
     const trimmed = content.trim();
     
-    // Check if it looks like a JSON/dict string
     if (trimmed.startsWith('{') && (trimmed.includes("'") || trimmed.includes('"'))) {
       try {
-        // First try standard JSON parsing
         let parsed: any;
         try {
           parsed = JSON.parse(trimmed);
         } catch (e1) {
-          // If that fails, try converting Python dict format (single quotes) to JSON
           try {
-            // Replace single quotes with double quotes, but be careful with strings
             const jsonString = trimmed.replace(/'/g, '"').replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
             parsed = JSON.parse(jsonString);
           } catch (e2) {
-            // If both fail, try using eval (last resort, but safe here since we control the input)
             try {
-              // Use Function constructor as safer alternative to eval
               parsed = new Function('return ' + trimmed)();
             } catch (e3) {
-              console.warn('[CHAT] Could not parse JSON string:', trimmed.substring(0, 100));
+              console.warn('[ANALYST] Could not parse JSON string:', trimmed.substring(0, 100));
             }
           }
         }
@@ -134,18 +133,15 @@ export async function* streamChatMessage(
           }
         }
       } catch (e) {
-        console.warn('[CHAT] Error parsing JSON content:', e);
+        console.warn('[ANALYST] Error parsing JSON content:', e);
       }
     }
   }
   
-  // Convert to string and clean up
   content = String(content).trim();
   
-  // Final check: if content still looks like a dict/JSON string, try one more extraction
   if (content.startsWith("{'") || content.startsWith('{"')) {
     try {
-      // Try to extract using regex as last resort
       const textMatch = content.match(/'text'\s*:\s*['"]([^'"]+)['"]/);
       if (textMatch && textMatch[1]) {
         content = textMatch[1];
@@ -155,18 +151,26 @@ export async function* streamChatMessage(
     }
   }
 
+  // Extract BRD ID from response if present
+  const brdIdMatch = content.match(/BRD ID:\s*([a-f0-9-]+)/i);
+  if (brdIdMatch && brdIdMatch[1]) {
+    AnalystSessionManager.setBrdId(brdIdMatch[1]);
+  }
+
   if (content) {
     yield content;
   }
 }
 
-export async function sendChatMessage(message: string, brdId?: string | null): Promise<ChatResponse> {
-  const API_BASE_URL = API_CONFIG.CHATBOT_API_URL;
+export async function sendAnalystMessage(message: string, projectId?: string | null): Promise<AnalystChatResponse> {
+  const API_BASE_URL = API_CONFIG.ANALYST_API_URL || API_CONFIG.CHATBOT_API_URL.replace('/chat', '/analyst-chat');
 
   const formData = new FormData();
   formData.append("message", message);
-  formData.append("brd_id", brdId || "none");
-  formData.append("session_id", SessionManager.getSessionId() || "none");
+  formData.append("session_id", AnalystSessionManager.getSessionId() || "none");
+  if (projectId) {
+    formData.append("project_id", projectId);
+  }
 
   const { apiPost } = await import("./api");
   const response = await apiPost(API_BASE_URL, formData);
@@ -178,21 +182,11 @@ export async function sendChatMessage(message: string, brdId?: string | null): P
 
   const data = await response.json();
   if (data.session_id) {
-    SessionManager.setSessionId(data.session_id);
+    AnalystSessionManager.setSessionId(data.session_id);
+  }
+  if (data.brd_id) {
+    AnalystSessionManager.setBrdId(data.brd_id);
   }
   return data;
-}
-
-export function useChatMessage() {
-  return useMutation({
-    mutationFn: ({ message, brdId }: { message: string; brdId?: string | null }) =>
-      sendChatMessage(message, brdId),
-    onError: (error) => {
-      console.error("Chat error:", error);
-    },
-    onSuccess: (data) => {
-      console.log("Chat success:", data);
-    },
-  });
 }
 

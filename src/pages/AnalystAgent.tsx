@@ -34,6 +34,7 @@ const AnalystAgent = () => {
   const [messages, setMessages] = useState<ChatMessageType[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [isGeneratingBRD, setIsGeneratingBRD] = useState(false);
   const [brdId, setBrdId] = useState<string | null>(AnalystSessionManager.getBrdId());
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,19 +46,25 @@ const AnalystAgent = () => {
 
   // Check for BRD ID in messages
   useEffect(() => {
-    messages.forEach((msg) => {
+    // Find the most recent BRD ID mentioned by the bot
+    let latestFoundBrdId: string | null = null;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
       if (msg.isBot) {
         const brdIdMatch = msg.content.match(/BRD ID:\s*([a-f0-9-]+)/i);
         if (brdIdMatch && brdIdMatch[1]) {
-          const foundBrdId = brdIdMatch[1];
-          if (foundBrdId !== brdId) {
-            setBrdId(foundBrdId);
-            AnalystSessionManager.setBrdId(foundBrdId);
-            toast.success("BRD generated successfully! You can now download it.");
-          }
+          latestFoundBrdId = brdIdMatch[1];
+          break;
         }
       }
-    });
+    }
+
+    // Only update and toast if it's a new BRD ID we haven't seen in this session state
+    if (latestFoundBrdId && latestFoundBrdId !== brdId) {
+      setBrdId(latestFoundBrdId);
+      AnalystSessionManager.setBrdId(latestFoundBrdId);
+      toast.success("BRD generated successfully! You can now download it.");
+    }
   }, [messages, brdId]);
 
   // Load conversation history on mount
@@ -66,6 +73,7 @@ const AnalystAgent = () => {
       const sessionId = AnalystSessionManager.getSessionId();
       if (!sessionId || sessionId === "none") {
         console.log("[AnalystAgent] No session ID found, skipping history load");
+        setIsHistoryLoading(false);
         return;
       }
 
@@ -106,6 +114,8 @@ const AnalystAgent = () => {
       } catch (error) {
         console.error("[AnalystAgent] Error loading history:", error);
         // Don't show error toast, just silently fail
+      } finally {
+        setIsHistoryLoading(false);
       }
     };
 
@@ -290,11 +300,11 @@ const AnalystAgent = () => {
     }
 
     try {
-      const blob = await downloadBRD("", `BRD_${brdId}.txt`, brdId);
+      const blob = await downloadBRD("", `BRD_${brdId}.docx`, brdId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `BRD_${brdId}.txt`;
+      a.download = `BRD_${brdId}.docx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -381,7 +391,7 @@ const AnalystAgent = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
             <div className="lg:col-span-8 lg:col-start-3">
-              <Card className="h-[600px] sm:h-[700px] flex flex-col overflow-hidden">
+              <Card className="h-[600px] sm:h-[700px] flex flex-col overflow-hidden relative">
                 <CardHeader className="pb-4 border-b">
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary" />
@@ -410,6 +420,15 @@ const AnalystAgent = () => {
                       </div>
                     )}
                   </div>
+
+                  {isHistoryLoading && (
+                    <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-muted-foreground font-medium">Loading conversation history...</p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex gap-2 pt-4 border-t">
                     <Input

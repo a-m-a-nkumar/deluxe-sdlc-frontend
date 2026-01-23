@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Download, Sparkles, Send, FileText } from "lucide-react";
+import { ArrowLeft, Download, Sparkles, Send, FileText, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { streamAnalystMessage, AnalystSessionManager } from "@/services/analystApi";
 import { toast } from "sonner";
@@ -21,17 +21,17 @@ interface ChatMessageType {
 
 const AnalystAgent = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<ChatMessageType[]>([
-    {
-      id: "1",
-      content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
-      isBot: true,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    },
-  ]);
+  const INITIAL_MESSAGE: ChatMessageType = {
+    id: "1",
+    content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
+    isBot: true,
+    timestamp: new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+
+  const [messages, setMessages] = useState<ChatMessageType[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingBRD, setIsGeneratingBRD] = useState(false);
@@ -91,9 +91,7 @@ const AnalystAgent = () => {
 
           // Prepend the initial greeting message
           const initialMessage: ChatMessageType = {
-            id: "1",
-            content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
-            isBot: true,
+            ...INITIAL_MESSAGE,
             timestamp: new Date().toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -308,6 +306,16 @@ const AnalystAgent = () => {
     }
   };
 
+  const handleNewSession = () => {
+    if (window.confirm("Are you sure you want to start a new session? This will clear the current conversation.")) {
+      AnalystSessionManager.clearSession();
+      setMessages([INITIAL_MESSAGE]);
+      setBrdId(null);
+      setInputValue("");
+      toast.success("New session started.");
+    }
+  };
+
   const handleBack = () => {
     navigate("/");
   };
@@ -347,6 +355,15 @@ const AnalystAgent = () => {
                       <span className="sm:hidden">Generate</span>
                     </>
                   )}
+                </Button>
+                <Button
+                  onClick={handleNewSession}
+                  className="flex items-center gap-2"
+                  variant="outline"
+                  title="Start New Session"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span className="hidden sm:inline">New Session</span>
                 </Button>
                 {brdId && (
                   <Button onClick={handleDownloadBRD} className="flex items-center gap-2">

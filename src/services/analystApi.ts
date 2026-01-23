@@ -81,16 +81,16 @@ export async function* streamAnalystMessage(
 
   // Extract text content, handling nested JSON structures
   let content = data?.response || data?.result || data?.message || data?.answer || data?.text || data?.content || "";
-  
+
   // Helper function to extract text from nested JSON structure
   const extractTextFromJson = (obj: any): string | null => {
     if (!obj || typeof obj !== 'object') return null;
-    
+
     if (obj.text && typeof obj.text === 'string') return obj.text;
     if (obj.message && typeof obj.message === 'string') return obj.message;
     if (obj.result && typeof obj.result === 'string') return obj.result;
     if (obj.response && typeof obj.response === 'string') return obj.response;
-    
+
     if (obj.content && Array.isArray(obj.content) && obj.content.length > 0) {
       const firstContent = obj.content[0];
       if (firstContent && typeof firstContent === 'object') {
@@ -101,13 +101,13 @@ export async function* streamAnalystMessage(
         if (nested) return nested;
       }
     }
-    
+
     return null;
   };
-  
+
   if (typeof content === 'string') {
     const trimmed = content.trim();
-    
+
     if (trimmed.startsWith('{') && (trimmed.includes("'") || trimmed.includes('"'))) {
       try {
         let parsed: any;
@@ -125,7 +125,7 @@ export async function* streamAnalystMessage(
             }
           }
         }
-        
+
         if (parsed) {
           const extracted = extractTextFromJson(parsed);
           if (extracted) {
@@ -137,9 +137,9 @@ export async function* streamAnalystMessage(
       }
     }
   }
-  
+
   content = String(content).trim();
-  
+
   if (content.startsWith("{'") || content.startsWith('{"')) {
     try {
       const textMatch = content.match(/'text'\s*:\s*['"]([^'"]+)['"]/);
@@ -189,4 +189,26 @@ export async function sendAnalystMessage(message: string, projectId?: string | n
   }
   return data;
 }
+
+// Fetch conversation history for a session
+export async function fetchAnalystHistory(sessionId: string): Promise<any[]> {
+  const API_BASE_URL = `http://localhost:8000/analyst-history/${sessionId}`;
+
+  try {
+    const { apiGet } = await import("./api");
+    const response = await apiGet(API_BASE_URL);
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch history: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    return data.messages || [];
+  } catch (error) {
+    console.error("Error fetching analyst history:", error);
+    return [];
+  }
+}
+
 

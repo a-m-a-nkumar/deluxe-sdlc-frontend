@@ -60,6 +60,61 @@ const AnalystAgent = () => {
     });
   }, [messages, brdId]);
 
+  // Load conversation history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      const sessionId = AnalystSessionManager.getSessionId();
+      if (!sessionId || sessionId === "none") {
+        console.log("[AnalystAgent] No session ID found, skipping history load");
+        return;
+      }
+
+      console.log(`[AnalystAgent] Loading history for session: ${sessionId}`);
+
+      try {
+        const { fetchAnalystHistory } = await import("@/services/analystApi");
+        const historyMessages = await fetchAnalystHistory(sessionId);
+
+        if (historyMessages && historyMessages.length > 0) {
+          console.log(`[AnalystAgent] Loaded ${historyMessages.length} messages from history`);
+
+          // Convert history messages to ChatMessageType format
+          const formattedMessages: ChatMessageType[] = historyMessages.map((msg, index) => ({
+            id: `history-${index}`,
+            content: msg.content,
+            isBot: msg.isBot,
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }));
+
+          // Prepend the initial greeting message
+          const initialMessage: ChatMessageType = {
+            id: "1",
+            content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
+            isBot: true,
+            timestamp: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          };
+
+          setMessages([initialMessage, ...formattedMessages]);
+          toast.success(`Restored ${historyMessages.length} previous messages`);
+        } else {
+          console.log("[AnalystAgent] No history messages found");
+        }
+      } catch (error) {
+        console.error("[AnalystAgent] Error loading history:", error);
+        // Don't show error toast, just silently fail
+      }
+    };
+
+    loadHistory();
+  }, []); // Run only once on mount
+
+
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -148,7 +203,7 @@ const AnalystAgent = () => {
 
   const handleGenerateBRD = async () => {
     let sessionId = AnalystSessionManager.getSessionId();
-    
+
     // If no session ID, try to get it from the most recent message
     if (!sessionId || sessionId === "none") {
       // Check if we have any messages (which means a session was created)
@@ -166,7 +221,7 @@ const AnalystAgent = () => {
         return;
       }
     }
-    
+
     if (!sessionId || sessionId === "none") {
       toast.error("No active session. Please start a conversation first.");
       return;
@@ -178,7 +233,7 @@ const AnalystAgent = () => {
     try {
       const { apiPost } = await import("@/services/api");
       const API_BASE_URL = "http://localhost:8000/analyst-generate-brd";
-      
+
       const formData = new FormData();
       formData.append("session_id", sessionId);
 
@@ -190,12 +245,12 @@ const AnalystAgent = () => {
       }
 
       const data = await response.json();
-      
+
       if (data.brd_id) {
         setBrdId(data.brd_id);
         AnalystSessionManager.setBrdId(data.brd_id);
         toast.success(`BRD generated successfully! BRD ID: ${data.brd_id}`);
-        
+
         // Add success message to chat
         const successMessage: ChatMessageType = {
           id: `brd-generated-${Date.now()}`,
@@ -213,7 +268,7 @@ const AnalystAgent = () => {
     } catch (error: any) {
       console.error("BRD generation error:", error);
       toast.error(error.message || "Failed to generate BRD. Please try again.");
-      
+
       // Add error message to chat
       const errorMessage: ChatMessageType = {
         id: `brd-error-${Date.now()}`,
@@ -273,8 +328,8 @@ const AnalystAgent = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  onClick={handleGenerateBRD} 
+                <Button
+                  onClick={handleGenerateBRD}
                   disabled={isGeneratingBRD || !AnalystSessionManager.getSessionId()}
                   className="flex items-center gap-2"
                   variant="outline"

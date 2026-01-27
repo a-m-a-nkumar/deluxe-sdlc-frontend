@@ -6,15 +6,12 @@ import {
   Bell, 
   Settings, 
   HelpCircle,
-  ChevronRight,
   ArrowLeft,
   ChevronLeft,
   X
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import userAvatar from "@/assets/user-avatar.jpg";
 
 const navigationItems = [
   {
@@ -204,34 +201,6 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
             </Button>
           ))}
         </div>
-      </div>
-
-      {/* User Profile - Fixed at bottom */}
-      <div className="p-4 border-t border-sidebar-border flex-shrink-0">
-        <Button
-          variant="ghost"
-          className={`w-full ${collapsed ? 'justify-center p-3' : 'justify-between'} h-auto hover:bg-accent`}
-        >
-          {collapsed ? (
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={userAvatar} />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={userAvatar} />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="text-left">
-                  <div style={{ color: '#3B3B3B', fontSize: '14px', fontWeight: 'normal' }}>Jane Doe</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
-        </Button>
       </div>
     </div>
   );

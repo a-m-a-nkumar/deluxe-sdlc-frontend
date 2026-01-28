@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Download, Sparkles, Send, FileText, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { streamAnalystMessage, AnalystSessionManager } from "@/services/analystApi";
@@ -37,6 +38,7 @@ const AnalystAgent = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [isGeneratingBRD, setIsGeneratingBRD] = useState(false);
   const [brdId, setBrdId] = useState<string | null>(AnalystSessionManager.getBrdId());
+  const [enableSearch, setEnableSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom when new messages arrive
@@ -430,14 +432,19 @@ const AnalystAgent = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Input
+                  <div className="flex gap-2 pt-4 border-t items-end">
+                    <Textarea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="Type your message about your project requirements..."
-                      onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                      placeholder="Type your message... (Shift+Enter for new line)"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
                       disabled={isLoading}
-                      className="flex-1"
+                      className="flex-1 min-h-[40px] max-h-[200px] resize-none"
                       style={{ backgroundColor: "#fff" }}
                     />
                     <Button

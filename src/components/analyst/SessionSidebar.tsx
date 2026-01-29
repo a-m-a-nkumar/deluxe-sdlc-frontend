@@ -19,7 +19,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -215,22 +214,24 @@ export const SessionSidebar = ({
                                                     <Button
                                                         onClick={() => handleSaveEdit(session.id)}
                                                         size="icon"
-                                                        variant="ghost"
-                                                        className="w-6 h-6"
+                                                        variant="outline"
+                                                        className="w-8 h-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                        title="Save"
                                                     >
-                                                        <Check className="w-3 h-3" />
+                                                        <Check className="w-4 h-4" />
                                                     </Button>
                                                     <Button
                                                         onClick={handleCancelEdit}
                                                         size="icon"
-                                                        variant="ghost"
-                                                        className="w-6 h-6"
+                                                        variant="outline"
+                                                        className="w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        title="Cancel"
                                                     >
-                                                        <X className="w-3 h-3" />
+                                                        <X className="w-4 h-4" />
                                                     </Button>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 transition-colors">
+                                                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 group/session transition-colors">
                                                     <div
                                                         onClick={() => onSelectSession(session.id)}
                                                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
@@ -246,37 +247,44 @@ export const SessionSidebar = ({
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center flex-shrink-0">
-                                                        <DropdownMenu>
+                                                        <DropdownMenu modal={false}>
                                                             <DropdownMenuTrigger asChild>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground z-10 relative"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        // Force focus to prevent menu closing immediately
+                                                                        e.currentTarget.focus();
+                                                                    }}
                                                                 >
                                                                     <MoreHorizontal className="h-4 w-4" />
-                                                                    <span className="sr-only">More</span>
+                                                                    <span className="sr-only">Menu</span>
                                                                 </Button>
                                                             </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleStartEdit(session);
-                                                                }}>
-                                                                    <Edit2 className="mr-2 h-4 w-4" />
-                                                                    Rename
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
+                                                            <DropdownMenuContent align="end" className="w-48 z-[100]">
                                                                 <DropdownMenuItem
+                                                                    className="cursor-pointer"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleStartEdit(session);
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="mr-2 h-4 w-4" />
+                                                                    <span>Rename</span>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         if (window.confirm(`Delete "${session.title}"?`)) {
                                                                             onDeleteSession(session.id);
                                                                         }
                                                                     }}
-                                                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                                                 >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Delete
+                                                                    <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                                                                    <span className="text-red-500">Delete</span>
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>

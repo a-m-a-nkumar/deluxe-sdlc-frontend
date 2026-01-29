@@ -60,7 +60,10 @@ const AnalystAgent = () => {
   // Load current session messages when session changes
   useEffect(() => {
     if (currentSessionId) {
+      // Clear messages immediately when switching sessions
+      setMessages([INITIAL_MESSAGE]);
       loadSessionMessages(currentSessionId);
+
       const session = AnalystSessionManager.getSession(currentSessionId);
       console.log(`[AnalystAgent] Loading session ${currentSessionId}, BRD ID:`, session?.brdId);
       if (session?.brdId) {
@@ -234,6 +237,8 @@ const AnalystAgent = () => {
   };
 
   const handleSelectSession = (sessionId: string) => {
+    // Clear messages immediately to prevent stale state in effects
+    setMessages([INITIAL_MESSAGE]);
     setCurrentSessionId(sessionId);
     AnalystSessionManager.setCurrentSessionId(sessionId);
     setIsMobileSidebarOpen(false);

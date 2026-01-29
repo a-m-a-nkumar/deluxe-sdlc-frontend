@@ -17,29 +17,208 @@ export interface AnalystChatResponse {
   message?: string;
 }
 
-export class AnalystSessionManager {
-  private static readonly SESSION_KEY = "analyst_session_id";
-  private static readonly BRD_ID_KEY = "analyst_brd_id";
+export interface ChatSession {
+  id: string;                    // Unified Session ID (Frontend + Backend)
+  backendSessionId?: string | null;  // DEPRECATED: Kept for legacy session migration
+  title: string;
+  brdId: string | null;
+  messageCount: number;
+  createdAt: number;
+  lastUpdated: number;
+}
 
+export interface StoredMessage {
+  id: string;
+  content: string;
+  isBot: boolean;
+  timestamp: string;
+}
+
+export class AnalystSessionManager {
+  private static readonly SESSIONS_KEY = "analyst_sessions";
+  private static readonly CURRENT_SESSION_KEY = "analyst_current_session_id";
+  private static readonly MESSAGES_PREFIX = "analyst_messages_";
+
+  // Get all sessions
+  static getAllSessions(): ChatSession[] {
+    const sessionsJson = localStorage.getItem(this.SESSIONS_KEY);
+    if (!sessionsJson) return [];
+    try {
+      const sessions = JSON.parse(sessionsJson);
+      // Sort by last updated (most recent first)
+      return sessions.sort((a: ChatSession, b: ChatSession) => b.lastUpdated - a.lastUpdated);
+    } catch (e) {
+      console.error("Error parsing sessions:", e);
+      return [];
+    }
+  }
+
+  // Save all sessions
+  private static saveSessions(sessions: ChatSession[]): void {
+    localStorage.setItem(this.SESSIONS_KEY, JSON.stringify(sessions));
+  }
+
+  // Get current session ID
+  static getCurrentSessionId(): string | null {
+    return localStorage.getItem(this.CURRENT_SESSION_KEY);
+  }
+
+  // Set current session ID
+  static setCurrentSessionId(sessionId: string): void {
+    localStorage.setItem(this.CURRENT_SESSION_KEY, sessionId);
+  }
+
+  // Create a new session
+  static createSession(title?: string): ChatSession {
+    const sessions = this.getAllSessions();
+    const newSession: ChatSession = {
+      // Generate a long unique ID that satisfies AgentCore requirement (min 33 chars)
+      // session-timestamp-random1-random2
+      id: `session-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`,
+      title: title || `New Chat ${sessions.length + 1}`,
+      brdId: null,
+      messageCount: 0,
+      createdAt: Date.now(),
+      lastUpdated: Date.now(),
+    };
+
+    sessions.unshift(newSession);
+    this.saveSessions(sessions);
+    this.setCurrentSessionId(newSession.id);
+
+    return newSession;
+  }
+
+  // Get a specific session
+  static getSession(sessionId: string): ChatSession | null {
+    const sessions = this.getAllSessions();
+    return sessions.find(s => s.id === sessionId) || null;
+  }
+
+  // Update session metadata
+  static updateSession(sessionId: string, updates: Partial<ChatSession>): void {
+    const sessions = this.getAllSessions();
+    const index = sessions.findIndex(s => s.id === sessionId);
+    if (index !== -1) {
+      sessions[index] = {
+        ...sessions[index],
+        ...updates,
+        lastUpdated: Date.now(),
+      };
+      this.saveSessions(sessions);
+    }
+  }
+
+  // Delete a session
+  static deleteSession(sessionId: string): void {
+    const sessions = this.getAllSessions();
+    const filtered = sessions.filter(s => s.id !== sessionId);
+    this.saveSessions(filtered);
+
+    // Clear messages for this session
+    localStorage.removeItem(this.MESSAGES_PREFIX + sessionId);
+
+    // If this was the current session, clear it
+    if (this.getCurrentSessionId() === sessionId) {
+      localStorage.removeItem(this.CURRENT_SESSION_KEY);
+    }
+  }
+
+  // Rename a session
+  static renameSession(sessionId: string, newTitle: string): void {
+    this.updateSession(sessionId, { title: newTitle });
+  }
+
+  // Set BRD ID for a session
+  static setBrdIdForSession(sessionId: string, brdId: string): void {
+    this.updateSession(sessionId, { brdId });
+  }
+
+  // Get messages for a session
+  static getSessionMessages(sessionId: string): StoredMessage[] {
+    const messagesJson = localStorage.getItem(this.MESSAGES_PREFIX + sessionId);
+    if (!messagesJson) return [];
+    try {
+      return JSON.parse(messagesJson);
+    } catch (e) {
+      console.error("Error parsing messages:", e);
+      return [];
+    }
+  }
+
+  // Save messages for a session
+  static saveSessionMessages(sessionId: string, messages: StoredMessage[]): void {
+    localStorage.setItem(this.MESSAGES_PREFIX + sessionId, JSON.stringify(messages));
+
+    // Update message count and last updated
+    this.updateSession(sessionId, {
+      messageCount: messages.length,
+      lastUpdated: Date.now(),
+    });
+  }
+
+  // Add a message to a session
+  static addMessageToSession(sessionId: string, message: StoredMessage): void {
+    const messages = this.getSessionMessages(sessionId);
+    messages.push(message);
+    this.saveSessionMessages(sessionId, messages);
+  }
+
+  // Clear all sessions (for testing/reset)
+  static clearAllSessions(): void {
+    const sessions = this.getAllSessions();
+    sessions.forEach(session => {
+      localStorage.removeItem(this.MESSAGES_PREFIX + session.id);
+    });
+    localStorage.removeItem(this.SESSIONS_KEY);
+    localStorage.removeItem(this.CURRENT_SESSION_KEY);
+  }
+
+  // Get backend session ID for a specific session
+  // Unified ID logic with Legacy Fallback
+  static getBackendSessionId(sessionId: string): string | null {
+    const session = this.getSession(sessionId);
+    // If legacy session has a specific backend ID, use it. Otherwise use the unified ID.
+    if (session?.backendSessionId && session.backendSessionId !== "none") {
+      return session.backendSessionId;
+    }
+    return sessionId;
+  }
+
+  // Set backend session ID for a specific session
+  // No-op: ID is unified
+  static setBackendSessionId(sessionId: string, backendSessionId: string): void {
+    // No-op
+  }
+
+  // Legacy compatibility methods
   static getSessionId(): string | null {
-    return localStorage.getItem(this.SESSION_KEY);
+    return this.getCurrentSessionId();
   }
 
   static setSessionId(sessionId: string): void {
-    localStorage.setItem(this.SESSION_KEY, sessionId);
+    // No-op
   }
 
   static getBrdId(): string | null {
-    return localStorage.getItem(this.BRD_ID_KEY);
+    const currentSessionId = this.getCurrentSessionId();
+    if (!currentSessionId) return null;
+    const session = this.getSession(currentSessionId);
+    return session?.brdId || null;
   }
 
   static setBrdId(brdId: string): void {
-    localStorage.setItem(this.BRD_ID_KEY, brdId);
+    const currentSessionId = this.getCurrentSessionId();
+    if (currentSessionId) {
+      this.setBrdIdForSession(currentSessionId, brdId);
+    }
   }
 
   static clearSession(): void {
-    localStorage.removeItem(this.SESSION_KEY);
-    localStorage.removeItem(this.BRD_ID_KEY);
+    const currentSessionId = this.getCurrentSessionId();
+    if (currentSessionId) {
+      this.deleteSession(currentSessionId);
+    }
   }
 }
 

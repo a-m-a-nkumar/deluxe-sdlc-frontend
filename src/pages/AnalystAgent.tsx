@@ -2,14 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Download, Sparkles, Send, FileText, RefreshCw } from "lucide-react";
+import { Download, Sparkles, Send, FileText, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { streamAnalystMessage, AnalystSessionManager } from "@/services/analystApi";
+import { streamAnalystMessage, AnalystSessionManager, ChatSession, StoredMessage } from "@/services/analystApi";
 import { toast } from "sonner";
 import { downloadBRD } from "@/services/projectApi";
 import { ChatMessage } from "@/components/chat/ChatMessage";
+import { SessionSidebar } from "@/components/analyst/SessionSidebar";
 
 interface ChatMessageType {
   id: string;
@@ -32,13 +32,19 @@ const AnalystAgent = () => {
     }),
   };
 
+  // Session management
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Chat state
   const [messages, setMessages] = useState<ChatMessageType[]>([INITIAL_MESSAGE]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isGeneratingBRD, setIsGeneratingBRD] = useState(false);
-  const [brdId, setBrdId] = useState<string | null>(AnalystSessionManager.getBrdId());
-  const [enableSearch, setEnableSearch] = useState(false);
+  const [brdId, setBrdId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom when new messages arrive
@@ -46,9 +52,57 @@ const AnalystAgent = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Load sessions on mount
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  // Load current session messages when session changes
+  useEffect(() => {
+    if (currentSessionId) {
+      loadSessionMessages(currentSessionId);
+      const session = AnalystSessionManager.getSession(currentSessionId);
+      console.log(`[AnalystAgent] Loading session ${currentSessionId}, BRD ID:`, session?.brdId);
+      if (session?.brdId) {
+        setBrdId(session.brdId);
+        console.log(`[AnalystAgent] ✅ BRD ID set to: ${session.brdId}`);
+      } else {
+        setBrdId(null);
+        console.log(`[AnalystAgent] ❌ No BRD ID for this session`);
+      }
+    } else {
+      setMessages([INITIAL_MESSAGE]);
+      setBrdId(null);
+    }
+  }, [currentSessionId]);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    // Prevent saving if we are currently loading history (avoids saving wrong session data)
+    if (currentSessionId && messages.length > 1 && !isHistoryLoading) {
+      const storedMessages: StoredMessage[] = messages
+        .filter(msg => msg.id !== "1")
+        .map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          isBot: msg.isBot,
+          timestamp: msg.timestamp,
+        }));
+      AnalystSessionManager.saveSessionMessages(currentSessionId, storedMessages);
+
+      if (messages.length === 3) {
+        const firstUserMessage = messages.find(m => !m.isBot);
+        if (firstUserMessage) {
+          const title = firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? "..." : "");
+          AnalystSessionManager.renameSession(currentSessionId, title);
+          loadSessions();
+        }
+      }
+    }
+  }, [messages, currentSessionId, isHistoryLoading]);
+
   // Check for BRD ID in messages
   useEffect(() => {
-    // Find the most recent BRD ID mentioned by the bot
     let latestFoundBrdId: string | null = null;
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
@@ -61,72 +115,160 @@ const AnalystAgent = () => {
       }
     }
 
-    // Only update and toast if it's a new BRD ID we haven't seen in this session state
     if (latestFoundBrdId && latestFoundBrdId !== brdId) {
       setBrdId(latestFoundBrdId);
-      AnalystSessionManager.setBrdId(latestFoundBrdId);
+      if (currentSessionId) {
+        AnalystSessionManager.setBrdIdForSession(currentSessionId, latestFoundBrdId);
+        loadSessions();
+      }
       toast.success("BRD generated successfully! You can now download it.");
     }
-  }, [messages, brdId]);
+  }, [messages, brdId, currentSessionId]);
 
-  // Load conversation history on mount
-  useEffect(() => {
-    const loadHistory = async () => {
-      const sessionId = AnalystSessionManager.getSessionId();
-      if (!sessionId || sessionId === "none") {
-        console.log("[AnalystAgent] No session ID found, skipping history load");
-        setIsHistoryLoading(false);
-        return;
+  const loadSessions = () => {
+    const allSessions = AnalystSessionManager.getAllSessions();
+    setSessions(allSessions);
+
+    if (!currentSessionId) {
+      if (allSessions.length > 0) {
+        setCurrentSessionId(allSessions[0].id);
+        AnalystSessionManager.setCurrentSessionId(allSessions[0].id);
+      } else {
+        const newSession = AnalystSessionManager.createSession("New Chat");
+        setSessions([newSession]);
+        setCurrentSessionId(newSession.id);
       }
+    }
+  };
 
-      console.log(`[AnalystAgent] Loading history for session: ${sessionId}`);
+  const loadSessionMessages = async (sessionId: string) => {
+    // Clear existing messages first to avoid showing previous session's chat
+    setMessages([INITIAL_MESSAGE]);
+    setIsHistoryLoading(true);
 
-      try {
+    try {
+      // Get the backend session ID for this frontend session
+      const backendSessionId = AnalystSessionManager.getBackendSessionId(sessionId);
+
+      // Try to fetch from AgentCore Memory via backend API if we have a backend session ID
+      if (backendSessionId) {
+        console.log(`[AnalystAgent] Loading history from AgentCore Memory for frontend session: ${sessionId}, backend session: ${backendSessionId}`);
+
         const { fetchAnalystHistory } = await import("@/services/analystApi");
-        const historyMessages = await fetchAnalystHistory(sessionId);
+        const historyMessages = await fetchAnalystHistory(backendSessionId);
 
         if (historyMessages && historyMessages.length > 0) {
-          console.log(`[AnalystAgent] Loaded ${historyMessages.length} messages from history`);
+          console.log(`[AnalystAgent] ✅ Loaded ${historyMessages.length} messages from AgentCore Memory`);
 
-          // Convert history messages to ChatMessageType format
           const formattedMessages: ChatMessageType[] = historyMessages.map((msg, index) => ({
             id: `history-${index}`,
             content: msg.content,
             isBot: msg.isBot,
-            timestamp: new Date().toLocaleTimeString([], {
+            timestamp: msg.timestamp || new Date().toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             }),
           }));
 
-          // Prepend the initial greeting message
-          const initialMessage: ChatMessageType = {
-            ...INITIAL_MESSAGE,
-            timestamp: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          };
+          setMessages([INITIAL_MESSAGE, ...formattedMessages]);
 
-          setMessages([initialMessage, ...formattedMessages]);
-          toast.success(`Restored ${historyMessages.length} previous messages`);
-        } else {
-          console.log("[AnalystAgent] No history messages found");
+          // Update message count in session metadata
+          AnalystSessionManager.updateSession(sessionId, {
+            messageCount: historyMessages.length,
+          });
+
+          // Update sessions state to reflect new message count
+          setSessions(AnalystSessionManager.getAllSessions());
+
+          setIsHistoryLoading(false);
+          return;
         }
-      } catch (error) {
-        console.error("[AnalystAgent] Error loading history:", error);
-        // Don't show error toast, just silently fail
-      } finally {
-        setIsHistoryLoading(false);
+      } else {
+        console.log(`[AnalystAgent] No backend session ID yet for session: ${sessionId}`);
       }
-    };
 
-    loadHistory();
-  }, []); // Run only once on mount
+      // Fallback: Load from localStorage if AgentCore Memory has no messages or no backend session
+      console.log(`[AnalystAgent] Loading from localStorage for session: ${sessionId}`);
+      const storedMessages = AnalystSessionManager.getSessionMessages(sessionId);
 
+      if (storedMessages.length > 0) {
+        const formattedMessages: ChatMessageType[] = storedMessages.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          isBot: msg.isBot,
+          timestamp: msg.timestamp,
+        }));
+        setMessages([INITIAL_MESSAGE, ...formattedMessages]);
+      } else {
+        setMessages([INITIAL_MESSAGE]);
+      }
+    } catch (error) {
+      console.error("[AnalystAgent] Error loading session messages:", error);
+      // On error, fall back to localStorage
+      const storedMessages = AnalystSessionManager.getSessionMessages(sessionId);
+      if (storedMessages.length > 0) {
+        const formattedMessages: ChatMessageType[] = storedMessages.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          isBot: msg.isBot,
+          timestamp: msg.timestamp,
+        }));
+        setMessages([INITIAL_MESSAGE, ...formattedMessages]);
+      } else {
+        setMessages([INITIAL_MESSAGE]);
+      }
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  const handleNewSession = () => {
+    const newSession = AnalystSessionManager.createSession();
+    setSessions([newSession, ...sessions]);
+    setCurrentSessionId(newSession.id);
+    setMessages([INITIAL_MESSAGE]);
+    setBrdId(null);
+    setInputValue("");
+    setIsMobileSidebarOpen(false);
+    toast.success("New chat session created!");
+  };
+
+  const handleSelectSession = (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    AnalystSessionManager.setCurrentSessionId(sessionId);
+    setIsMobileSidebarOpen(false);
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    AnalystSessionManager.deleteSession(sessionId);
+    const updatedSessions = sessions.filter(s => s.id !== sessionId);
+    setSessions(updatedSessions);
+
+    if (sessionId === currentSessionId) {
+      if (updatedSessions.length > 0) {
+        setCurrentSessionId(updatedSessions[0].id);
+        AnalystSessionManager.setCurrentSessionId(updatedSessions[0].id);
+      } else {
+        handleNewSession();
+      }
+    }
+
+    toast.success("Chat session deleted");
+  };
+
+  const handleRenameSession = (sessionId: string, newTitle: string) => {
+    AnalystSessionManager.renameSession(sessionId, newTitle);
+    loadSessions();
+    toast.success("Session renamed");
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
+
+    if (!currentSessionId) {
+      handleNewSession();
+      return;
+    }
 
     const userMessage: ChatMessageType = {
       id: Date.now().toString(),
@@ -144,7 +286,6 @@ const AnalystAgent = () => {
     setInputValue("");
     setIsLoading(true);
 
-    // Add bot message placeholder
     const botMessageId = `bot-${Date.now()}`;
     const botMessage: ChatMessageType = {
       id: botMessageId,
@@ -163,11 +304,9 @@ const AnalystAgent = () => {
     try {
       let accumulatedContent = "";
 
-      // Stream the response using analyst API
       for await (const chunk of streamAnalystMessage(currentMessage)) {
         accumulatedContent += chunk;
 
-        // Update the bot message with accumulated content
         updatedMessages = updatedMessages.map((msg) =>
           msg.id === botMessageId
             ? { ...msg, content: accumulatedContent, isLoading: false, isTyping: false }
@@ -178,17 +317,13 @@ const AnalystAgent = () => {
 
       setIsLoading(false);
 
-      // Get session_id from AnalystSessionManager (it's set by streamAnalystMessage)
-      const currentSessionId = AnalystSessionManager.getSessionId();
-      if (currentSessionId && currentSessionId !== "none") {
-        console.log(`[AnalystAgent] Session ID stored: ${currentSessionId}`);
-      }
-
-      // Check for BRD ID in response
       const brdIdMatch = accumulatedContent.match(/BRD ID:\s*([a-f0-9-]+)/i);
       if (brdIdMatch && brdIdMatch[1]) {
         setBrdId(brdIdMatch[1]);
-        AnalystSessionManager.setBrdId(brdIdMatch[1]);
+        if (currentSessionId) {
+          AnalystSessionManager.setBrdIdForSession(currentSessionId, brdIdMatch[1]);
+          loadSessions();
+        }
       }
     } catch (error) {
       console.error("Chat error:", error);
@@ -197,8 +332,7 @@ const AnalystAgent = () => {
       const withoutLoading = updatedMessages.filter((msg) => msg.id !== botMessageId);
       const errorMessage: ChatMessageType = {
         id: `error-${Date.now()}`,
-        content:
-          "Sorry, I couldn't process your message right now. Please try again later.",
+        content: "Sorry, I couldn't process your message right now. Please try again later.",
         isBot: true,
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -213,24 +347,6 @@ const AnalystAgent = () => {
 
   const handleGenerateBRD = async () => {
     let sessionId = AnalystSessionManager.getSessionId();
-
-    // If no session ID, try to get it from the most recent message
-    if (!sessionId || sessionId === "none") {
-      // Check if we have any messages (which means a session was created)
-      if (messages.length > 0) {
-        // Try to extract session_id from the last bot message
-        const lastBotMessage = [...messages].reverse().find(msg => msg.isBot);
-        if (lastBotMessage) {
-          // The session_id should be in localStorage, but if not, we need to make a call to get it
-          // For now, show a helpful error
-          toast.error("Session ID not found. Please send another message to establish a session, then try again.");
-          return;
-        }
-      } else {
-        toast.error("No active session. Please start a conversation first.");
-        return;
-      }
-    }
 
     if (!sessionId || sessionId === "none") {
       toast.error("No active session. Please start a conversation first.");
@@ -258,10 +374,12 @@ const AnalystAgent = () => {
 
       if (data.brd_id) {
         setBrdId(data.brd_id);
-        AnalystSessionManager.setBrdId(data.brd_id);
+        if (currentSessionId) {
+          AnalystSessionManager.setBrdIdForSession(currentSessionId, data.brd_id);
+          loadSessions();
+        }
         toast.success(`BRD generated successfully! BRD ID: ${data.brd_id}`);
 
-        // Add success message to chat
         const successMessage: ChatMessageType = {
           id: `brd-generated-${Date.now()}`,
           content: `✅ BRD generated successfully!\n\nBRD ID: ${data.brd_id}\n\nYou can now download the BRD using the download button.`,
@@ -279,7 +397,6 @@ const AnalystAgent = () => {
       console.error("BRD generation error:", error);
       toast.error(error.message || "Failed to generate BRD. Please try again.");
 
-      // Add error message to chat
       const errorMessage: ChatMessageType = {
         id: `brd-error-${Date.now()}`,
         content: `❌ Failed to generate BRD: ${error.message || "Unknown error"}\n\nPlease try again or continue the conversation to gather more requirements.`,
@@ -318,81 +435,99 @@ const AnalystAgent = () => {
     }
   };
 
-  const handleNewSession = () => {
-    if (window.confirm("Are you sure you want to start a new session? This will clear the current conversation.")) {
-      AnalystSessionManager.clearSession();
-      setMessages([INITIAL_MESSAGE]);
-      setBrdId(null);
-      setInputValue("");
-      toast.success("New session started.");
-    }
-  };
-
   const handleBack = () => {
     navigate("/");
   };
 
+  const currentSession = sessions.find(s => s.id === currentSessionId);
+
   return (
-    <div className="min-h-screen bg-background">
-      <MainLayout currentView="analyst" showBackButton onBack={handleBack}>
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="mb-4 lg:mb-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" onClick={handleBack} className="p-2 hover:bg-accent">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
+    <MainLayout currentView="analyst" showBackButton onBack={handleBack}>
+      <div className="flex h-full">
+        {/* Session Sidebar - Desktop */}
+        <div className="hidden lg:block h-[calc(100vh-4rem)] sticky top-16">
+          <SessionSidebar
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSelectSession={handleSelectSession}
+            onNewSession={handleNewSession}
+            onDeleteSession={handleDeleteSession}
+            onRenameSession={handleRenameSession}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
+        </div>
+
+        {/* Mobile Session Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileSidebarOpen(false)}>
+            <div className="w-64 h-full bg-background" onClick={(e) => e.stopPropagation()}>
+              <SessionSidebar
+                sessions={sessions}
+                currentSessionId={currentSessionId}
+                onSelectSession={handleSelectSession}
+                onNewSession={handleNewSession}
+                onDeleteSession={handleDeleteSession}
+                onRenameSession={handleRenameSession}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Main Chat Content */}
+        <div className="flex-1 min-w-0">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="mb-4 lg:mb-6">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
+                  {/* Mobile Session Menu Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsMobileSidebarOpen(true)}
+                    className="lg:hidden p-2 hover:bg-accent"
+                    title="Show chat sessions"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </Button>
+
                   <Sparkles className="w-5 h-5 text-primary" />
                   <h1 className="text-xl font-bold sm:text-2xl">Business Analyst Agent</h1>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleGenerateBRD}
-                  disabled={isGeneratingBRD || !AnalystSessionManager.getSessionId()}
-                  className="flex items-center gap-2"
-                  variant="outline"
-                >
-                  {isGeneratingBRD ? (
-                    <>
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      <span className="hidden sm:inline">Generating...</span>
-                      <span className="sm:hidden">Generating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4" />
-                      <span className="hidden sm:inline">Generate BRD</span>
-                      <span className="sm:hidden">Generate</span>
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleNewSession}
-                  className="flex items-center gap-2"
-                  variant="outline"
-                  title="Start New Session"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span className="hidden sm:inline">New Session</span>
-                </Button>
-                {brdId && (
-                  <Button onClick={handleDownloadBRD} className="flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Download BRD</span>
-                    <span className="sm:hidden">Download</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleGenerateBRD}
+                    disabled={isGeneratingBRD || !currentSessionId}
+                    className="flex items-center gap-2"
+                    variant="outline"
+                    size="sm"
+                  >
+                    {isGeneratingBRD ? (
+                      <>
+                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        <span className="hidden sm:inline">Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4" />
+                        <span className="hidden sm:inline">Generate BRD</span>
+                      </>
+                    )}
                   </Button>
-                )}
+                  {brdId && (
+                    <Button onClick={handleDownloadBRD} className="flex items-center gap-2" size="sm">
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Download</span>
+                    </Button>
+                  )}
+                </div>
               </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {currentSession?.title || "Have a conversation with Mary, your Strategic Business Analyst"}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-2 ml-11">
-              Have a conversation with Mary, your Strategic Business Analyst, to gather requirements and generate a BRD
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-            <div className="lg:col-span-8 lg:col-start-3">
+            <div className="max-w-5xl mx-auto">
               <Card className="h-[600px] sm:h-[700px] flex flex-col overflow-hidden relative">
                 <CardHeader className="pb-4 border-b">
                   <CardTitle className="flex items-center gap-2">
@@ -465,10 +600,9 @@ const AnalystAgent = () => {
             </div>
           </div>
         </div>
-      </MainLayout>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 
 export default AnalystAgent;
-

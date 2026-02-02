@@ -69,15 +69,17 @@ export async function getAccessToken(): Promise<string | null> {
     }
 
     const account = accounts[0];
-    
+
     // Use only User.Read scope (no .default scope)
     const tokenRequest = {
       scopes: ["User.Read"],
       account: account,
     };
-    
+
     const response = await msalInstance.acquireTokenSilent(tokenRequest);
-    return response.accessToken;
+    // Use ID Token instead of Access Token because we are the same app
+    // and Access Token for User.Read is for Graph API (audience 00000003...) which we can't verify
+    return response.idToken;
   } catch (error) {
     console.error("Error acquiring token:", error);
     // If error is about scope, clear cache and try again
@@ -99,14 +101,14 @@ export async function getAccessToken(): Promise<string | null> {
         console.error("Error after cache clear:", retryError);
       }
     }
-    
+
     // Try interactive login if silent fails
     try {
       await ensureMsalInitialized();
       const response = await msalInstance.acquireTokenPopup({
         scopes: ["User.Read"],
       });
-      return response.accessToken;
+      return response.idToken;
     } catch (popupError) {
       console.error("Error acquiring token via popup:", popupError);
       return null;

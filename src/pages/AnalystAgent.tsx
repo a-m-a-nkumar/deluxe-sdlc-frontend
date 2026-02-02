@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { downloadBRD } from "@/services/projectApi";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { SessionSidebar } from "@/components/analyst/SessionSidebar";
+import { useAppState } from "@/contexts/AppStateContext";
 
 interface ChatMessageType {
   id: string;
@@ -22,6 +23,8 @@ interface ChatMessageType {
 
 const AnalystAgent = () => {
   const navigate = useNavigate();
+  const { selectedProject } = useAppState();
+
   const INITIAL_MESSAGE: ChatMessageType = {
     id: "1",
     content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
@@ -37,6 +40,7 @@ const AnalystAgent = () => {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSessionsLoading, setIsSessionsLoading] = useState(false);
 
   // Chat state
   const [messages, setMessages] = useState<ChatMessageType[]>([INITIAL_MESSAGE]);
@@ -52,154 +56,189 @@ const AnalystAgent = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Load sessions function
+  const loadSessions_DUPLICATE = async () => {
+    if (!selectedProject?.project_id) return;
+
+    setIsSessionsLoading(true);
+    try {
+      // console.log(`[AnalystAgent] Loading sessions for project: ${selectedProject.project_id}`);
+      const sessionsData = await AnalystSessionManager.getProjectSessions(selectedProject.project_id);
+      // console.log(`[AnalystAgent] Loaded ${sessionsData.length} sessions`);
+      setSessions(sessionsData);
+    } catch (error) {
+      console.error("Failed to load sessions:", error);
+      toast.error("Failed to load chat history");
+    } finally {
+      setIsSessionsLoading(false);
+    }
+  };
+
   // Load sessions on mount
   useEffect(() => {
     loadSessions();
   }, []);
 
-  // Load current session messages when session changes
+  // Reload sessions when project changes
   useEffect(() => {
-    if (currentSessionId) {
-      // Clear messages immediately when switching sessions
-      setMessages([INITIAL_MESSAGE]);
-      loadSessionMessages(currentSessionId);
+    if (selectedProject) {
+      console.log(`[AnalystAgent] Project changed to: ${selectedProject.project_name} (${selectedProject.project_id})`);
 
-      const session = AnalystSessionManager.getSession(currentSessionId);
-      console.log(`[AnalystAgent] Loading session ${currentSessionId}, BRD ID:`, session?.brdId);
-      if (session?.brdId) {
-        setBrdId(session.brdId);
-        console.log(`[AnalystAgent] ✅ BRD ID set to: ${session.brdId}`);
-      } else {
-        setBrdId(null);
-        console.log(`[AnalystAgent] ❌ No BRD ID for this session`);
-      }
-    } else {
+      // Clear current session and messages
+      setCurrentSessionId(null);
       setMessages([INITIAL_MESSAGE]);
       setBrdId(null);
+
+      // Reload sessions for new project
+      loadSessions();
+
+      toast.info(`Switched to project: ${selectedProject.project_name}`);
     }
+  }, [selectedProject?.project_id]); // Watch for project_id changes
+
+
+  // Load current session messages when session changes
+  useEffect(() => {
+    let active = true;
+
+    const fetchSessionData = async () => {
+      if (currentSessionId) {
+        // Clear messages immediately when switching sessions
+        setMessages([INITIAL_MESSAGE]);
+        await loadSessionMessages(currentSessionId);
+
+        if (!active) return;
+
+        try {
+          const session = await AnalystSessionManager.getSession(currentSessionId);
+          console.log(`[AnalystAgent] Loading session ${currentSessionId}, BRD ID:`, session?.brdId);
+
+          if (!active) return;
+
+          if (session?.brdId) {
+            setBrdId(session.brdId);
+            console.log(`[AnalystAgent] ✅ BRD ID set to: ${session.brdId}`);
+          } else {
+            setBrdId(null);
+            console.log(`[AnalystAgent] ❌ No BRD ID for this session`);
+          }
+        } catch (e) {
+          console.error("Error fetching session details:", e);
+        }
+      } else {
+        setMessages([INITIAL_MESSAGE]);
+        setBrdId(null);
+      }
+    };
+
+    fetchSessionData();
+    return () => { active = false; };
   }, [currentSessionId]);
 
-  // Save messages to localStorage whenever they change
+  // Save messages to localStorage - REMOVED/NO-OP
+  // We rely on backend persistence now.
+  // We only rename session based on first message
   useEffect(() => {
-    // Prevent saving if we are currently loading history (avoids saving wrong session data)
-    if (currentSessionId && messages.length > 1 && !isHistoryLoading) {
-      const storedMessages: StoredMessage[] = messages
-        .filter(msg => msg.id !== "1")
-        .map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          isBot: msg.isBot,
-          timestamp: msg.timestamp,
-        }));
-      AnalystSessionManager.saveSessionMessages(currentSessionId, storedMessages);
-
-      if (messages.length === 3) {
+    const checkRename = async () => {
+      if (currentSessionId && messages.length === 3 && !isHistoryLoading) {
         const firstUserMessage = messages.find(m => !m.isBot);
         if (firstUserMessage) {
           const title = firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? "..." : "");
-          AnalystSessionManager.renameSession(currentSessionId, title);
-          loadSessions();
+          await AnalystSessionManager.renameSession(currentSessionId, title);
+          loadSessions(false); // Silent reload
         }
       }
-    }
+    };
+    checkRename();
   }, [messages, currentSessionId, isHistoryLoading]);
 
   // Check for BRD ID in messages
   useEffect(() => {
-    let latestFoundBrdId: string | null = null;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      if (msg.isBot) {
-        const brdIdMatch = msg.content.match(/BRD ID:\s*([a-f0-9-]+)/i);
-        if (brdIdMatch && brdIdMatch[1]) {
-          latestFoundBrdId = brdIdMatch[1];
-          break;
+    const checkBrd = async () => {
+      let latestFoundBrdId: string | null = null;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg.isBot) {
+          const brdIdMatch = msg.content.match(/BRD ID:\s*([a-f0-9-]+)/i);
+          if (brdIdMatch && brdIdMatch[1]) {
+            latestFoundBrdId = brdIdMatch[1];
+            break;
+          }
         }
       }
-    }
 
-    if (latestFoundBrdId && latestFoundBrdId !== brdId) {
-      setBrdId(latestFoundBrdId);
-      if (currentSessionId) {
-        AnalystSessionManager.setBrdIdForSession(currentSessionId, latestFoundBrdId);
-        loadSessions();
+      if (latestFoundBrdId && latestFoundBrdId !== brdId) {
+        setBrdId(latestFoundBrdId);
+        if (currentSessionId) {
+          await AnalystSessionManager.setBrdIdForSession(currentSessionId, latestFoundBrdId);
+          loadSessions(false);
+        }
+        toast.success("BRD generated successfully! You can now download it.");
       }
-      toast.success("BRD generated successfully! You can now download it.");
-    }
+    };
+    checkBrd();
   }, [messages, brdId, currentSessionId]);
 
-  const loadSessions = () => {
-    const allSessions = AnalystSessionManager.getAllSessions();
-    setSessions(allSessions);
+  // Load sessions using API
+  // Load sessions using API
+  const loadSessions = async (showLoading = true) => {
+    const projectId = selectedProject?.project_id;
 
-    if (!currentSessionId) {
-      if (allSessions.length > 0) {
-        setCurrentSessionId(allSessions[0].id);
-        AnalystSessionManager.setCurrentSessionId(allSessions[0].id);
-      } else {
-        const newSession = AnalystSessionManager.createSession("New Chat");
-        setSessions([newSession]);
-        setCurrentSessionId(newSession.id);
+    if (projectId) {
+      AnalystSessionManager.setCurrentProjectId(projectId);
+
+      try {
+        if (showLoading) {
+          setIsSessionsLoading(true); // Set local loading state only if requested
+        }
+
+        const projectSessions = await AnalystSessionManager.getAllSessions(projectId);
+        setSessions(projectSessions);
+
+        console.log(`[AnalystAgent] Loaded ${projectSessions.length} sessions for project: ${projectId}`);
+
+        if (!currentSessionId) {
+          if (projectSessions.length > 0) {
+            setCurrentSessionId(projectSessions[0].id);
+            AnalystSessionManager.setCurrentSessionId(projectSessions[0].id);
+          } else {
+            const newSession = await AnalystSessionManager.createSession("New Chat", projectId);
+            setSessions([newSession]);
+            setCurrentSessionId(newSession.id);
+            console.log(`[AnalystAgent] Created first session for project: ${projectId}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading sessions:", error);
+        toast.error("Failed to load sessions");
+      } finally {
+        if (showLoading) {
+          setIsSessionsLoading(false);
+        }
       }
+    } else {
+      setSessions([]);
+      setCurrentSessionId(null);
     }
   };
 
   const loadSessionMessages = async (sessionId: string) => {
-    // Clear existing messages first to avoid showing previous session's chat
     setMessages([INITIAL_MESSAGE]);
     setIsHistoryLoading(true);
 
     try {
-      // Get the backend session ID for this frontend session
-      const backendSessionId = AnalystSessionManager.getBackendSessionId(sessionId);
+      console.log(`[AnalystAgent] Loading messages for session: ${sessionId}`);
+      const storedMessages = await AnalystSessionManager.getSessionMessages(sessionId);
 
-      // Try to fetch from AgentCore Memory via backend API if we have a backend session ID
-      if (backendSessionId) {
-        console.log(`[AnalystAgent] Loading history from AgentCore Memory for frontend session: ${sessionId}, backend session: ${backendSessionId}`);
-
-        const { fetchAnalystHistory } = await import("@/services/analystApi");
-        const historyMessages = await fetchAnalystHistory(backendSessionId);
-
-        if (historyMessages && historyMessages.length > 0) {
-          console.log(`[AnalystAgent] ✅ Loaded ${historyMessages.length} messages from AgentCore Memory`);
-
-          const formattedMessages: ChatMessageType[] = historyMessages.map((msg, index) => ({
-            id: `history-${index}`,
-            content: msg.content,
-            isBot: msg.isBot,
-            timestamp: msg.timestamp || new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          }));
-
-          setMessages([INITIAL_MESSAGE, ...formattedMessages]);
-
-          // Update message count in session metadata
-          AnalystSessionManager.updateSession(sessionId, {
-            messageCount: historyMessages.length,
-          });
-
-          // Update sessions state to reflect new message count
-          setSessions(AnalystSessionManager.getAllSessions());
-
-          setIsHistoryLoading(false);
-          return;
-        }
-      } else {
-        console.log(`[AnalystAgent] No backend session ID yet for session: ${sessionId}`);
-      }
-
-      // Fallback: Load from localStorage if AgentCore Memory has no messages or no backend session
-      console.log(`[AnalystAgent] Loading from localStorage for session: ${sessionId}`);
-      const storedMessages = AnalystSessionManager.getSessionMessages(sessionId);
-
-      if (storedMessages.length > 0) {
-        const formattedMessages: ChatMessageType[] = storedMessages.map(msg => ({
-          id: msg.id,
+      if (storedMessages && storedMessages.length > 0) {
+        const formattedMessages: ChatMessageType[] = storedMessages.map((msg, index) => ({
+          id: msg.id || `msg-${index}`,
           content: msg.content,
           isBot: msg.isBot,
-          timestamp: msg.timestamp,
+          timestamp: msg.timestamp || new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         }));
         setMessages([INITIAL_MESSAGE, ...formattedMessages]);
       } else {
@@ -207,77 +246,111 @@ const AnalystAgent = () => {
       }
     } catch (error) {
       console.error("[AnalystAgent] Error loading session messages:", error);
-      // On error, fall back to localStorage
-      const storedMessages = AnalystSessionManager.getSessionMessages(sessionId);
-      if (storedMessages.length > 0) {
-        const formattedMessages: ChatMessageType[] = storedMessages.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          isBot: msg.isBot,
-          timestamp: msg.timestamp,
-        }));
-        setMessages([INITIAL_MESSAGE, ...formattedMessages]);
-      } else {
-        setMessages([INITIAL_MESSAGE]);
-      }
+      toast.error("Failed to load conversation history");
+      setMessages([INITIAL_MESSAGE]);
     } finally {
       setIsHistoryLoading(false);
     }
   };
 
-  const handleNewSession = () => {
-    const newSession = AnalystSessionManager.createSession();
-    setSessions([newSession, ...sessions]);
-    setCurrentSessionId(newSession.id);
-    setMessages([INITIAL_MESSAGE]);
-    setBrdId(null);
-    setInputValue("");
-    setIsMobileSidebarOpen(false);
-    toast.success("New chat session created!");
+  const handleNewSession = async () => {
+    const projectId = selectedProject?.project_id;
+    if (!projectId) return;
+
+    try {
+      const newSession = await AnalystSessionManager.createSession("New Chat", projectId);
+
+      // Update local state
+      setSessions((prev) => [newSession, ...prev]);
+      setCurrentSessionId(newSession.id);
+      AnalystSessionManager.setCurrentSessionId(newSession.id);
+      setMessages([INITIAL_MESSAGE]);
+      setBrdId(null);
+
+      setIsMobileSidebarOpen(false);
+    } catch (error) {
+      console.error("Error creating session:", error);
+      toast.error("Failed to create new session");
+    }
   };
 
   const handleSelectSession = (sessionId: string) => {
-    // Clear messages immediately to prevent stale state in effects
-    setMessages([INITIAL_MESSAGE]);
     setCurrentSessionId(sessionId);
     AnalystSessionManager.setCurrentSessionId(sessionId);
     setIsMobileSidebarOpen(false);
   };
 
-  const handleDeleteSession = (sessionId: string) => {
-    AnalystSessionManager.deleteSession(sessionId);
-    const updatedSessions = sessions.filter(s => s.id !== sessionId);
-    setSessions(updatedSessions);
+  const handleDeleteSession = async (sessionId: string) => {
+    if (confirm("Are you sure you want to delete this chat session?")) {
+      // Optimistic update
+      const previousSessions = [...sessions];
 
-    if (sessionId === currentSessionId) {
-      if (updatedSessions.length > 0) {
-        setCurrentSessionId(updatedSessions[0].id);
-        AnalystSessionManager.setCurrentSessionId(updatedSessions[0].id);
-      } else {
-        handleNewSession();
+      const updatedSessions = sessions.filter((s) => s.id !== sessionId);
+      setSessions(updatedSessions);
+
+      if (currentSessionId === sessionId) {
+        if (updatedSessions.length > 0) {
+          setCurrentSessionId(updatedSessions[0].id);
+          AnalystSessionManager.setCurrentSessionId(updatedSessions[0].id);
+        } else {
+          setCurrentSessionId(null);
+          AnalystSessionManager.setCurrentSessionId(""); // Clear
+          setMessages([INITIAL_MESSAGE]);
+        }
+      }
+
+      try {
+        await AnalystSessionManager.deleteSession(sessionId);
+        toast.success("Session deleted");
+      } catch (error) {
+        console.error("Error deleting session:", error);
+        toast.error("Failed to delete session");
+
+        // Revert optimistic update on failure - reload to be safe
+        loadSessions(false);
       }
     }
-
-    toast.success("Chat session deleted");
   };
 
-  const handleRenameSession = (sessionId: string, newTitle: string) => {
-    AnalystSessionManager.renameSession(sessionId, newTitle);
-    loadSessions();
-    toast.success("Session renamed");
+  const handleRenameSession = async (sessionId: string, newTitle: string) => {
+    // Optimistic update
+    setSessions(prev =>
+      prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s)
+    );
+
+    try {
+      await AnalystSessionManager.renameSession(sessionId, newTitle);
+      toast.success("Session renamed");
+    } catch (error) {
+      console.error("Error renaming session:", error);
+      toast.error("Failed to rename session");
+      // Revert optimistic update on failure - strictly reload to get source of truth
+      loadSessions(false);
+    }
   };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
 
     if (!currentSessionId) {
-      handleNewSession();
-      return;
+      // Need to handle creation here if new session needed
+      const projectId = selectedProject?.project_id;
+      if (projectId) {
+        await handleNewSession();
+        // Re-trigger send? Complex. 
+        // Simplest is to create session and then proceed.
+      } else {
+        toast.error("Please select a project first.");
+        return;
+      }
     }
+
+    const userContent = inputValue.trim();
+    setInputValue("");
 
     const userMessage: ChatMessageType = {
       id: Date.now().toString(),
-      content: inputValue,
+      content: userContent,
       isBot: false,
       timestamp: new Date().toLocaleTimeString([], {
         hour: "2-digit",
@@ -285,14 +358,11 @@ const AnalystAgent = () => {
       }),
     };
 
-    const currentMessage = inputValue;
-    const currentMessages = messages;
-    setMessages([...currentMessages, userMessage]);
-    setInputValue("");
+    setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    const botMessageId = `bot-${Date.now()}`;
-    const botMessage: ChatMessageType = {
+    const botMessageId = (Date.now() + 1).toString();
+    const botPlaceholder: ChatMessageType = {
       id: botMessageId,
       content: "",
       isBot: true,
@@ -300,55 +370,60 @@ const AnalystAgent = () => {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      isLoading: true,
+      isTyping: true,
     };
-    setMessages([...currentMessages, userMessage, botMessage]);
-
-    let updatedMessages = [...currentMessages, userMessage, botMessage];
+    setMessages((prev) => [...prev, botPlaceholder]);
 
     try {
-      let accumulatedContent = "";
+      // Ensure we have a valid session
+      let sessionId = currentSessionId;
+      const projectId = selectedProject?.project_id;
 
-      for await (const chunk of streamAnalystMessage(currentMessage)) {
-        accumulatedContent += chunk;
+      if (!sessionId && projectId) {
+        const newSession = await AnalystSessionManager.createSession("New Chat", projectId);
+        sessionId = newSession.id;
+        setCurrentSessionId(sessionId);
+        setSessions([newSession, ...sessions]);
+      }
 
-        updatedMessages = updatedMessages.map((msg) =>
-          msg.id === botMessageId
-            ? { ...msg, content: accumulatedContent, isLoading: false, isTyping: false }
-            : msg
+      if (!sessionId) {
+        throw new Error("No session active");
+      }
+
+      const projectIdToUse = selectedProject?.project_id;
+
+      let fullResponse = "";
+      for await (const chunk of streamAnalystMessage(userContent, projectIdToUse)) {
+        fullResponse += chunk;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, content: fullResponse, isTyping: false }
+              : msg
+          )
         );
-        setMessages(updatedMessages);
       }
 
-      setIsLoading(false);
+      // Update session if BRD ID found etc. (handled by useEffect on messages)
 
-      const brdIdMatch = accumulatedContent.match(/BRD ID:\s*([a-f0-9-]+)/i);
-      if (brdIdMatch && brdIdMatch[1]) {
-        setBrdId(brdIdMatch[1]);
-        if (currentSessionId) {
-          AnalystSessionManager.setBrdIdForSession(currentSessionId, brdIdMatch[1]);
-          loadSessions();
-        }
-      }
+      // Refresh sessions to update timestamp
+      loadSessions(false);
+
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("Error in chat:", error);
+      toast.error("Failed to receive response");
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMessageId
+            ? { ...msg, content: "Sorry, I encountered an error. Please try again.", isTyping: false }
+            : msg
+        )
+      );
+    } finally {
       setIsLoading(false);
-
-      const withoutLoading = updatedMessages.filter((msg) => msg.id !== botMessageId);
-      const errorMessage: ChatMessageType = {
-        id: `error-${Date.now()}`,
-        content: "Sorry, I couldn't process your message right now. Please try again later.",
-        isBot: true,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages([...withoutLoading, errorMessage]);
-
-      toast.error("Failed to send message. Please check your connection and try again.");
     }
   };
+
 
   const handleGenerateBRD = async () => {
     let sessionId = AnalystSessionManager.getSessionId();
@@ -380,8 +455,9 @@ const AnalystAgent = () => {
       if (data.brd_id) {
         setBrdId(data.brd_id);
         if (currentSessionId) {
-          AnalystSessionManager.setBrdIdForSession(currentSessionId, data.brd_id);
-          loadSessions();
+          await AnalystSessionManager.setBrdIdForSession(currentSessionId, data.brd_id);
+          // Reload sessions to refresh state
+          loadSessions(false);
         }
         toast.success(`BRD generated successfully! BRD ID: ${data.brd_id}`);
 
@@ -460,6 +536,7 @@ const AnalystAgent = () => {
             onRenameSession={handleRenameSession}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            isLoading={isSessionsLoading}
           />
         </div>
 
@@ -474,6 +551,7 @@ const AnalystAgent = () => {
                 onNewSession={handleNewSession}
                 onDeleteSession={handleDeleteSession}
                 onRenameSession={handleRenameSession}
+                isLoading={isSessionsLoading}
               />
             </div>
           </div>

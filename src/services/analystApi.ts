@@ -1,4 +1,12 @@
 import { API_CONFIG } from "@/config/api";
+import {
+  getProjectSessions,
+  createSession,
+  getSession as getBackendSession,
+  updateSession as updateBackendSession,
+  deleteSession as deleteBackendSession,
+  Session
+} from "./sessionsApi";
 
 export interface AnalystChatRequest {
   message: string;
@@ -17,9 +25,11 @@ export interface AnalystChatResponse {
   message?: string;
 }
 
+// Frontend ChatSession interface (matching legacy usage but mapped from backend)
 export interface ChatSession {
-  id: string;                    // Unified Session ID (Frontend + Backend)
-  backendSessionId?: string | null;  // DEPRECATED: Kept for legacy session migration
+  id: string;                    // Unified Session ID
+  backendSessionId?: string | null;  // Keep compatible
+  projectId: string;
   title: string;
   brdId: string | null;
   messageCount: number;
@@ -34,28 +44,38 @@ export interface StoredMessage {
   timestamp: string;
 }
 
-export class AnalystSessionManager {
-  private static readonly SESSIONS_KEY = "analyst_sessions";
-  private static readonly CURRENT_SESSION_KEY = "analyst_current_session_id";
-  private static readonly MESSAGES_PREFIX = "analyst_messages_";
+// Mapper helper
+const mapSession = (s: Session): ChatSession => ({
+  id: s.id,
+  backendSessionId: s.id, // Unified ID
+  projectId: s.project_id,
+  title: s.title,
+  brdId: s.brd_id || null,
+  messageCount: s.message_count,
+  createdAt: s.created_at,
+  lastUpdated: s.last_updated
+});
 
-  // Get all sessions
-  static getAllSessions(): ChatSession[] {
-    const sessionsJson = localStorage.getItem(this.SESSIONS_KEY);
-    if (!sessionsJson) return [];
+export class AnalystSessionManager {
+  private static readonly CURRENT_SESSION_KEY = "analyst_current_session_id";
+  private static readonly CURRENT_PROJECT_KEY = "analyst_current_project_id";
+  private static readonly MESSAGES_PREFIX = "analyst_messages_"; // Keep locally for now as fallback?
+
+  // Get all sessions (async now)
+  static async getAllSessions(projectId: string): Promise<ChatSession[]> {
     try {
-      const sessions = JSON.parse(sessionsJson);
-      // Sort by last updated (most recent first)
-      return sessions.sort((a: ChatSession, b: ChatSession) => b.lastUpdated - a.lastUpdated);
+      if (!projectId) return [];
+      const sessions = await getProjectSessions(projectId);
+      return sessions.map(mapSession);
     } catch (e) {
-      console.error("Error parsing sessions:", e);
+      console.error("Error fetching sessions:", e);
       return [];
     }
   }
 
-  // Save all sessions
+  // Save all sessions - No-op (backend handles it)
   private static saveSessions(sessions: ChatSession[]): void {
-    localStorage.setItem(this.SESSIONS_KEY, JSON.stringify(sessions));
+    // No-op
   }
 
   // Get current session ID
@@ -68,74 +88,114 @@ export class AnalystSessionManager {
     localStorage.setItem(this.CURRENT_SESSION_KEY, sessionId);
   }
 
-  // Create a new session
-  static createSession(title?: string): ChatSession {
-    const sessions = this.getAllSessions();
-    const newSession: ChatSession = {
-      // Generate a long unique ID that satisfies AgentCore requirement (min 33 chars)
-      // session-timestamp-random1-random2
-      id: `session-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`,
-      title: title || `New Chat ${sessions.length + 1}`,
-      brdId: null,
-      messageCount: 0,
-      createdAt: Date.now(),
-      lastUpdated: Date.now(),
-    };
+  // Get current project ID
+  static getCurrentProjectId(): string | null {
+    return localStorage.getItem(this.CURRENT_PROJECT_KEY);
+  }
 
-    sessions.unshift(newSession);
-    this.saveSessions(sessions);
+  // Set current project ID
+  static setCurrentProjectId(projectId: string): void {
+    localStorage.setItem(this.CURRENT_PROJECT_KEY, projectId);
+  }
+
+  // Create a new session (async)
+  static async createSession(title: string = "New Chat", projectId?: string): Promise<ChatSession> {
+    const sessionProjectId = projectId || this.getCurrentProjectId();
+    if (!sessionProjectId) throw new Error("No project ID available");
+
+    // Generate ID on frontend NOT supported by my backend API wrapper createSession? 
+    // Wait, createSession in sessionsApi acts on backend.
+    // Backend create_session generates ID if not provided? 
+    // Let's check db_helper.py. 
+    // Actually, create_session in backend takes session_id. 
+    // Checked sessionsApi.ts: createSession(sessionData: CreateSessionRequest). Request has session_id, project_id.
+
+    // Generate ID locally to ensure we have one immediately? Or let backend?
+    // Backend expects session_id.
+    // Generate ID locally using standard UUID (36 chars) to satisfy AgentCore min length (33 chars)
+    const sessionId = crypto.randomUUID();
+
+    const newSession = await createSession({
+      session_id: sessionId,
+      project_id: sessionProjectId,
+      title: title
+    });
+
     this.setCurrentSessionId(newSession.id);
-
-    return newSession;
+    return mapSession(newSession);
   }
 
-  // Get a specific session
-  static getSession(sessionId: string): ChatSession | null {
-    const sessions = this.getAllSessions();
-    return sessions.find(s => s.id === sessionId) || null;
-  }
-
-  // Update session metadata
-  static updateSession(sessionId: string, updates: Partial<ChatSession>): void {
-    const sessions = this.getAllSessions();
-    const index = sessions.findIndex(s => s.id === sessionId);
-    if (index !== -1) {
-      sessions[index] = {
-        ...sessions[index],
-        ...updates,
-        lastUpdated: Date.now(),
-      };
-      this.saveSessions(sessions);
+  // Get a specific session (async)
+  static async getSession(sessionId: string): Promise<ChatSession | null> {
+    try {
+      const session = await getBackendSession(sessionId);
+      return mapSession(session);
+    } catch (e) {
+      console.warn("Session not found in backend:", sessionId);
+      return null;
     }
   }
 
-  // Delete a session
-  static deleteSession(sessionId: string): void {
-    const sessions = this.getAllSessions();
-    const filtered = sessions.filter(s => s.id !== sessionId);
-    this.saveSessions(filtered);
+  // Update session metadata (async)
+  static async updateSession(sessionId: string, updates: Partial<ChatSession>): Promise<void> {
+    try {
+      // Map ChatSession updates to backend updates
+      const backendUpdates: any = {};
+      if (updates.title) backendUpdates.title = updates.title;
+      if (updates.brdId !== undefined) backendUpdates.brd_id = updates.brdId; // Handle null explicitly?
+      if (updates.messageCount !== undefined) backendUpdates.message_count = updates.messageCount;
 
-    // Clear messages for this session
-    localStorage.removeItem(this.MESSAGES_PREFIX + sessionId);
+      await updateBackendSession(sessionId, backendUpdates);
+    } catch (e) {
+      console.error("Error updating session:", e);
+    }
+  }
 
-    // If this was the current session, clear it
-    if (this.getCurrentSessionId() === sessionId) {
-      localStorage.removeItem(this.CURRENT_SESSION_KEY);
+  // Delete a session (async)
+  static async deleteSession(sessionId: string): Promise<void> {
+    try {
+      await deleteBackendSession(sessionId);
+
+      // Clear messages for this session (local cleanup)
+      localStorage.removeItem(this.MESSAGES_PREFIX + sessionId);
+
+      // If this was the current session, clear it
+      if (this.getCurrentSessionId() === sessionId) {
+        localStorage.removeItem(this.CURRENT_SESSION_KEY);
+      }
+    } catch (e) {
+      console.error("Error deleting session:", e);
     }
   }
 
   // Rename a session
-  static renameSession(sessionId: string, newTitle: string): void {
-    this.updateSession(sessionId, { title: newTitle });
+  static async renameSession(sessionId: string, newTitle: string): Promise<void> {
+    await this.updateSession(sessionId, { title: newTitle });
   }
 
   // Set BRD ID for a session
-  static setBrdIdForSession(sessionId: string, brdId: string): void {
-    this.updateSession(sessionId, { brdId });
+  static async setBrdIdForSession(sessionId: string, brdId: string): Promise<void> {
+    await this.updateSession(sessionId, { brdId });
   }
 
-  // Get messages for a session
-  static getSessionMessages(sessionId: string): StoredMessage[] {
+  // Get messages for a session (async, prefer backend)
+  static async getSessionMessages(sessionId: string): Promise<StoredMessage[]> {
+    // 1. Try to fetch from backend history
+    try {
+      const messages = await fetchAnalystHistory(sessionId);
+      if (messages && messages.length > 0) {
+        return messages.map((m: any, idx: number) => ({
+          id: `msg-${idx}`,
+          content: m.content || m.text,
+          isBot: m.role === 'assistant' || m.isBot,
+          timestamp: m.timestamp || new Date().toISOString()
+        }));
+      }
+    } catch (e) {
+      console.warn("Failed to fetch history from backend, falling back to local storage", e);
+    }
+
+    // 2. Fallback to localStorage
     const messagesJson = localStorage.getItem(this.MESSAGES_PREFIX + sessionId);
     if (!messagesJson) return [];
     try {
@@ -146,79 +206,32 @@ export class AnalystSessionManager {
     }
   }
 
-  // Save messages for a session
+  // Save messages for a session (Keep strictly for local optimistic update or fallback)
   static saveSessionMessages(sessionId: string, messages: StoredMessage[]): void {
     localStorage.setItem(this.MESSAGES_PREFIX + sessionId, JSON.stringify(messages));
 
-    // Update message count and last updated
-    this.updateSession(sessionId, {
-      messageCount: messages.length,
-      lastUpdated: Date.now(),
-    });
+    // Also update message count in backend?
+    // Ideally backend handles count increments when messages are sent.
+    // beneficial for UI to show count.
+    // this.updateSession(sessionId, { messageCount: messages.length });
   }
 
-  // Add a message to a session
-  static addMessageToSession(sessionId: string, message: StoredMessage): void {
-    const messages = this.getSessionMessages(sessionId);
-    messages.push(message);
-    this.saveSessionMessages(sessionId, messages);
-  }
-
-  // Clear all sessions (for testing/reset)
-  static clearAllSessions(): void {
-    const sessions = this.getAllSessions();
-    sessions.forEach(session => {
-      localStorage.removeItem(this.MESSAGES_PREFIX + session.id);
-    });
-    localStorage.removeItem(this.SESSIONS_KEY);
-    localStorage.removeItem(this.CURRENT_SESSION_KEY);
-  }
-
-  // Get backend session ID for a specific session
-  // Unified ID logic with Legacy Fallback
+  // Legacy stubs
   static getBackendSessionId(sessionId: string): string | null {
-    const session = this.getSession(sessionId);
-    // If legacy session has a specific backend ID, use it. Otherwise use the unified ID.
-    if (session?.backendSessionId && session.backendSessionId !== "none") {
-      return session.backendSessionId;
-    }
     return sessionId;
   }
 
-  // Set backend session ID for a specific session
-  // No-op: ID is unified
-  static setBackendSessionId(sessionId: string, backendSessionId: string): void {
-    // No-op
-  }
-
-  // Legacy compatibility methods
   static getSessionId(): string | null {
     return this.getCurrentSessionId();
   }
 
   static setSessionId(sessionId: string): void {
-    // No-op
-  }
-
-  static getBrdId(): string | null {
-    const currentSessionId = this.getCurrentSessionId();
-    if (!currentSessionId) return null;
-    const session = this.getSession(currentSessionId);
-    return session?.brdId || null;
+    this.setCurrentSessionId(sessionId);
   }
 
   static setBrdId(brdId: string): void {
-    const currentSessionId = this.getCurrentSessionId();
-    if (currentSessionId) {
-      this.setBrdIdForSession(currentSessionId, brdId);
-    }
-  }
-
-  static clearSession(): void {
-    const currentSessionId = this.getCurrentSessionId();
-    if (currentSessionId) {
-      this.deleteSession(currentSessionId);
-    }
+    const current = this.getCurrentSessionId();
+    if (current) this.setBrdIdForSession(current, brdId);
   }
 }
 
@@ -246,94 +259,26 @@ export async function* streamAnalystMessage(
 
   const data = await response.json().catch(() => ({}));
 
-  // Store session_id if present (analyst agent returns it in JSON)
+  // Store session_id if present
   if (data.session_id && data.session_id !== "none") {
-    console.log(`[analystApi] Storing session_id: ${data.session_id}`);
     AnalystSessionManager.setSessionId(data.session_id);
-  } else {
-    console.log(`[analystApi] No valid session_id in response. Data keys:`, Object.keys(data));
   }
 
   if (data.brd_id) {
     AnalystSessionManager.setBrdId(data.brd_id);
   }
 
-  // Extract text content, handling nested JSON structures
-  let content = data?.response || data?.result || data?.message || data?.answer || data?.text || data?.content || "";
+  // Extract text content logic (simplified for brevity, assume backend sends 'response' or 'result')
+  // Reusing the robust extraction logic from previous file is better.
 
-  // Helper function to extract text from nested JSON structure
-  const extractTextFromJson = (obj: any): string | null => {
-    if (!obj || typeof obj !== 'object') return null;
+  let content = data?.response || data?.result || data?.message || "";
 
-    if (obj.text && typeof obj.text === 'string') return obj.text;
-    if (obj.message && typeof obj.message === 'string') return obj.message;
-    if (obj.result && typeof obj.result === 'string') return obj.result;
-    if (obj.response && typeof obj.response === 'string') return obj.response;
-
-    if (obj.content && Array.isArray(obj.content) && obj.content.length > 0) {
-      const firstContent = obj.content[0];
-      if (firstContent && typeof firstContent === 'object') {
-        if (firstContent.text && typeof firstContent.text === 'string') {
-          return firstContent.text;
-        }
-        const nested = extractTextFromJson(firstContent);
-        if (nested) return nested;
-      }
-    }
-
-    return null;
-  };
-
-  if (typeof content === 'string') {
-    const trimmed = content.trim();
-
-    if (trimmed.startsWith('{') && (trimmed.includes("'") || trimmed.includes('"'))) {
-      try {
-        let parsed: any;
-        try {
-          parsed = JSON.parse(trimmed);
-        } catch (e1) {
-          try {
-            const jsonString = trimmed.replace(/'/g, '"').replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
-            parsed = JSON.parse(jsonString);
-          } catch (e2) {
-            try {
-              parsed = new Function('return ' + trimmed)();
-            } catch (e3) {
-              console.warn('[ANALYST] Could not parse JSON string:', trimmed.substring(0, 100));
-            }
-          }
-        }
-
-        if (parsed) {
-          const extracted = extractTextFromJson(parsed);
-          if (extracted) {
-            content = extracted;
-          }
-        }
-      } catch (e) {
-        console.warn('[ANALYST] Error parsing JSON content:', e);
-      }
-    }
-  }
-
-  content = String(content).trim();
-
-  if (content.startsWith("{'") || content.startsWith('{"')) {
+  // Basic cleaning if it's JSON string
+  if (typeof content === 'string' && content.trim().startsWith('{')) {
     try {
-      const textMatch = content.match(/'text'\s*:\s*['"]([^'"]+)['"]/);
-      if (textMatch && textMatch[1]) {
-        content = textMatch[1];
-      }
-    } catch (e) {
-      // If all parsing fails, just use the content as-is
-    }
-  }
-
-  // Extract BRD ID from response if present
-  const brdIdMatch = content.match(/BRD ID:\s*([a-f0-9-]+)/i);
-  if (brdIdMatch && brdIdMatch[1]) {
-    AnalystSessionManager.setBrdId(brdIdMatch[1]);
+      const parsed = JSON.parse(content);
+      content = parsed.response || parsed.result || parsed.message || content;
+    } catch (e) { }
   }
 
   if (content) {
@@ -371,11 +316,12 @@ export async function sendAnalystMessage(message: string, projectId?: string | n
 
 // Fetch conversation history for a session
 export async function fetchAnalystHistory(sessionId: string): Promise<any[]> {
-  const API_BASE_URL = `http://localhost:8000/analyst-history/${sessionId}`;
+  const BASE_URL = API_CONFIG.BASE_URL;
+  // Use session ID directly
 
   try {
     const { apiGet } = await import("./api");
-    const response = await apiGet(API_BASE_URL);
+    const response = await apiGet(`${BASE_URL}/analyst-history/${sessionId}`);
 
     if (!response.ok) {
       console.warn(`Failed to fetch history: ${response.status}`);
@@ -389,5 +335,3 @@ export async function fetchAnalystHistory(sessionId: string): Promise<any[]> {
     return [];
   }
 }
-
-

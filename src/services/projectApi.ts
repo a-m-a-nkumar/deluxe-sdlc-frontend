@@ -1,84 +1,139 @@
 // Project API Service
+import { apiGet, apiPost, apiDelete, apiRequest } from "./api";
 import { API_CONFIG } from "@/config/api";
 
-export interface CreateProjectRequest {
-  project_name: string;
-  description: string;
-  jira_project_key: string;
-  confluence_space_key: string;
-}
+const BASE_URL = API_CONFIG.BASE_URL;
 
-export interface Project {
-  project_id: string;
+export interface CreateProjectRequest {
+  project_id: string; // Now required by backend
   project_name: string;
-  description: string;
+  description?: string;
   jira_project_key?: string;
   confluence_space_key?: string;
-  created_at: string;
 }
 
-interface CreateProjectResponse extends Project {}
+export interface UpdateProjectRequest {
+  project_name?: string;
+  description?: string;
+  jira_project_key?: string;
+  confluence_space_key?: string;
+}
 
-// Local-only project handling to keep UI functional without backend endpoints
-const LOCAL_PROJECT_KEY = "local_brd_projects";
+// Backend project interface
+export interface BackendProject {
+  id: string; // Backend uses 'id' instead of 'project_id'
+  user_id: string;
+  project_name: string;
+  description?: string;
+  jira_project_key?: string;
+  confluence_space_key?: string;
+  created_at: number; // Milliseconds
+  updated_at: number; // Milliseconds
+  is_deleted: boolean;
+}
 
-const readLocalProjects = (): Project[] => {
-  try {
-    const raw = localStorage.getItem(LOCAL_PROJECT_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Project[];
-  } catch {
-    return [];
-  }
-};
+// Helper to map backend Project to frontend interface if needed, or update frontend to use 'id'
+// For now, let's keep frontend expectations. If frontend expects 'project_id', we map it.
+// Checking previous code: interface Project { project_id: string; ... }
+// I should align with backend 'id', but to avoid breaking entire frontend, I might mapper.
+// But better to update frontend to match backend schema. 'id' is standard.
+// Let's assume we map 'id' -> 'project_id' for compatibility or just switch to 'id'.
+// The previous interface had: project_id, project_name, description, jira..., confluence..., created_at (string)
+// Backend returns created_at as number (ms).
 
-const writeLocalProjects = (projects: Project[]) => {
-  localStorage.setItem(LOCAL_PROJECT_KEY, JSON.stringify(projects));
-};
+// Let's force alignment with Backend but providing a compatibility layer if needed?
+// The user wants migration. Let's return what backend returns but mapped if necessary.
 
-export const createProject = async (projectData: CreateProjectRequest): Promise<CreateProjectResponse> => {
-  const newProject: Project = {
-    project_id: crypto.randomUUID(),
-    project_name: projectData.project_name,
-    description: projectData.description,
-    jira_project_key: projectData.jira_project_key,
-    confluence_space_key: projectData.confluence_space_key,
-    created_at: new Date().toISOString(),
+// Updated interface matching backend response
+export interface ProjectResponse {
+  id: string;
+  user_id: string;
+  project_name: string;
+  description?: string;
+  jira_project_key?: string;
+  confluence_space_key?: string;
+  created_at: number;
+  updated_at: number;
+  is_deleted: boolean;
+}
+
+// Frontend might rely on 'project_id' property. Let's keep it compatible by adding it
+export interface FrontendProject extends ProjectResponse {
+  project_id: string; // Alias for id
+}
+
+// Export Project as FrontendProject for backward compatibility
+export type Project = FrontendProject;
+
+const mapProject = (p: ProjectResponse): FrontendProject => ({
+  ...p,
+  project_id: p.id
+});
+
+export const createProject = async (projectData: Omit<CreateProjectRequest, "project_id">): Promise<FrontendProject> => {
+  const payload = {
+    ...projectData,
+    project_id: crypto.randomUUID() // Generate ID on frontend as expected by backend or helpful
   };
 
-  const projects = readLocalProjects();
-  projects.push(newProject);
-  writeLocalProjects(projects);
-  return newProject;
-};
+  const response = await apiPost(`${BASE_URL}/api/projects/`, payload);
 
-export const fetchProjects = async (): Promise<Project[]> => {
-  const projects = readLocalProjects();
-
-  // Ensure at least one default project exists
-  if (projects.length === 0) {
-    const defaultProject: Project = {
-      project_id: "local-project",
-      project_name: "Local BRD Project",
-      description: "Local project placeholder",
-      jira_project_key: "LOC",
-      confluence_space_key: "LOC",
-      created_at: new Date().toISOString(),
-    };
-    writeLocalProjects([defaultProject]);
-    return [defaultProject];
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(`Failed to create project: ${response.status} - ${errorText}`);
   }
 
-  return projects;
+  const data = await response.json();
+  return mapProject(data);
 };
 
-export const getProjectById = async (projectId: string): Promise<Project> => {
-  const projects = readLocalProjects();
-  const project = projects.find((p) => p.project_id === projectId);
-  if (!project) {
-    throw new Error("Project not found");
+export const fetchProjects = async (): Promise<FrontendProject[]> => {
+  const response = await apiGet(`${BASE_URL}/api/projects/`);
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch projects: ${response.status} - ${errorText}`);
   }
-  return project;
+
+  const data: ProjectResponse[] = await response.json();
+  return data.map(mapProject);
+};
+
+export const getProjectById = async (projectId: string): Promise<FrontendProject> => {
+  const response = await apiGet(`${BASE_URL}/api/projects/${projectId}`);
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(`Failed to fetch project: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return mapProject(data);
+};
+
+export const updateProject = async (projectId: string, updates: UpdateProjectRequest): Promise<FrontendProject> => {
+  const response = await apiRequest(`${BASE_URL}/api/projects/${projectId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates)
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(`Failed to update project: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return mapProject(data);
+};
+
+export const deleteProject = async (projectId: string): Promise<void> => {
+  const response = await apiDelete(`${BASE_URL}/api/projects/${projectId}`);
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "Unknown error");
+    throw new Error(`Failed to delete project: ${response.status} - ${errorText}`);
+  }
 };
 
 export interface BRDTemplate {
@@ -203,7 +258,7 @@ export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> =>
 
 export const downloadBRD = async (text: string, filename: string, brdId?: string | null): Promise<Blob> => {
   const API_BASE_URL = API_CONFIG.BASE_URL;
-  
+
   // If brdId is provided, use backend download endpoint
   if (brdId && brdId !== "none") {
     try {

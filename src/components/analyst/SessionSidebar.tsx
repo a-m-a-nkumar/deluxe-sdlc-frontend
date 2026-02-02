@@ -31,6 +31,7 @@ interface SessionSidebarProps {
     onRenameSession: (sessionId: string, newTitle: string) => void;
     isCollapsed?: boolean;
     onToggleCollapse?: () => void;
+    isLoading?: boolean;
 }
 
 export const SessionSidebar = ({
@@ -42,6 +43,7 @@ export const SessionSidebar = ({
     onRenameSession,
     isCollapsed = false,
     onToggleCollapse,
+    isLoading = false,
 }: SessionSidebarProps) => {
     const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
@@ -106,24 +108,30 @@ export const SessionSidebar = ({
                 <div className="flex-1 w-full overflow-hidden">
                     <ScrollArea className="h-full">
                         <div className="flex flex-col gap-2 px-2">
-                            {sessions.map((session) => (
-                                <Button
-                                    key={session.id}
-                                    onClick={() => onSelectSession(session.id)}
-                                    size="icon"
-                                    variant={currentSessionId === session.id ? "secondary" : "ghost"}
-                                    className={cn(
-                                        "w-10 h-10 relative",
-                                        currentSessionId === session.id && "bg-accent"
-                                    )}
-                                    title={session.title}
-                                >
-                                    <MessageSquare className="w-4 h-4" />
-                                    {session.brdId && (
-                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
-                                    )}
-                                </Button>
-                            ))}
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <div key={i} className="w-10 h-10 rounded-md bg-muted animate-pulse" />
+                                ))
+                            ) : (
+                                sessions.map((session) => (
+                                    <Button
+                                        key={session.id}
+                                        onClick={() => onSelectSession(session.id)}
+                                        size="icon"
+                                        variant={currentSessionId === session.id ? "secondary" : "ghost"}
+                                        className={cn(
+                                            "w-10 h-10 relative",
+                                            currentSessionId === session.id && "bg-accent"
+                                        )}
+                                        title={session.title}
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                        {session.brdId && (
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
+                                        )}
+                                    </Button>
+                                ))
+                            )}
                         </div>
                     </ScrollArea>
                 </div>
@@ -174,7 +182,17 @@ export const SessionSidebar = ({
             {/* Sessions List */}
             <ScrollArea className="flex-1">
                 <div className="p-2">
-                    {Object.keys(groupedSessions).length === 0 ? (
+                    {isLoading ? (
+                        <div className="space-y-4 p-2">
+                            {/* Skeleton Loader */}
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="flex flex-col gap-2">
+                                    <div className="h-4 w-16 bg-muted rounded animate-pulse" /> {/* Date label */}
+                                    <div className="h-14 w-full bg-muted rounded-md animate-pulse" /> {/* Card */}
+                                </div>
+                            ))}
+                        </div>
+                    ) : Object.keys(groupedSessions).length === 0 ? (
                         <div className="text-center py-8 text-sm text-muted-foreground">
                             No chat sessions yet
                         </div>
@@ -246,48 +264,33 @@ export const SessionSidebar = ({
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center flex-shrink-0">
-                                                        <DropdownMenu modal={false}>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground z-10 relative"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        // Force focus to prevent menu closing immediately
-                                                                        e.currentTarget.focus();
-                                                                    }}
-                                                                >
-                                                                    <MoreHorizontal className="h-4 w-4" />
-                                                                    <span className="sr-only">Menu</span>
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="w-48 z-[100]">
-                                                                <DropdownMenuItem
-                                                                    className="cursor-pointer"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleStartEdit(session);
-                                                                    }}
-                                                                >
-                                                                    <Edit2 className="mr-2 h-4 w-4" />
-                                                                    <span>Rename</span>
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    className="cursor-pointer"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        if (window.confirm(`Delete "${session.title}"?`)) {
-                                                                            onDeleteSession(session.id);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-                                                                    <span className="text-red-500">Delete</span>
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                    <div className="flex items-center gap-1 flex-shrink-0 text-muted-foreground">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 hover:text-foreground"
+                                                            title="Rename"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleStartEdit(session);
+                                                            }}
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 hover:text-red-600"
+                                                            title="Delete"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm(`Delete "${session.title}"?`)) {
+                                                                    onDeleteSession(session.id);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             )}

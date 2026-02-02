@@ -74,10 +74,7 @@ const AnalystAgent = () => {
     }
   };
 
-  // Load sessions on mount
-  useEffect(() => {
-    loadSessions();
-  }, []);
+
 
   // Reload sessions when project changes
   useEffect(() => {

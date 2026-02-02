@@ -25,6 +25,12 @@ const AnalystAgent = () => {
   const navigate = useNavigate();
   const { selectedProject } = useAppState();
 
+  // Ref for accessing latest selectedProject in async functions/shutdowns
+  const selectedProjectRef = useRef(selectedProject);
+  useEffect(() => {
+    selectedProjectRef.current = selectedProject;
+  }, [selectedProject]);
+
   const INITIAL_MESSAGE: ChatMessageType = {
     id: "1",
     content: "Hello! I'm Mary, your Strategic Business Analyst. I'm here to help you create a comprehensive Business Requirements Document (BRD) through a structured conversation.\n\nI'll ask you questions about your project to understand:\n• Project purpose and objectives\n• Business drivers and pain points\n• Stakeholders and their roles\n• Scope (what's in and out)\n• Functional and non-functional requirements\n• Constraints and assumptions\n• Success criteria\n\nLet's start! What is the main idea or goal of your project?",
@@ -56,23 +62,7 @@ const AnalystAgent = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Load sessions function
-  const loadSessions_DUPLICATE = async () => {
-    if (!selectedProject?.project_id) return;
 
-    setIsSessionsLoading(true);
-    try {
-      // console.log(`[AnalystAgent] Loading sessions for project: ${selectedProject.project_id}`);
-      const sessionsData = await AnalystSessionManager.getProjectSessions(selectedProject.project_id);
-      // console.log(`[AnalystAgent] Loaded ${sessionsData.length} sessions`);
-      setSessions(sessionsData);
-    } catch (error) {
-      console.error("Failed to load sessions:", error);
-      toast.error("Failed to load chat history");
-    } finally {
-      setIsSessionsLoading(false);
-    }
-  };
 
 
 
@@ -190,6 +180,13 @@ const AnalystAgent = () => {
         }
 
         const projectSessions = await AnalystSessionManager.getAllSessions(projectId);
+
+        // Race condition check: Ensure we are still on the same project
+        if (selectedProjectRef.current?.project_id !== projectId) {
+          console.log(`[AnalystAgent] Ignoring stale sessions for project: ${projectId}`);
+          return;
+        }
+
         setSessions(projectSessions);
 
         console.log(`[AnalystAgent] Loaded ${projectSessions.length} sessions for project: ${projectId}`);
@@ -200,6 +197,9 @@ const AnalystAgent = () => {
             AnalystSessionManager.setCurrentSessionId(projectSessions[0].id);
           } else {
             const newSession = await AnalystSessionManager.createSession("New Chat", projectId);
+            // Re-check race condition
+            if (selectedProjectRef.current?.project_id !== projectId) return;
+
             setSessions([newSession]);
             setCurrentSessionId(newSession.id);
             console.log(`[AnalystAgent] Created first session for project: ${projectId}`);
@@ -227,6 +227,13 @@ const AnalystAgent = () => {
       console.log(`[AnalystAgent] Loading messages for session: ${sessionId}`);
       const storedMessages = await AnalystSessionManager.getSessionMessages(sessionId);
 
+      // Race condition check: Ensure we are still on the requested session
+      // Note: currentSessionId might have changed while awaiting
+      if (sessionId !== currentSessionId) {
+        console.log(`[AnalystAgent] Ignoring stale messages for session: ${sessionId}`);
+        return;
+      }
+
       if (storedMessages && storedMessages.length > 0) {
         const formattedMessages: ChatMessageType[] = storedMessages.map((msg, index) => ({
           id: msg.id || `msg-${index}`,
@@ -246,7 +253,9 @@ const AnalystAgent = () => {
       toast.error("Failed to load conversation history");
       setMessages([INITIAL_MESSAGE]);
     } finally {
-      setIsHistoryLoading(false);
+      if (sessionId === currentSessionId) {
+        setIsHistoryLoading(false);
+      }
     }
   };
 

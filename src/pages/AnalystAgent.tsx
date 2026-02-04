@@ -444,7 +444,7 @@ const AnalystAgent = () => {
 
     try {
       const { apiPost } = await import("@/services/api");
-      const API_BASE_URL = "http://localhost:8000/analyst-generate-brd";
+      const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/analyst-generate-brd`;
 
       const formData = new FormData();
       formData.append("session_id", sessionId);

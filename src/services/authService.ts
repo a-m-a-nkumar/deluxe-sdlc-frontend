@@ -1,8 +1,12 @@
 import { PublicClientApplication, AccountInfo, AuthenticationResult } from "@azure/msal-browser";
 
 // Azure AD Configuration
-const AZURE_CLIENT_ID = import.meta.env.VITE_AZURE_CLIENT_ID || "10eda5db-4715-4e7b-bcd9-32dba3533084";
-const AZURE_TENANT_ID = import.meta.env.VITE_AZURE_TENANT_ID || "0575746d-c254-4eea-bfc6-10d0979d1e90";
+const AZURE_CLIENT_ID = import.meta.env.VITE_AZURE_CLIENT_ID || "";
+const AZURE_TENANT_ID = import.meta.env.VITE_AZURE_TENANT_ID || "";
+
+if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
+  console.warn("[AUTH] VITE_AZURE_CLIENT_ID or VITE_AZURE_TENANT_ID not set in environment variables");
+}
 
 // MSAL Configuration
 const msalConfig = {

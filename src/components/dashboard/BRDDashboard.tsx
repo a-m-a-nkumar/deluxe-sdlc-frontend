@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
+import { sendChatMessage } from "@/services/chatbotApi";
 const sectionContent = {
   "Executive Summary": {
     title: "Executive Summary Assistant",
@@ -70,6 +71,7 @@ export const BRDDashboard = ({
   } = useAppState();
   const [selectedSection, setSelectedSection] = useState<string>("");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [isFetchingSection, setIsFetchingSection] = useState(false);
   
   // Auto-select first section when brdSections are loaded
   useEffect(() => {
@@ -77,6 +79,45 @@ export const BRDDashboard = ({
       setSelectedSection(brdSections[0].title);
     }
   }, [brdSections, selectedSection]);
+
+  // Function to fetch fresh section content from backend
+  const fetchSectionContent = async (sectionTitle: string) => {
+    if (!brdId || !sectionTitle || isFetchingSection) {
+      return;
+    }
+
+    try {
+      setIsFetchingSection(true);
+      
+      // Find section number
+      const section = brdSections.find(s => s.title === sectionTitle);
+      const sectionNumber = section?.sectionNumber;
+      
+      // Request to show the section (this will fetch latest content from backend)
+      const showCommand = sectionNumber 
+        ? `show section ${sectionNumber}`
+        : `show section ${sectionTitle}`;
+      
+      const response = await sendChatMessage(showCommand, brdId);
+      
+      if (response && response.response) {
+        // Extract section content from response
+        const content = response.response;
+        
+        // Update the section content in state
+        const updatedSections = brdSections.map(s =>
+          s.title === sectionTitle
+            ? { ...s, content: content }
+            : s
+        );
+        setBrdSections(updatedSections);
+      }
+    } catch (error) {
+      console.error("Error fetching section content:", error);
+    } finally {
+      setIsFetchingSection(false);
+    }
+  };
 
   // Check for pending upload response on mount and add to chat
   useEffect(() => {
@@ -197,7 +238,7 @@ export const BRDDashboard = ({
     // Response is already handled by global state and useEffect
   };
 
-  const handleSectionTabClick = (title: string, description: string) => {
+  const handleSectionTabClick = async (title: string, description: string) => {
     // Only update and add message if it's a different section
     if (selectedSection === title) {
       return;
@@ -206,7 +247,10 @@ export const BRDDashboard = ({
     // Update selected section when clicking a tab
     setSelectedSection(title);
     
-    // Find the full section content from brdSections
+    // Always fetch fresh content from backend when section tab is clicked
+    await fetchSectionContent(title);
+    
+    // Find the full section content from brdSections (will be updated by fetchSectionContent)
     const section = brdSections.find(s => s.title === title);
     const fullContent = section?.content || description;
     
@@ -223,7 +267,12 @@ export const BRDDashboard = ({
     setChatMessages("brd", [...currentMessages, newMessage]);
   };
 
-  const handleResponseReceived = (response: string) => {
+  const handleResponseReceived = async (response: string) => {
+    // Check if the response indicates a successful section update
+    const isUpdateSuccess = response.toLowerCase().includes("updated successfully") ||
+                           response.includes("✅") ||
+                           response.toLowerCase().includes("section") && response.toLowerCase().includes("updated");
+    
     // Update the BRD section content with the AI response
     if (selectedSection) {
       const updatedSections = brdSections.map(section =>
@@ -232,6 +281,14 @@ export const BRDDashboard = ({
           : section
       );
       setBrdSections(updatedSections);
+      
+      // If this was a successful update, fetch fresh content from backend
+      if (isUpdateSuccess && brdId) {
+        // Small delay to ensure backend has saved the update
+        setTimeout(async () => {
+          await fetchSectionContent(selectedSection);
+        }, 500);
+      }
     }
   };
   return <div className="p-4 sm:p-6 lg:p-8 bg-white">

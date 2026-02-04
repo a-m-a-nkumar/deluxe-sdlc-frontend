@@ -11,13 +11,13 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: process.env.ALLOWED_HOSTS?.split(',') || [],
     proxy: {
       '/api': {
-        target: 'http://deluxe-internet-300914418.us-east-1.elb.amazonaws.com:8000',
+        target: process.env.VITE_PROXY_API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       '/confluence-api': {
-        target: 'https://siriusai-team-test.atlassian.net',
+        target: process.env.VITE_PROXY_CONFLUENCE_TARGET || 'https://siriusai-team-test.atlassian.net',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/confluence-api/, '')

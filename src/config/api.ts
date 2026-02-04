@@ -1,8 +1,10 @@
 // Get base URL from environment variable (Vite requires VITE_ prefix)
-const BASE_URL_ENDPOINT = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+// In production, use empty string to use same origin (nginx will proxy /api/* to backend)
+// In development, use http://localhost:8000
+const BASE_URL_ENDPOINT = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://localhost:8000" : "")
 
-if (!import.meta.env.VITE_API_BASE_URL) {
-  console.warn("[API] VITE_API_BASE_URL not set, using default: http://localhost:8000");
+if (!import.meta.env.VITE_API_BASE_URL && !import.meta.env.DEV) {
+  console.info("[API] VITE_API_BASE_URL not set in production, using relative paths (nginx will proxy)");
 }
 
 // API Configuration

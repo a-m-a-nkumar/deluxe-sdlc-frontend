@@ -14,75 +14,76 @@ import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <AppStateProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/brd-assistant"
-                element={
-                  <ProtectedRoute>
-                    <BRDAssistant />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/analyst-agent"
-                element={
-                  <ProtectedRoute>
-                    <AnalystAgent />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/confluence"
-                element={
-                  <ProtectedRoute>
-                    <ConfluencePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/jira"
-                element={
-                  <ProtectedRoute>
-                    <JiraPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/design-assistant"
-                element={
-                  <ProtectedRoute>
-                    <DesignAssistant />
-                  </ProtectedRoute>
-                }
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AppStateProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppStateProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/brd-assistant"
+                  element={
+                    <ProtectedRoute>
+                      <BRDAssistant />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analyst-agent"
+                  element={
+                    <ProtectedRoute>
+                      <AnalystAgent />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/confluence"
+                  element={
+                    <ProtectedRoute>
+                      <ConfluencePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/jira"
+                  element={
+                    <ProtectedRoute>
+                      <JiraPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/design-assistant"
+                  element={
+                    <ProtectedRoute>
+                      <DesignAssistant />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AppStateProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

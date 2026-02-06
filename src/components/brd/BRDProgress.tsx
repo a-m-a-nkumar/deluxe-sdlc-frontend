@@ -1,4 +1,4 @@
-import { CheckCircle, Circle, Users, Target, List, Database, Shield, FileText, Settings } from "lucide-react";
+import { CheckCircle, Circle, Users, Target, List, Database, Shield, FileText, Settings, FileStack } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppState } from "@/contexts/AppStateContext";
 const brdSections = [{
@@ -47,6 +47,7 @@ interface BRDProgressProps {
   onSectionClick?: (title: string, description: string) => void;
   showDocumentOverview?: boolean;
   dynamicSections?: BRDSection[];
+  onViewEntireBRD?: () => void;
 }
 
 const documentOverviewSections = [
@@ -88,7 +89,7 @@ const documentOverviewSections = [
   }
 ];
 
-export const BRDProgress = ({ selectedSection, onSectionChange, completedSections, hasProjectAndTemplate = false, disabled = false, onSectionClick, showDocumentOverview = false, dynamicSections }: BRDProgressProps) => {
+export const BRDProgress = ({ selectedSection, onSectionChange, completedSections, hasProjectAndTemplate = false, disabled = false, onSectionClick, showDocumentOverview = false, dynamicSections, onViewEntireBRD }: BRDProgressProps) => {
   const { isBRDApproved } = useAppState();
   const completedCount = completedSections.length;
   
@@ -147,6 +148,16 @@ export const BRDProgress = ({ selectedSection, onSectionChange, completedSection
           </div>
         ) : dynamicSections && dynamicSections.length > 0 ? (
           <div className="space-y-2">
+            {onViewEntireBRD && (
+              <button
+                onClick={onViewEntireBRD}
+                className="w-full text-left p-3 rounded-lg border border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors group flex items-center gap-3"
+              >
+                <FileStack className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">View entire BRD</span>
+                <span className="text-xs text-muted-foreground">Edit any section in one place</span>
+              </button>
+            )}
             {dynamicSections.map((section) => {
               const isActive = selectedSection === section.title;
               return (

@@ -326,6 +326,20 @@ export const BRDDashboard = ({
             onSectionClick={handleSectionTabClick}
             showDocumentOverview={uploadedFileBatches.length > 0}
             dynamicSections={brdSections}
+            onViewEntireBRD={brdId ? async () => {
+              try {
+                const response = await sendChatMessage("show entire brd", brdId);
+                const content = response?.response || response?.message || "Full BRD loaded.";
+                setChatMessages("brd", [...(chatMessages.brd || []), {
+                  id: `full-brd-${Date.now()}`,
+                  content,
+                  isBot: true,
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                }]);
+              } catch (e) {
+                console.error("Failed to load full BRD:", e);
+              }
+            } : undefined}
           />
         </div>
         

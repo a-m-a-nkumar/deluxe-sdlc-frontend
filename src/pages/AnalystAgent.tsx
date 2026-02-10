@@ -202,7 +202,8 @@ const AnalystAgent = () => {
 
             setSessions([newSession]);
             setCurrentSessionId(newSession.id);
-            console.log(`[AnalystAgent] Created first session for project: ${projectId}`);
+            AnalystSessionManager.setCurrentSessionId(newSession.id);  // CRITICAL: Sync localStorage
+            console.log(`[AnalystAgent] Created first session for project: ${projectId}, Session ID: ${newSession.id}`);
           }
         }
       } catch (error) {
@@ -398,8 +399,10 @@ const AnalystAgent = () => {
 
       const projectIdToUse = selectedProject?.project_id;
 
+      console.log(`[AnalystAgent] Sending message with session ID from state: ${sessionId}`);
+
       let fullResponse = "";
-      for await (const chunk of streamAnalystMessage(userContent, projectIdToUse)) {
+      for await (const chunk of streamAnalystMessage(userContent, sessionId, projectIdToUse)) {
         fullResponse += chunk;
         setMessages((prev) =>
           prev.map((msg) =>
@@ -432,7 +435,8 @@ const AnalystAgent = () => {
 
 
   const handleGenerateBRD = async () => {
-    let sessionId = AnalystSessionManager.getSessionId();
+    // Use session ID from React state (database), not localStorage
+    const sessionId = currentSessionId;
 
     if (!sessionId || sessionId === "none") {
       toast.error("No active session. Please start a conversation first.");

@@ -238,16 +238,23 @@ export class AnalystSessionManager {
 // Stream chat message from analyst agent
 export async function* streamAnalystMessage(
   message: string,
+  sessionId: string | null,  // CRITICAL: Session ID from React state (database)
   projectId?: string | null
 ): AsyncGenerator<string, void, unknown> {
   const API_BASE_URL = API_CONFIG.ANALYST_API_URL || API_CONFIG.CHATBOT_API_URL.replace('/chat', '/analyst-chat');
 
+  // Use the session ID from React state (database), not localStorage
+  const effectiveSessionId = sessionId || "none";
+  console.log(`[streamAnalystMessage] Using session_id from React state: ${effectiveSessionId}`);
+
   const formData = new FormData();
   formData.append("message", message);
-  formData.append("session_id", AnalystSessionManager.getSessionId() || "none");
+  formData.append("session_id", effectiveSessionId);
   if (projectId) {
     formData.append("project_id", projectId);
   }
+
+  console.log(`[streamAnalystMessage] Sending with session_id: ${AnalystSessionManager.getSessionId() || "none"}`);
 
   const { apiPost } = await import("./api");
   const response = await apiPost(API_BASE_URL, formData);
@@ -286,12 +293,19 @@ export async function* streamAnalystMessage(
   }
 }
 
-export async function sendAnalystMessage(message: string, projectId?: string | null): Promise<AnalystChatResponse> {
+export async function sendAnalystMessage(
+  message: string,
+  sessionId: string | null,  // From React state (database)
+  projectId?: string | null
+): Promise<AnalystChatResponse> {
   const API_BASE_URL = API_CONFIG.ANALYST_API_URL || API_CONFIG.CHATBOT_API_URL.replace('/chat', '/analyst-chat');
+
+  const effectiveSessionId = sessionId || "none";
+  console.log(`[sendAnalystMessage] Using session_id from React state: ${effectiveSessionId}`);
 
   const formData = new FormData();
   formData.append("message", message);
-  formData.append("session_id", AnalystSessionManager.getSessionId() || "none");
+  formData.append("session_id", effectiveSessionId);
   if (projectId) {
     formData.append("project_id", projectId);
   }

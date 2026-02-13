@@ -1,4 +1,4 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Plus, Eye } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Plus, Eye, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,8 @@ import { createJiraStoryFromConfluence } from "@/services/jiraApi";
 import { useNavigate } from "react-router-dom";
 
 export const ConfluenceDashboard = () => {
-  const { 
-    activeConfluencePageId, 
+  const {
+    activeConfluencePageId,
     setActiveConfluencePageId,
     isCreatingJiraStory,
     setIsCreatingJiraStory,
@@ -92,13 +92,13 @@ export const ConfluenceDashboard = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       "Approved": "bg-green-100 text-green-700",
-      "Under Review": "bg-yellow-100 text-yellow-700", 
+      "Under Review": "bg-yellow-100 text-yellow-700",
       "Published": "bg-purple-100 text-purple-700",
       "In Progress": "bg-blue-100 text-blue-700",
       "Draft": "bg-gray-100 text-gray-700",
       "Current": "text-white border-0"
     };
-    
+
     return statusConfig[status] || "bg-gray-100 text-gray-700";
   };
 
@@ -115,9 +115,9 @@ export const ConfluenceDashboard = () => {
     setIsCreatingJiraStory(true);
     try {
       const response = await createJiraStoryFromConfluence(selectedPageId);
-      
+
       setIsCreatingJiraStory(false);
-      
+
       if (response.issue_key) {
         setNewlyCreatedJiraIssueId(response.issue_key);
         toast({
@@ -144,13 +144,13 @@ export const ConfluenceDashboard = () => {
 
   const formatConfluenceContent = (htmlContent: string) => {
     if (!htmlContent) return htmlContent;
-    
+
     // Convert markdown bold ** to <strong>
     let formatted = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
+
     // Convert ### subheadings to <h4> with bold
     formatted = formatted.replace(/###\s+(.+)/g, '<h4><strong>$1</strong></h4>');
-    
+
     // Make sure all headings are bold
     formatted = formatted.replace(/<h1>((?:(?!<strong>).)*)<\/h1>/g, '<h1><strong>$1</strong></h1>');
     formatted = formatted.replace(/<h2>((?:(?!<strong>).)*)<\/h2>/g, '<h2><strong>$1</strong></h2>');
@@ -158,10 +158,10 @@ export const ConfluenceDashboard = () => {
     formatted = formatted.replace(/<h4>((?:(?!<strong>).)*)<\/h4>/g, '<h4><strong>$1</strong></h4>');
     formatted = formatted.replace(/<h5>((?:(?!<strong>).)*)<\/h5>/g, '<h5><strong>$1</strong></h5>');
     formatted = formatted.replace(/<h6>((?:(?!<strong>).)*)<\/h6>/g, '<h6><strong>$1</strong></h6>');
-    
+
     // Remove tables that don't have tbody
     formatted = formatted.replace(/<table[^>]*>(?:(?!<tbody)[\s\S])*?<\/table>/gi, '');
-    
+
     return formatted;
   };
 
@@ -197,11 +197,10 @@ export const ConfluenceDashboard = () => {
                   ) : (
                     <div className="space-y-2">
                       {filteredPages.map((page) => (
-                        <div 
-                          key={page.id} 
-                          className={`p-3 sm:p-4 border-[#DEDCDC] border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                            selectedPageId === page.id ? 'border-primary bg-primary/5' : ''
-                          }`}
+                        <div
+                          key={page.id}
+                          className={`p-3 sm:p-4 border-[#DEDCDC] border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${selectedPageId === page.id ? 'border-primary bg-primary/5' : ''
+                            }`}
                           onClick={() => setSelectedPageId(page.id)}
                         >
                           <div className="flex items-center justify-between mb-2">
@@ -210,11 +209,11 @@ export const ConfluenceDashboard = () => {
                             </h3>
                             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                           </div>
-                          
+
                           <div className="flex items-center justify-between">
-                            <span 
+                            <span
                               className="text-[10px] truncate text-black px-2 py-1"
-                              style={{backgroundColor: '#E5E5E5', borderRadius: '50px'}}
+                              style={{ backgroundColor: '#E5E5E5', borderRadius: '50px' }}
                             >
                               {page.status}
                             </span>
@@ -240,8 +239,8 @@ export const ConfluenceDashboard = () => {
               <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#CCCCCC] p-4 sm:p-[24px] gap-4">
                 <h1 className="text-base font-semibold truncate flex-1">{pageDetails?.title || 'Select a page'}</h1>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
                     style={{
                       fontSize: '14px',
@@ -254,8 +253,22 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">View in Confluence</span>
                     <span className="sm:hidden">View</span>
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
+                    className="bg-purple-600 text-white border border-purple-600 text-sm flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 'normal'
+                    }}
+                    onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
+                    disabled={!selectedPageId}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span className="hidden sm:inline">Generate Jira Items</span>
+                    <span className="sm:hidden">Generate</span>
+                  </Button>
+                  <Button
+                    variant="outline"
                     className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
                     style={{
                       fontSize: '14px',
@@ -289,36 +302,36 @@ export const ConfluenceDashboard = () => {
                   </div>
                 ) : pageDetails ? (
                   pageDetails.body?.storage?.value ? (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback className="text-sm bg-red-600 text-white">
-                          {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{pageDetails.version.by.displayName}</span>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4 flex-shrink-0 text-red-600" />
-                        <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
+                    <>
+                      <div className="flex items-center gap-3 mb-4">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarFallback className="text-sm bg-red-600 text-white">
+                            {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{pageDetails.version.by.displayName}</span>
                       </div>
-                      <Badge 
-                        className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'hover:bg-red-600' : ''}`}
-                        style={{
-                          backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                          borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                          color: pageDetails.status === 'Current' ? '#fff' : undefined
-                        }}
-                      >
-                        {pageDetails.status}
-                      </Badge>
-                    </div>
 
-                    <div className="space-y-6">
-                      <div 
-                        className="text-sm leading-relaxed prose prose-sm max-w-none 
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4 flex-shrink-0 text-red-600" />
+                          <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
+                        </div>
+                        <Badge
+                          className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'hover:bg-red-600' : ''}`}
+                          style={{
+                            backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
+                            borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
+                            color: pageDetails.status === 'Current' ? '#fff' : undefined
+                          }}
+                        >
+                          {pageDetails.status}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div
+                          className="text-sm leading-relaxed prose prose-sm max-w-none 
                         [&_*]:text-[#747474] 
                         [&_h1]:text-[#3B3B3B] [&_h1]:font-bold [&_h1]:text-lg [&_h1]:mb-4 [&_h1]:mt-6 
                         [&_h2]:text-[#3B3B3B] [&_h2]:font-bold [&_h2]:text-lg [&_h2]:mb-4 [&_h2]:mt-5 
@@ -334,35 +347,35 @@ export const ConfluenceDashboard = () => {
                         [&_td:empty]:after:content-['—'] [&_td:empty]:after:text-[#CCCCCC]
                         [&_tr]:border-b [&_tr]:border-[#DEDCDC]
                         [&_ac-structured-macro]:hidden [&_ac-adf-extension]:hidden"
-                        dangerouslySetInnerHTML={{ 
-                          __html: formatConfluenceContent(
-                            pageDetails.body.storage.value
-                              .replace(/true%7B%22[^<]*/g, '')
-                              .replace(/<ac:structured-macro[^>]*>[\s\S]*?<\/ac:structured-macro>/g, '')
-                              .replace(/<ac:adf-extension[^>]*>[\s\S]*?<\/ac:adf-extension>/g, '')
-                          ) 
-                        }}
-                      />
-                      
-                      {pageDetails.ancestors && pageDetails.ancestors.length > 0 && (
-                        <div className="mt-6">
-                          <h4 className="text-sm font-medium mb-3">Breadcrumb</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {pageDetails.ancestors.map((ancestor) => (
-                              <Badge key={ancestor.id} variant="secondary" className="text-xs">
-                                {ancestor.title}
-                              </Badge>
-                            ))}
+                          dangerouslySetInnerHTML={{
+                            __html: formatConfluenceContent(
+                              pageDetails.body.storage.value
+                                .replace(/true%7B%22[^<]*/g, '')
+                                .replace(/<ac:structured-macro[^>]*>[\s\S]*?<\/ac:structured-macro>/g, '')
+                                .replace(/<ac:adf-extension[^>]*>[\s\S]*?<\/ac:adf-extension>/g, '')
+                            )
+                          }}
+                        />
+
+                        {pageDetails.ancestors && pageDetails.ancestors.length > 0 && (
+                          <div className="mt-6">
+                            <h4 className="text-sm font-medium mb-3">Breadcrumb</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {pageDetails.ancestors.map((ancestor) => (
+                                <Badge key={ancestor.id} variant="secondary" className="text-xs">
+                                  {ancestor.title}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <p className="mb-2">This page doesn't have content available.</p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="mt-4"
                         onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                       >

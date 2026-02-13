@@ -12,6 +12,7 @@ import BRDAssistant from "./pages/BRDAssistant";
 import AnalystAgent from "./pages/AnalystAgent";
 import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
+import JiraGenerationPage from "./pages/JiraGenerationPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
@@ -64,6 +65,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <JiraPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/jira-generation/:confluencePageId"
+                  element={
+                    <ProtectedRoute>
+                      <JiraGenerationPage />
                     </ProtectedRoute>
                   }
                 />

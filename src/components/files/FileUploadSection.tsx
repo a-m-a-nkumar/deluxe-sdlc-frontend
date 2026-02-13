@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadFiles, downloadBRD } from "@/services/projectApi";
 import { createOrUpdateConfluencePage } from "@/services/confluenceApi";
 import { useAppState } from "@/contexts/AppStateContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 interface UploadedFile {
@@ -24,6 +25,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { accessToken } = useAuth();
   const [isUploadingToConfluence, setIsUploadingToConfluence] = useState(false);
   const {
     isFileUploading,
@@ -210,10 +212,22 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   };
 
   const handleUploadToConfluence = async () => {
-    if (!selectedProject || brdSections.length === 0) {
+    if (!selectedProject || !brdId) {
       toast({
-        title: "No BRD data available",
-        description: "Please complete the BRD sections first.",
+        title: "Cannot upload to Confluence",
+        description: !selectedProject
+          ? "Please select a project first."
+          : "No BRD available. Please generate a BRD first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!accessToken) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to upload to Confluence.",
         variant: "destructive",
       });
       return;
@@ -221,119 +235,51 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
 
     setIsUploadingToConfluence(true);
     try {
-      // Format BRD sections as HTML
-      const formatContent = (text: string) => {
-        if (!text) return "";
+      // Import the integrationsApi
+      const { integrationsApi } = await import('@/services/integrationsApi');
 
-        // Convert markdown bold to HTML strong tags
-        let formatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-
-        // Convert ### subheadings to h4 tags
-        formatted = formatted.replace(/###\s+(.+)/g, "<h4><strong>$1</strong></h4>");
-
-        const lines = formatted.split("\n").filter((line) => line.trim());
-
-        // Check for markdown tables (| header | header |)
-        const hasMarkdownTable = lines.some((line) => line.trim().startsWith("|") && line.trim().endsWith("|"));
-
-        if (hasMarkdownTable) {
-          const tableLines = lines.filter((line) => line.trim().startsWith("|"));
-          const headerLine = tableLines[0];
-          const separatorIndex = tableLines.findIndex((line) => line.includes("---"));
-          const dataLines = separatorIndex > 0 ? tableLines.slice(separatorIndex + 1) : tableLines.slice(1);
-
-          // Parse header
-          const headers = headerLine
-            .split("|")
-            .map((h) => h.trim())
-            .filter((h) => h);
-          const headerRow = `<tr>${headers.map((h) => `<th><strong>${h}</strong></th>`).join("")}</tr>`;
-
-          // Parse data rows
-          const dataRows = dataLines
-            .map((line) => {
-              const cells = line
-                .split("|")
-                .map((c) => c.trim())
-                .filter((c) => c);
-              return `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
-            })
-            .join("");
-
-          return `<table border="1" cellpadding="5"><thead>${headerRow}</thead><tbody>${dataRows}</tbody></table>`;
-        }
-
-        // Check if description contains key-value pairs
-        const hasKeyValuePairs = lines.some((line) => line.includes(":") && line.includes("<strong>"));
-
-        if (hasKeyValuePairs) {
-          // Format as table
-          const tableRows = lines
-            .map((line) => {
-              if (line.includes(":")) {
-                const [key, ...valueParts] = line.split(":");
-                const value = valueParts.join(":").trim();
-                return `<tr><td><strong>${key.trim()}</strong></td><td>${value}</td></tr>`;
-              }
-              return null;
-            })
-            .filter((row) => row !== null)
-            .join("");
-
-          return `<table border="1" cellpadding="5"><tbody>${tableRows}</tbody></table>`;
-        } else if (formatted.includes("\n- ") || formatted.includes("\n• ")) {
-          // Format as bullet list
-          const listItems = lines
-            .filter((line) => line.trim().startsWith("-") || line.trim().startsWith("•"))
-            .map((item) => `<li>${item.replace(/^[-•]\s*/, "").trim()}</li>`)
-            .join("");
-          return `<ul>${listItems}</ul>`;
-        } else {
-          // Format as paragraphs
-          return lines
-            .map((line) => {
-              // Skip h4 tags as they're already formatted
-              if (line.startsWith("<h4>")) return line;
-              return `<p>${line}</p>`;
-            })
-            .join("");
-        }
-      };
-
-      const htmlContent = brdSections
-        .map((section) => {
-          const formattedDescription = formatContent(section.description);
-          const formattedContent = formatContent(section.content || "");
-          return `<h3><strong>${section.title}</strong></h3>${formattedDescription}${formattedContent}`;
-        })
-        .join("\n");
-
-      const response = await createOrUpdateConfluencePage(
-        "SO",
-        `${selectedProject.project_name} - BRD`,
-        htmlContent,
-        76841016,
+      // Call the new backend endpoint
+      const response = await integrationsApi.uploadBRDToConfluence(
+        {
+          brd_id: brdId,
+          project_id: selectedProject.project_id,
+          // Optional: customize page title
+          // page_title: `${selectedProject.project_name} - BRD`
+        },
+        accessToken
       );
 
-      // Set the newly created/updated page as active
-      if (response?.id) {
-        setActiveConfluencePageId(response.id);
+      // Set the newly created page as active
+      if (response.confluence_page?.id) {
+        setActiveConfluencePageId(response.confluence_page.id);
       }
 
-      const isUpdate = response?.version?.number > 1;
       toast({
-        title: isUpdate ? "BRD updated in Confluence" : "BRD uploaded to Confluence",
-        description: isUpdate
-          ? "Your BRD has been successfully updated in Confluence."
-          : "Your BRD has been successfully uploaded to Confluence.",
+        title: "BRD uploaded to Confluence",
+        description: `Successfully created page: ${response.confluence_page.title}`,
       });
+
+      // Optionally open the Confluence page in a new tab
+      if (response.confluence_page?.web_url) {
+        window.open(response.confluence_page.web_url, '_blank');
+      }
 
       // Navigate to Confluence page after successful upload
       navigate("/confluence");
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error uploading to Confluence:', error);
+
+      let errorMessage = "Failed to upload BRD to Confluence. Please try again.";
+
+      if (error.response?.status === 400) {
+        errorMessage = error.response.data?.detail || "Please link your Atlassian account and configure a Confluence space for this project.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Project not found.";
+      }
+
       toast({
         title: "Upload failed",
-        description: "Failed to upload BRD to Confluence. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -376,147 +322,147 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto pr-2">
         <div className="space-y-4">
-            {/* Previously uploaded batches */}
-            {uploadedFileBatches.map((batch) => (
-              <div key={batch.id} className="border border-border rounded-lg p-3 bg-muted/30">
-                <div className="space-y-2">
-                  {batch.files.map((file, idx) => (
-                    <div key={idx} className="flex items-center gap-2 opacity-60">
-                      <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-sm truncate">{file.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {file.size} • {batch.timestamp}
-                        </div>
+          {/* Previously uploaded batches */}
+          {uploadedFileBatches.map((batch) => (
+            <div key={batch.id} className="border border-border rounded-lg p-3 bg-muted/30">
+              <div className="space-y-2">
+                {batch.files.map((file, idx) => (
+                  <div key={idx} className="flex items-center gap-2 opacity-60">
+                    <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm truncate">{file.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {file.size} • {batch.timestamp}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* Current files being prepared */}
-            {uploadedFiles.length === 0 && uploadedFileBatches.length === 0 ? (
-              <div className="flex items-center justify-center h-24 sm:h-32 text-muted-foreground text-center">
-                <p className="text-sm" style={{ color: "#727272" }}>
-                  No file selected.
-                </p>
-              </div>
-            ) : uploadedFiles.length > 0 ? (
-              <div className="space-y-3 mb-4">
-                {uploadedFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex flex-col sm:flex-row sm:items-center p-3 border border-border rounded-lg gap-3"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0 flex-grow">
-                      <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-sm truncate" title={file.name}>
-                          {file.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {file.size} • {file.timestamp}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownloadFile(file)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteFile(file.id)}
-                        className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : null}
+            </div>
+          ))}
 
-            {uploadedFiles.length > 0 && (
-              <div className="mt-6 space-y-4">
-                <Button
-                  variant="outline"
-                  className="w-full justify-center gap-2 h-12 bg-white border border-[#8C8C8C] hover:bg-gray-50"
-                  onClick={handleSubmitFiles}
-                  disabled={uploadedFiles.length === 0 || isFileUploading}
+          {/* Current files being prepared */}
+          {uploadedFiles.length === 0 && uploadedFileBatches.length === 0 ? (
+            <div className="flex items-center justify-center h-24 sm:h-32 text-muted-foreground text-center">
+              <p className="text-sm" style={{ color: "#727272" }}>
+                No file selected.
+              </p>
+            </div>
+          ) : uploadedFiles.length > 0 ? (
+            <div className="space-y-3 mb-4">
+              {uploadedFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex flex-col sm:flex-row sm:items-center p-3 border border-border rounded-lg gap-3"
                 >
-                  {isFileUploading ? (
-                    <>
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent flex-shrink-0" />
-                      <span>Submitting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                        />
-                      </svg>
-                      <span>Submit Files</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+                  <div className="flex items-center gap-3 flex-1 min-w-0 flex-grow">
+                    <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm truncate" title={file.name}>
+                        {file.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {file.size} • {file.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadFile(file)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteFile(file.id)}
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
-            <div className="mt-4">
-              <h4 className="font-medium mb-3">Actions</h4>
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-center items-center h-12 bg-white border border-[#8C8C8C] hover:bg-gray-50 px-3"
-                  disabled={!isBRDApproved || isUploadingToConfluence}
-                  onClick={handleUploadToConfluence}
-                >
-                  {isUploadingToConfluence ? (
-                    <>
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
-                      <span className="truncate">Uploading...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">Upload to Confluence</span>
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-muted-foreground px-2" style={{ color: "#727272" }}>
-                  Complete all BRD sections before submitting for approval
-                </p>
-              </div>
+          {uploadedFiles.length > 0 && (
+            <div className="mt-6 space-y-4">
               <Button
-                className="w-full mt-4"
-                variant="default"
-                disabled={brdSections.length === 0 || isBRDDownloading}
-                onClick={handleDownloadBRD}
+                variant="outline"
+                className="w-full justify-center gap-2 h-12 bg-white border border-[#8C8C8C] hover:bg-gray-50"
+                onClick={handleSubmitFiles}
+                disabled={uploadedFiles.length === 0 || isFileUploading}
               >
-                {isBRDDownloading ? (
+                {isFileUploading ? (
                   <>
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
-                    <span>Downloading...</span>
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent flex-shrink-0" />
+                    <span>Submitting...</span>
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>Download BRD</span>
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      />
+                    </svg>
+                    <span>Submit Files</span>
                   </>
                 )}
               </Button>
             </div>
+          )}
+
+          <div className="mt-4">
+            <h4 className="font-medium mb-3">Actions</h4>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-center items-center h-12 bg-white border border-[#8C8C8C] hover:bg-gray-50 px-3"
+                disabled={!brdId || isUploadingToConfluence}
+                onClick={handleUploadToConfluence}
+              >
+                {isUploadingToConfluence ? (
+                  <>
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
+                    <span className="truncate">Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Upload to Confluence</span>
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground px-2" style={{ color: "#727272" }}>
+                Generate a BRD first, then upload it to your linked Confluence space
+              </p>
+            </div>
+            <Button
+              className="w-full mt-4"
+              variant="default"
+              disabled={brdSections.length === 0 || isBRDDownloading}
+              onClick={handleDownloadBRD}
+            >
+              {isBRDDownloading ? (
+                <>
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
+                  <span>Downloading...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span>Download BRD</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

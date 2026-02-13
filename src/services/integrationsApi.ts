@@ -33,6 +33,23 @@ export interface ConfluenceSpace {
     type: string;
 }
 
+export interface UploadBRDToConfluenceRequest {
+    brd_id: string;
+    project_id: string;
+    page_title?: string;
+}
+
+export interface UploadBRDToConfluenceResponse {
+    status: string;
+    message: string;
+    confluence_page: {
+        id: string;
+        title: string;
+        web_url: string;
+        space_key: string;
+    };
+}
+
 // ============================================
 // API Functions
 // ============================================
@@ -109,6 +126,29 @@ export const integrationsApi = {
         const response = await axios.get(`${API_BASE_URL}/api/integrations/jira/issues/${projectKey}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+        return response.data;
+    },
+
+    /**
+     * Upload BRD from S3 to Confluence
+     * Creates a new Confluence page with the BRD content
+     */
+    uploadBRDToConfluence: async (
+        request: UploadBRDToConfluenceRequest,
+        token: string
+    ): Promise<UploadBRDToConfluenceResponse> => {
+        if (!token) {
+            console.warn('No access token provided for BRD upload request');
+            throw new Error('Authentication required');
+        }
+
+        const response = await axios.post(
+            `${API_BASE_URL}/api/integrations/confluence/upload-brd`,
+            request,
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
         return response.data;
     }
 };

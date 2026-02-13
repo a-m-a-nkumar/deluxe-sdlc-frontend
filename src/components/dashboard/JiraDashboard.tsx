@@ -26,6 +26,8 @@ interface DisplayIssue {
   sprint: string;
   labels: string[];
   url: string;
+  parentKey?: string;
+  parentTitle?: string;
 }
 
 export const JiraDashboard = () => {
@@ -35,6 +37,7 @@ export const JiraDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all-status");
   const [typeFilter, setTypeFilter] = useState("all-type");
+  const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { selectedProject, newlyCreatedJiraIssueId, setNewlyCreatedJiraIssueId } = useAppState();
   const { accessToken } = useAuth();
@@ -98,7 +101,9 @@ export const JiraDashboard = () => {
       description: extractTextFromADF(jiraIssue.fields.description),
       sprint: jiraIssue.fields.sprint?.name || "No sprint",
       labels: jiraIssue.fields.labels || [],
-      url: issueUrl
+      url: issueUrl,
+      parentKey: jiraIssue.fields.parent?.key,
+      parentTitle: jiraIssue.fields.parent?.fields?.summary
     };
   };
 
@@ -183,6 +188,51 @@ export const JiraDashboard = () => {
 
     return matchesSearch && matchesStatus && matchesType;
   });
+
+  // Organize issues into hierarchical structure (Epics with child Stories)
+  const organizedIssues = (() => {
+    const epics: DisplayIssue[] = [];
+    const stories: DisplayIssue[] = [];
+    const orphans: DisplayIssue[] = [];
+
+    filteredIssues.forEach(issue => {
+      if (issue.type.toLowerCase() === 'epic') {
+        epics.push(issue);
+      } else if (issue.parentKey) {
+        stories.push(issue);
+      } else {
+        orphans.push(issue);
+      }
+    });
+
+    // Build hierarchical structure
+    const hierarchical: Array<{ epic: DisplayIssue; children: DisplayIssue[] } | { issue: DisplayIssue }> = [];
+
+    // Add epics with their children
+    epics.forEach(epic => {
+      const children = stories.filter(story => story.parentKey === epic.id);
+      hierarchical.push({ epic, children });
+    });
+
+    // Add orphaned issues (no parent)
+    orphans.forEach(issue => {
+      hierarchical.push({ issue });
+    });
+
+    return hierarchical;
+  })();
+
+  const toggleEpic = (epicKey: string) => {
+    setExpandedEpics(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(epicKey)) {
+        newSet.delete(epicKey);
+      } else {
+        newSet.add(epicKey);
+      }
+      return newSet;
+    });
+  };
 
   // Update selected issue if it's filtered out
   useEffect(() => {
@@ -280,45 +330,179 @@ export const JiraDashboard = () => {
                     }
                   `
                     }} />
-                    {filteredIssues.map(issue => <div key={issue.id}><div className={`p-3 border border-[#DEDCDC] rounded cursor-pointer hover:bg-gray-50 transition-colors ${selectedIssue?.id === issue.id ? 'border-primary bg-primary/10 shadow-md' : ''}`} onClick={() => setSelectedIssue(issue)}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium" style={{
-                            color: '#6C6C6C',
-                            fontSize: '12px'
-                          }}>{issue.id}</span>
-                          <Badge className={`${getTypeBadge(issue.type)} text-xs px-2 py-0`}>
-                            {issue.type}
-                          </Badge>
-                        </div>
-                        {getPriorityIcon(issue.priority)}
-                      </div>
+                    {organizedIssues.map((item, index) => {
+                      // Check if it's an epic with children or a standalone issue
+                      if ('epic' in item) {
+                        const { epic, children } = item;
+                        const isExpanded = expandedEpics.has(epic.id);
 
-                      <h4 className="font-medium mb-2 line-clamp-2" style={{
-                        fontSize: '16px',
-                        color: '#3B3B3B',
-                        fontWeight: 'medium'
-                      }}>
-                        {issue.title}
-                      </h4>
+                        return (
+                          <div key={epic.id}>
+                            {/* Epic */}
+                            <div
+                              className={`p-3 border border-[#DEDCDC] rounded cursor-pointer hover:bg-gray-50 transition-colors ${selectedIssue?.id === epic.id ? 'border-primary bg-primary/10 shadow-md' : ''
+                                }`}
+                              onClick={() => setSelectedIssue(epic)}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleEpic(epic.id);
+                                    }}
+                                    className="hover:bg-gray-200 rounded p-0.5"
+                                  >
+                                    <ChevronDown
+                                      className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'
+                                        }`}
+                                    />
+                                  </button>
+                                  <span className="font-medium" style={{
+                                    color: '#6C6C6C',
+                                    fontSize: '12px'
+                                  }}>{epic.id}</span>
+                                  <Badge className={`${getTypeBadge(epic.type)} text-xs px-2 py-0`}>
+                                    {epic.type}
+                                  </Badge>
+                                  {children.length > 0 && (
+                                    <span className="text-xs text-gray-500">({children.length})</span>
+                                  )}
+                                </div>
+                                {getPriorityIcon(epic.priority)}
+                              </div>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1 min-w-0 flex-1" style={{
-                          color: '#747474'
-                        }}>
-                          <Avatar className="h-4 w-4 flex-shrink-0">
-                            <AvatarFallback className="text-xs">
-                              {issue.assignee.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate">{issue.assignee}</span>
-                          <span className="flex-shrink-0">• {issue.points} pts</span>
-                        </div>
-                        <Badge className={`${getStatusBadge(issue.status)} text-xs px-2 py-0 flex-shrink-0 ml-2`}>
-                          {issue.status}
-                        </Badge>
-                      </div>
-                    </div></div>)}
+                              <h4 className="font-medium mb-2 line-clamp-2" style={{
+                                fontSize: '16px',
+                                color: '#3B3B3B',
+                                fontWeight: 'medium'
+                              }}>
+                                {epic.title}
+                              </h4>
+
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1 min-w-0 flex-1" style={{
+                                  color: '#747474'
+                                }}>
+                                  <Avatar className="h-4 w-4 flex-shrink-0">
+                                    <AvatarFallback className="text-xs">
+                                      {epic.assignee.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="truncate">{epic.assignee}</span>
+                                  <span className="flex-shrink-0">• {epic.points} pts</span>
+                                </div>
+                                <Badge className={`${getStatusBadge(epic.status)} text-xs px-2 py-0 flex-shrink-0 ml-2`}>
+                                  {epic.status}
+                                </Badge>
+                              </div>
+                            </div>
+
+                            {/* Child Stories */}
+                            {isExpanded && children.length > 0 && (
+                              <div className="ml-6 mt-1 space-y-1 border-l-2 border-gray-200 pl-2">
+                                {children.map(story => (
+                                  <div
+                                    key={story.id}
+                                    className={`p-2 border border-[#DEDCDC] rounded cursor-pointer hover:bg-gray-50 transition-colors ${selectedIssue?.id === story.id ? 'border-primary bg-primary/10 shadow-md' : ''
+                                      }`}
+                                    onClick={() => setSelectedIssue(story)}
+                                  >
+                                    <div className="flex items-center justify-between mb-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium" style={{
+                                          color: '#6C6C6C',
+                                          fontSize: '11px'
+                                        }}>{story.id}</span>
+                                        <Badge className={`${getTypeBadge(story.type)} text-xs px-1.5 py-0`}>
+                                          {story.type}
+                                        </Badge>
+                                      </div>
+                                      {getPriorityIcon(story.priority)}
+                                    </div>
+
+                                    <h4 className="font-medium mb-1 line-clamp-2 text-sm" style={{
+                                      fontSize: '14px',
+                                      color: '#3B3B3B',
+                                      fontWeight: 'normal'
+                                    }}>
+                                      {story.title}
+                                    </h4>
+
+                                    <div className="flex items-center justify-between text-xs">
+                                      <div className="flex items-center gap-1 min-w-0 flex-1" style={{
+                                        color: '#747474'
+                                      }}>
+                                        <Avatar className="h-3 w-3 flex-shrink-0">
+                                          <AvatarFallback className="text-xs">
+                                            {story.assignee.split(' ').map(n => n[0]).join('')}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="truncate text-xs">{story.assignee}</span>
+                                        <span className="flex-shrink-0 text-xs">• {story.points} pts</span>
+                                      </div>
+                                      <Badge className={`${getStatusBadge(story.status)} text-xs px-1.5 py-0 flex-shrink-0 ml-2`}>
+                                        {story.status}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      } else {
+                        // Standalone issue (no parent)
+                        const { issue } = item;
+                        return (
+                          <div key={issue.id}>
+                            <div
+                              className={`p-3 border border-[#DEDCDC] rounded cursor-pointer hover:bg-gray-50 transition-colors ${selectedIssue?.id === issue.id ? 'border-primary bg-primary/10 shadow-md' : ''
+                                }`}
+                              onClick={() => setSelectedIssue(issue)}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium" style={{
+                                    color: '#6C6C6C',
+                                    fontSize: '12px'
+                                  }}>{issue.id}</span>
+                                  <Badge className={`${getTypeBadge(issue.type)} text-xs px-2 py-0`}>
+                                    {issue.type}
+                                  </Badge>
+                                </div>
+                                {getPriorityIcon(issue.priority)}
+                              </div>
+
+                              <h4 className="font-medium mb-2 line-clamp-2" style={{
+                                fontSize: '16px',
+                                color: '#3B3B3B',
+                                fontWeight: 'medium'
+                              }}>
+                                {issue.title}
+                              </h4>
+
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1 min-w-0 flex-1" style={{
+                                  color: '#747474'
+                                }}>
+                                  <Avatar className="h-4 w-4 flex-shrink-0">
+                                    <AvatarFallback className="text-xs">
+                                      {issue.assignee.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="truncate">{issue.assignee}</span>
+                                  <span className="flex-shrink-0">• {issue.points} pts</span>
+                                </div>
+                                <Badge className={`${getStatusBadge(issue.status)} text-xs px-2 py-0 flex-shrink-0 ml-2`}>
+                                  {issue.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
                   </div>
                 )}
               </div>

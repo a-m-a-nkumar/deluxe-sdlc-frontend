@@ -29,8 +29,15 @@ export interface JiraIssue {
       name: string;
     };
     labels?: string[];
+    parent?: {
+      key: string;
+      fields: {
+        summary: string;
+      };
+    };
   };
 }
+
 
 export interface JiraSearchResponse {
   issues: JiraIssue[];

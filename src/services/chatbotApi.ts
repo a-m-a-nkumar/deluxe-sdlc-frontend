@@ -45,7 +45,21 @@ export async function* streamChatMessage(
     // If section context includes "SECTION" prefix, it already has the section info
     // Otherwise, format it clearly for the agent
     if (sectionContext.startsWith("SECTION")) {
-      enhancedMessage = `${sectionContext}\n\nUSER REQUEST: ${message}\n\nIMPORTANT: The user is currently viewing the section shown above. When they say "here", "this section", or make edits without specifying a section number, they are referring to that specific section. Please update that section accordingly.`;
+      // Check if the user wants a global update (everywhere, all sections, etc.)
+      const lowerMessage = message.toLowerCase();
+      const isGlobalUpdate = lowerMessage.includes("everywhere") ||
+        lowerMessage.includes("all sections") ||
+        lowerMessage.includes("entire document") ||
+        lowerMessage.includes("whole document") ||
+        lowerMessage.includes("across all") ||
+        lowerMessage.includes("in all sections");
+
+      if (isGlobalUpdate) {
+        // Do NOT append the section-forcing instruction — it contradicts "everywhere"
+        enhancedMessage = `${sectionContext}\n\nUSER REQUEST: ${message}`;
+      } else {
+        enhancedMessage = `${sectionContext}\n\nUSER REQUEST: ${message}\n\nIMPORTANT: The user is currently viewing the section shown above. When they say "here", "this section", or make edits without specifying a section number, they are referring to that specific section. Please update that section accordingly.`;
+      }
     } else {
       enhancedMessage = `BRD CONTEXT:\n${sectionContext}\n\nUSER REQUEST: ${message}`;
     }

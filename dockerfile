@@ -1,5 +1,24 @@
+# Deluxe SDLC Frontend - Dockerfile
+# Build (required for Azure login - Vite bakes these at build time):
+#   docker build -t frontend \
+#     --build-arg VITE_AZURE_CLIENT_ID=your-client-id \
+#     --build-arg VITE_AZURE_TENANT_ID=your-tenant-id \
+#     .
+# Run:   docker run -p 8080:8080 -e BACKEND_URL=http://backend:8000 frontend
+
 # Build stage
 FROM node:18-alpine AS builder
+
+# Azure AD / MSAL - MUST be set at build time (Vite embeds VITE_* in the bundle)
+ARG VITE_AZURE_CLIENT_ID
+ARG VITE_AZURE_TENANT_ID
+ARG VITE_API_BASE_URL=
+ARG VITE_S3_TEMPLATE_URL=
+
+ENV VITE_AZURE_CLIENT_ID=$VITE_AZURE_CLIENT_ID
+ENV VITE_AZURE_TENANT_ID=$VITE_AZURE_TENANT_ID
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_S3_TEMPLATE_URL=$VITE_S3_TEMPLATE_URL
 
 WORKDIR /app
 
@@ -12,7 +31,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application (Vite will embed the ENV values above)
 RUN npm run build
 
 # Production stage
@@ -30,21 +49,16 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 # Create startup script to substitute environment variables
 # envsubst replaces ${VAR} with environment variable values
 RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
-    echo 'envsubst '"'"'$$BACKEND_URL $$CONFLUENCE_URL'"'"' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
+    echo 'envsubst '"'"'$$BACKEND_URL $$CONFLUENCE_URL $$CONFLUENCE_HOST'"'"' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.sh && \
     echo 'exec nginx -g "daemon off;"' >> /docker-entrypoint.sh && \
     chmod +x /docker-entrypoint.sh
 
 # Expose port 8080
 EXPOSE 8080
 
-# Set default backend URL (can be overridden via environment variable in ECS)
-# In ECS, set BACKEND_URL to your backend service URL
-# Examples:
-# - http://localhost:8000 (same container/task)
-# - http://backend-service:8000 (service discovery)
-# - http://<backend-ip>:8000 (direct IP)
+# Backend and Confluence — use DOMAIN for Confluence (never IP), or TLS handshake fails with CloudFront.
 ENV BACKEND_URL=http://localhost:8000
 ENV CONFLUENCE_URL=https://siriusai-team-test.atlassian.net
+ENV CONFLUENCE_HOST=siriusai-team-test.atlassian.net
 
-# Start nginx with environment variable substitution
 CMD ["/docker-entrypoint.sh"]

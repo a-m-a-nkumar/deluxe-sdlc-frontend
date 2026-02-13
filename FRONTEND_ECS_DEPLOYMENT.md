@@ -25,10 +25,16 @@ The frontend container needs these environment variables:
     {
       "name": "CONFLUENCE_URL",
       "value": "https://siriusai-team-test.atlassian.net"
+    },
+    {
+      "name": "CONFLUENCE_HOST",
+      "value": "siriusai-team-test.atlassian.net"
     }
   ]
 }
 ```
+
+**Important:** For Confluence, always use the **domain** (e.g. `https://your-site.atlassian.net`), never an IP. Atlassian/CloudFront requires SNI hostname; using an IP causes `SSL_do_handshake() failed` and 502s. Set both `CONFLUENCE_URL` and `CONFLUENCE_HOST` to the same hostname (URL for CONFLUENCE_URL, host only for CONFLUENCE_HOST).
 
 ## ECS Deployment Options
 
@@ -58,6 +64,10 @@ If both frontend and backend are in the same ECS cluster, use service discovery:
         {
           "name": "CONFLUENCE_URL",
           "value": "https://siriusai-team-test.atlassian.net"
+        },
+        {
+          "name": "CONFLUENCE_HOST",
+          "value": "siriusai-team-test.atlassian.net"
         }
       ],
       "logConfiguration": {

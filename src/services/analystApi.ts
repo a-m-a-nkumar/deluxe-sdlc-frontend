@@ -335,7 +335,7 @@ export async function fetchAnalystHistory(sessionId: string): Promise<any[]> {
 
   try {
     const { apiGet } = await import("./api");
-    const response = await apiGet(`${BASE_URL}/analyst-history/${sessionId}`);
+    const response = await apiGet(`${BASE_URL}/api/analyst-history/${sessionId}`);
 
     if (!response.ok) {
       console.warn(`Failed to fetch history: ${response.status}`);

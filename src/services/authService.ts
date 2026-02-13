@@ -8,7 +8,10 @@ if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
   console.warn("[AUTH] VITE_AZURE_CLIENT_ID or VITE_AZURE_TENANT_ID not set in environment variables");
 }
 
-// MSAL Configuration
+// MSAL Configuration (no NextAuth — this app uses MSAL only).
+// In Azure Portal → App registration → Authentication → add SPA redirect URI:
+//   https://deluxe.siriusai.com  (must match window.location.origin in production)
+// Do NOT use /api/auth/callback/azure-ad — that is for NextAuth (Next.js), not this app.
 const msalConfig = {
   auth: {
     clientId: AZURE_CLIENT_ID,

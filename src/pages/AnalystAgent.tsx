@@ -449,7 +449,7 @@ const AnalystAgent = () => {
     try {
       const { apiPost } = await import("@/services/api");
       const { API_CONFIG } = await import("@/config/api");
-      const API_BASE_URL = `${API_CONFIG.BASE_URL}/analyst-generate-brd`;
+      const API_BASE_URL = `${API_CONFIG.BASE_URL}/api/analyst-generate-brd`;
 
       const formData = new FormData();
       formData.append("session_id", sessionId);

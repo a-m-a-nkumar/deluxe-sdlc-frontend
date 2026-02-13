@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { API_CONFIG } from '@/config/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Use single source of truth so we never get /api/api/... (base is origin or empty; paths add /api/... once)
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // ============================================
 // Type Definitions

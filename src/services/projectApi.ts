@@ -197,7 +197,7 @@ export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> =>
   uploadFormData.append("transcript", transcript, transcript.name);
 
   console.log("[UPLOAD] Uploading transcript to S3...");
-  const uploadResponse = await apiPost(`${API_BASE_URL}/upload-transcript`, uploadFormData);
+  const uploadResponse = await apiPost(`${API_BASE_URL}/api/upload-transcript`, uploadFormData);
 
   if (!uploadResponse.ok) {
     const text = await uploadResponse.text().catch(() => "Unable to read error response");
@@ -218,7 +218,7 @@ export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> =>
   generateFormData.append("transcript_s3_path", transcriptS3Path);
 
   console.log("[GENERATE] Requesting BRD generation from S3...");
-  const generateResponse = await apiPost(`${API_BASE_URL}/generate-from-s3`, generateFormData);
+  const generateResponse = await apiPost(`${API_BASE_URL}/api/generate-from-s3`, generateFormData);
 
   if (!generateResponse.ok) {
     const text = await generateResponse.text().catch(() => "Unable to read error response");
@@ -263,7 +263,7 @@ export const downloadBRD = async (text: string, filename: string, brdId?: string
   if (brdId && brdId !== "none") {
     try {
       const { apiGet } = await import("./api");
-      const response = await apiGet(`${API_BASE_URL}/download-brd/${brdId}`);
+      const response = await apiGet(`${API_BASE_URL}/api/download-brd/${brdId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

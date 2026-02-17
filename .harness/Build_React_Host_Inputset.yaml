@@ -1,0 +1,30 @@
+{
+  "inputSet": {
+    "name": "Build_React_Host_Inputset",
+    "identifier": "Build_React_Host_Inputset",
+    "orgIdentifier": "Tools",
+    "projectIdentifier": "SDLCOR",
+    "pipeline":   {
+      "identifier": "sdlc_nextjs_frontend_CI_Pipeline",
+      "properties": {
+        "ci": {
+          "codebase": {
+            "build": {
+              "type": "branch",
+              "spec": {
+                "branch": "develop",
+                "variables": [
+                                                {
+                                                    "name": "replicas",
+                                                    "type": "String",
+                                                    "value": "3"
+                                                }
+                                            ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

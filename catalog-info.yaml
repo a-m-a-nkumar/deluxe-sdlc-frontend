@@ -1,0 +1,38 @@
+apiVersion: harness.io/v1
+kind: Component
+type: service
+name: sdlc_nextjs_frontend
+identifier: sdlc_nextjs_frontend
+owner: harness_sdlcor_devops
+system: SDLC_Orchestration
+orgIdentifier: Tools
+projectIdentifier: SDLCOR
+spec:
+  lifecycle: experimental
+  system:
+    - system:account.Tools.SDLCOR/SDLC_Orchestration
+  sourceCode:
+    provider: Bitbucket
+    repoName: sdlc_nextjs_frontend
+    connectorRef: account.BitbucketCloudHarnessCI2Connector
+    branch: develop
+    monoRepo: false
+    url: https://bitbucket.org/deluxe-development/sdlc_nextjs_frontend/src/develop
+metadata:
+  name: "sdlc_nextjs_frontend"
+  description: "React host"
+  tags:
+    - react
+    - micro-frontend
+    - typescript
+  annotations:
+    harness.io/sto-test-target:
+      - name: sdlc_nextjs_frontend
+        scope: Tools.SDLCOR
+        variant: develop
+    backstage.io/source-location: url:https://bitbucket.org/deluxe-development/sdlc_nextjs_frontend/src/develop/
+    bitbucket.org/project-slug: "deluxe-development/sdlc_nextjs_frontend"
+    backstage.io/techdocs-ref: dir:.
+    sonarqube.org/project-key: SDLCOR-sdlc_nextjs_frontend
+    harness.io/pipelines: |
+       sdlc_nextjs_frontend_CI_Pipeline: https://app.harness.io/ng/account/PJouQ0w0S4Cr8nIfe4jHPw/all/orgs/Tools/projects/SDLCOR/pipelines/sdlc_nextjs_frontend_CI_Pipeline/pipeline-studio/?storeType=REMOTE&connectorRef=account.BitbucketCloudHarnessCI0Connector&repoName=sdlc_nextjs_frontend&branch=develop      

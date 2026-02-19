@@ -14,6 +14,7 @@ import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
 import DesignAssistant from "./pages/DesignAssistant";
+import PairProgramming from "./pages/PairProgramming";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -81,6 +82,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <DesignAssistant />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pair-programming"
+                  element={
+                    <ProtectedRoute>
+                      <PairProgramming />
                     </ProtectedRoute>
                   }
                 />

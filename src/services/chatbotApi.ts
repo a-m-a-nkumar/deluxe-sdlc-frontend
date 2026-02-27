@@ -22,11 +22,20 @@ export interface ChatResponse {
 export class SessionManager {
   private static readonly SESSION_KEY = "chatbot_session_id";
 
-  static getSessionId(): string | null {
+  static getSessionId(projectId?: string | null): string | null {
+    if (projectId) {
+      const projectSession = localStorage.getItem(`${this.SESSION_KEY}_${projectId}`);
+      if (projectSession) return projectSession;
+    }
+    // Fallback to global key for backward compatibility
     return localStorage.getItem(this.SESSION_KEY);
   }
 
-  static setSessionId(sessionId: string): void {
+  static setSessionId(sessionId: string, projectId?: string | null): void {
+    if (projectId) {
+      localStorage.setItem(`${this.SESSION_KEY}_${projectId}`, sessionId);
+    }
+    // Also update global key for backward compatibility
     localStorage.setItem(this.SESSION_KEY, sessionId);
   }
 }
@@ -86,17 +95,17 @@ export async function* streamChatMessage(
 
   // Extract text content, handling nested JSON structures
   let content = data?.response || data?.result || data?.message || data?.answer || data?.text || data?.content || "";
-  
+
   // Helper function to extract text from nested JSON structure
   const extractTextFromJson = (obj: any): string | null => {
     if (!obj || typeof obj !== 'object') return null;
-    
+
     // Check for direct text fields
     if (obj.text && typeof obj.text === 'string') return obj.text;
     if (obj.message && typeof obj.message === 'string') return obj.message;
     if (obj.result && typeof obj.result === 'string') return obj.result;
     if (obj.response && typeof obj.response === 'string') return obj.response;
-    
+
     // Check for content array: {'role': 'assistant', 'content': [{'text': '...'}]}
     if (obj.content && Array.isArray(obj.content) && obj.content.length > 0) {
       const firstContent = obj.content[0];
@@ -109,14 +118,14 @@ export async function* streamChatMessage(
         if (nested) return nested;
       }
     }
-    
+
     return null;
   };
-  
+
   // If content is a string that looks like JSON (Python dict or JSON format), try to parse it
   if (typeof content === 'string') {
     const trimmed = content.trim();
-    
+
     // Check if it looks like a JSON/dict string
     if (trimmed.startsWith('{') && (trimmed.includes("'") || trimmed.includes('"'))) {
       try {
@@ -140,7 +149,7 @@ export async function* streamChatMessage(
             }
           }
         }
-        
+
         if (parsed) {
           const extracted = extractTextFromJson(parsed);
           if (extracted) {
@@ -152,10 +161,10 @@ export async function* streamChatMessage(
       }
     }
   }
-  
+
   // Convert to string and clean up
   content = String(content).trim();
-  
+
   // Final check: if content still looks like a dict/JSON string, try one more extraction
   if (content.startsWith("{'") || content.startsWith('{"')) {
     try {

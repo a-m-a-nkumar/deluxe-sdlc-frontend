@@ -1,4 +1,8 @@
-const CONFLUENCE_AUTH = 'Basic c2h1YmhhbS5zaW5naEBzaXJpdXNhaS5jb206QVRBVFQzeEZmR0YwX0ZsSkh5S3NHeVdzbDNnNEE3NWpFbTF3QlUzVThhNUo3VVp0cVJLcXEtajNCalJHNTdVRVUtNjJWRHhGMi0ta2NiUXp5R19DbUJ0a3c1STZkY1hPd0RkZHlmdE84SXZkMzBUOERaSG14NDNvTkpwUjdwek1jaGpUZ3d3WjBfRTBOSXk3NFdKRThaOHJzR21EUzhzemF4VU9SR2VfQWxnSWxHMFhrQk1JY1QwPThFNEM5RDhE';
+import { API_CONFIG } from '@/config/api';
+
+const BASE_URL = API_CONFIG.BASE_URL;
+
+/** @deprecated Legacy hardcoded auth removed. All Confluence operations now go through the authenticated backend. */
 
 export interface ConfluencePage {
   id: string;
@@ -39,22 +43,21 @@ export interface ConfluencePageDetails {
   };
 }
 
-export const fetchConfluencePages = async (): Promise<ConfluencePage[]> => {
+/** Fetch Confluence pages using current user's linked Atlassian account (via backend). Requires Bearer token. */
+export const fetchConfluencePages = async (token: string, spaceKey: string = 'SO'): Promise<ConfluencePage[]> => {
+  if (!token) throw new Error('Authentication required');
   try {
-    const response = await fetch(
-      '/confluence-api/wiki/rest/api/content?spaceKey=SO&type=page&limit=100',
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': CONFLUENCE_AUTH,
-        },
-      }
-    );
-
+    const url = `${BASE_URL}/api/integrations/confluence/pages?space_key=${encodeURIComponent(spaceKey)}&limit=100`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
-      throw new Error(`Failed to fetch pages: ${response.statusText}`);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to fetch pages: ${response.statusText}`);
     }
-
     const data = await response.json();
     return data.results || [];
   } catch (error) {
@@ -63,24 +66,23 @@ export const fetchConfluencePages = async (): Promise<ConfluencePage[]> => {
   }
 };
 
-export const fetchConfluencePageDetails = async (pageId: string): Promise<ConfluencePageDetails> => {
+/** Fetch Confluence page details using current user's linked Atlassian account (via backend). Requires Bearer token. */
+export const fetchConfluencePageDetails = async (pageId: string, token: string): Promise<ConfluencePageDetails> => {
+  if (!token) throw new Error('Authentication required');
   try {
-    const response = await fetch(
-      `/confluence-api/wiki/rest/api/content/${pageId}?expand=body.storage%2Cversion%2Cancestors`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': CONFLUENCE_AUTH,
-        },
-      }
-    );
-
+    const expand = 'body.storage,version,ancestors';
+    const url = `${BASE_URL}/api/integrations/confluence/pages/${pageId}?expand=${encodeURIComponent(expand)}`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
-      throw new Error(`Failed to fetch page details: ${response.statusText}`);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || `Failed to fetch page details: ${response.statusText}`);
     }
-
-    const data = await response.json();
-    return data;
+    return response.json();
   } catch (error) {
     console.error('Error fetching Confluence page details:', error);
     throw error;
@@ -100,30 +102,12 @@ export interface CreateConfluencePageRequest {
   };
 }
 
+/** @deprecated Use backend endpoint instead. This function relied on removed hardcoded credentials. */
 export const fetchConfluencePageByTitle = async (spaceKey: string, title: string): Promise<ConfluencePage | null> => {
-  try {
-    const encodedTitle = encodeURIComponent(title);
-    const response = await fetch(
-      `/confluence-api/wiki/rest/api/content?spaceKey=${spaceKey}&title=${encodedTitle}&expand=version`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': CONFLUENCE_AUTH,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch page by title: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.results && data.results.length > 0 ? data.results[0] : null;
-  } catch (error) {
-    console.error('Error fetching Confluence page by title:', error);
-    throw error;
-  }
+  console.warn('fetchConfluencePageByTitle is deprecated. Use backend endpoint /api/integrations/confluence/pages instead.');
+  throw new Error('Legacy Confluence API function removed. Use backend endpoint instead.');
 };
+
 
 export interface UpdateConfluencePageRequest {
   id: string;
@@ -140,57 +124,19 @@ export interface UpdateConfluencePageRequest {
   };
 }
 
+/** @deprecated Use backend endpoint instead. This function relied on removed hardcoded credentials. */
 export const updateConfluencePage = async (pageData: UpdateConfluencePageRequest): Promise<any> => {
-  try {
-    const response = await fetch(
-      `/confluence-api/wiki/rest/api/content/${pageData.id}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': CONFLUENCE_AUTH,
-        },
-        body: JSON.stringify(pageData),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to update page: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error updating Confluence page:', error);
-    throw error;
-  }
+  console.warn('updateConfluencePage is deprecated. Use backend endpoint instead.');
+  throw new Error('Legacy Confluence API function removed. Use backend endpoint instead.');
 };
 
+
+/** @deprecated Use backend endpoint /api/integrations/confluence/upload-brd instead. This function relied on removed hardcoded credentials. */
 export const createConfluencePage = async (pageData: CreateConfluencePageRequest): Promise<any> => {
-  try {
-    const response = await fetch(
-      '/confluence-api/wiki/rest/api/content/',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': CONFLUENCE_AUTH,
-        },
-        body: JSON.stringify(pageData),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to create page: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error creating Confluence page:', error);
-    throw error;
-  }
+  console.warn('createConfluencePage is deprecated. Use backend endpoint /api/integrations/confluence/upload-brd instead.');
+  throw new Error('Legacy Confluence API function removed. Use backend endpoint instead.');
 };
+
 
 export const createOrUpdateConfluencePage = async (
   spaceKey: string,

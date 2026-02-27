@@ -109,12 +109,38 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   });
 
   const onSubmit = (data: CreateProjectFormData) => {
+    // Validate Jira and Confluence are selected
+    if (!isAtlassianLinked) {
+      toast({
+        title: "Atlassian account required",
+        description: "Please link your Atlassian account before creating a project.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!selectedJiraProject || selectedJiraProject === "none") {
+      toast({
+        title: "Jira project required",
+        description: "Please select a Jira project to link with this project.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!selectedConfluenceSpace || selectedConfluenceSpace === "none") {
+      toast({
+        title: "Confluence space required",
+        description: "Please select a Confluence space to link with this project.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const projectData: CreateProjectRequest = {
       project_id: crypto.randomUUID(),
       project_name: data.project_name,
       description: data.brd_template || "",
-      jira_project_key: (selectedJiraProject && selectedJiraProject !== "none") ? selectedJiraProject : undefined,
-      confluence_space_key: (selectedConfluenceSpace && selectedConfluenceSpace !== "none") ? selectedConfluenceSpace : undefined,
+      jira_project_key: selectedJiraProject,
+      confluence_space_key: selectedConfluenceSpace,
     };
 
     createProjectMutation.mutate(projectData);
@@ -461,12 +487,12 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                       )}
                     />
 
-                    {/* Atlassian Integration Section */}
-                    {isAtlassianLinked && (
+                    {/* Atlassian Integration Section - REQUIRED */}
+                    {isAtlassianLinked ? (
                       <div className="space-y-3 pt-2">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground pb-1">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-red-600 pb-1">
                           <Info className="w-3 h-3" />
-                          LINK TO ATLASSIAN (OPTIONAL)
+                          LINK TO ATLASSIAN (REQUIRED)
                         </div>
 
                         {/* Jira Project Selector */}
@@ -476,12 +502,11 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             value={selectedJiraProject}
                           >
                             <FormControl>
-                              <SelectTrigger className="bg-white border-border h-10">
-                                <SelectValue placeholder="Link Jira Project (Optional)" />
+                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedJiraProject || selectedJiraProject === 'none' ? 'border-red-300' : 'border-green-400'}`}>
+                                <SelectValue placeholder="Select Jira Project *" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-white">
-                              <SelectItem value="none">-- No Jira Project --</SelectItem>
                               {jiraProjects.map(project => (
                                 <SelectItem key={project.key} value={project.key} className="text-sm">
                                   <span className="font-medium">{project.key}</span> - {project.name}
@@ -489,6 +514,9 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                               ))}
                             </SelectContent>
                           </Select>
+                          {(!selectedJiraProject || selectedJiraProject === 'none') && (
+                            <p className="text-xs text-red-500 mt-1">Jira project is required</p>
+                          )}
                         </FormItem>
 
                         {/* Confluence Space Selector */}
@@ -498,12 +526,11 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             value={selectedConfluenceSpace}
                           >
                             <FormControl>
-                              <SelectTrigger className="bg-white border-border h-10">
-                                <SelectValue placeholder="Link Confluence Space (Optional)" />
+                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-red-300' : 'border-green-400'}`}>
+                                <SelectValue placeholder="Select Confluence Space *" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-white">
-                              <SelectItem value="none">-- No Confluence Space --</SelectItem>
                               {confluenceSpaces.map(space => (
                                 <SelectItem key={space.key} value={space.key} className="text-sm">
                                   <span className="font-medium">{space.key}</span> - {space.name}
@@ -511,14 +538,36 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                               ))}
                             </SelectContent>
                           </Select>
+                          {(!selectedConfluenceSpace || selectedConfluenceSpace === 'none') && (
+                            <p className="text-xs text-red-500 mt-1">Confluence space is required</p>
+                          )}
                         </FormItem>
+                      </div>
+                    ) : (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-2">
+                        <div className="flex items-start gap-2">
+                          <Info className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-red-800">Atlassian account required</p>
+                            <p className="text-xs text-red-600 mt-1">
+                              Please link your Atlassian account first to create a project. Go to Settings → Link Atlassian Account.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
 
                     <div className="flex justify-end pt-4">
                       <Button
                         type="submit"
-                        disabled={createProjectMutation.isPending}
+                        disabled={
+                          createProjectMutation.isPending ||
+                          !isAtlassianLinked ||
+                          !selectedJiraProject ||
+                          selectedJiraProject === 'none' ||
+                          !selectedConfluenceSpace ||
+                          selectedConfluenceSpace === 'none'
+                        }
                         className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90"
                         style={{
                           backgroundColor: '#D61120',

@@ -1,4 +1,4 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Plus, Eye, Sparkles } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,16 +8,15 @@ import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
-import { createJiraStoryFromConfluence } from "@/services/jiraApi";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const ConfluenceDashboard = () => {
+  const { accessToken } = useAuth();
   const {
     activeConfluencePageId,
     setActiveConfluencePageId,
-    isCreatingJiraStory,
-    setIsCreatingJiraStory,
-    setNewlyCreatedJiraIssueId
+    selectedProject
   } = useAppState();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,8 +28,8 @@ export const ConfluenceDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadPages();
-  }, []);
+    if (accessToken) loadPages();
+  }, [accessToken, selectedProject]);
 
   // Set active page when activeConfluencePageId is set
   useEffect(() => {
@@ -50,9 +49,11 @@ export const ConfluenceDashboard = () => {
   }, [selectedPageId]);
 
   const loadPages = async () => {
+    if (!accessToken) return;
     try {
       setIsLoadingPages(true);
-      const fetchedPages = await fetchConfluencePages();
+      const spaceKey = selectedProject?.confluence_space_key || 'SO';
+      const fetchedPages = await fetchConfluencePages(accessToken, spaceKey);
       setPages(fetchedPages);
       // Only auto-select first page if there's no activeConfluencePageId waiting to be set
       if (fetchedPages.length > 0 && !selectedPageId && !activeConfluencePageId) {
@@ -70,9 +71,10 @@ export const ConfluenceDashboard = () => {
   };
 
   const loadPageDetails = async (pageId: string) => {
+    if (!accessToken) return;
     try {
       setIsLoadingDetails(true);
-      const details = await fetchConfluencePageDetails(pageId);
+      const details = await fetchConfluencePageDetails(pageId, accessToken);
       setPageDetails(details);
     } catch (error) {
       toast({
@@ -102,45 +104,6 @@ export const ConfluenceDashboard = () => {
     return statusConfig[status] || "bg-gray-100 text-gray-700";
   };
 
-  const handleCreateJiraStory = async () => {
-    if (!selectedPageId) {
-      toast({
-        title: "No page selected",
-        description: "Please select a Confluence page first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsCreatingJiraStory(true);
-    try {
-      const response = await createJiraStoryFromConfluence(selectedPageId);
-
-      setIsCreatingJiraStory(false);
-
-      if (response.issue_key) {
-        setNewlyCreatedJiraIssueId(response.issue_key);
-        toast({
-          title: "Jira story created",
-          description: `Successfully created ${response.issue_key}`,
-        });
-        navigate('/jira');
-      } else {
-        toast({
-          title: "Story created",
-          description: response.message || "Successfully created Jira story",
-        });
-        navigate('/jira');
-      }
-    } catch (error) {
-      setIsCreatingJiraStory(false);
-      toast({
-        title: "Creation failed",
-        description: "Failed to create Jira story. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const formatConfluenceContent = (htmlContent: string) => {
     if (!htmlContent) return htmlContent;
@@ -267,30 +230,7 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">Generate Jira Items</span>
                     <span className="sm:hidden">Generate</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal'
-                    }}
-                    onClick={handleCreateJiraStory}
-                    disabled={!selectedPageId || isCreatingJiraStory}
-                  >
-                    {isCreatingJiraStory ? (
-                      <>
-                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent flex-shrink-0" />
-                        <span className="hidden sm:inline">Creating Jira issue for {pageDetails?.title || 'page'}</span>
-                        <span className="sm:hidden">Creating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Create Epic & Story</span>
-                        <span className="sm:hidden">Create</span>
-                      </>
-                    )}
-                  </Button>
+
                 </div>
               </div>
 

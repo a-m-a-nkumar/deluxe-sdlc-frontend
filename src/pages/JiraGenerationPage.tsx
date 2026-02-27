@@ -61,9 +61,15 @@ export const JiraGenerationPage = () => {
             });
         } catch (error: any) {
             console.error('Error generating Jira items:', error);
+            const raw = error.response?.data?.detail;
+            const description = typeof raw === 'string'
+                ? raw
+                : Array.isArray(raw)
+                    ? raw.map((x: any) => x?.msg ?? x).join('. ')
+                    : raw?.message || 'Failed to generate Jira items. Please try again.';
             toast({
                 title: 'Generation failed',
-                description: error.response?.data?.detail || 'Failed to generate Jira items. Please try again.',
+                description: description || 'Failed to generate Jira items. Please try again.',
                 variant: 'destructive',
             });
         } finally {
@@ -297,16 +303,11 @@ export const JiraGenerationPage = () => {
                                                             {story.description}
                                                         </p>
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                                                             <div className="text-xs">
                                                                 <span className="font-medium">BRD Requirement:</span>
                                                                 <br />
                                                                 <span className="text-muted-foreground">{story.mapped_to_requirement}</span>
-                                                            </div>
-                                                            <div className="text-xs">
-                                                                <span className="font-medium">Story Points:</span>
-                                                                <br />
-                                                                <span className="text-muted-foreground">{story.story_points}</span>
                                                             </div>
                                                             <div className="text-xs">
                                                                 <span className="font-medium">Priority:</span>

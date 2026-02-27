@@ -259,9 +259,6 @@ export const SessionSidebar = ({
                                                             <div className="text-sm font-medium truncate">
                                                                 {session.title}
                                                             </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {session.messageCount} messages
-                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1 flex-shrink-0 text-muted-foreground">

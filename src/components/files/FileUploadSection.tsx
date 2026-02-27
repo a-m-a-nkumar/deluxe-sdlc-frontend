@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { uploadFiles, downloadBRD } from "@/services/projectApi";
-import { createOrUpdateConfluencePage } from "@/services/confluenceApi";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -125,9 +124,18 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       return;
     }
 
+    if (!selectedProject) {
+      toast({
+        title: "No project selected",
+        description: "Please select a project before generating a BRD.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsFileUploading(true);
     try {
-      const response = await uploadFiles(filesToUpload);
+      const response = await uploadFiles(filesToUpload, selectedProject?.project_id);
 
       // Store brdId from response
       if (response.brd_auto_generated?.brd_id) {

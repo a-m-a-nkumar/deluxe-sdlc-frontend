@@ -180,7 +180,7 @@ export interface FileUploadResponse {
   };
 }
 
-export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> => {
+export const uploadFiles = async (files: File[], projectId?: string | null): Promise<FileUploadResponse> => {
   const API_BASE_URL = API_CONFIG.BASE_URL;
 
   // Import API functions once at the start
@@ -216,6 +216,9 @@ export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> =>
   // Step 2: Generate BRD from S3 (backend fetches transcript and template from S3)
   const generateFormData = new FormData();
   generateFormData.append("transcript_s3_path", transcriptS3Path);
+  if (projectId) {
+    generateFormData.append("project_id", projectId);
+  }
 
   console.log("[GENERATE] Requesting BRD generation from S3...");
   const generateResponse = await apiPost(`${API_BASE_URL}/api/generate-from-s3`, generateFormData);
@@ -232,9 +235,10 @@ export const uploadFiles = async (files: File[]): Promise<FileUploadResponse> =>
   const brdId = data?.brd_id || "none";
   const sessionId = data?.session_id;
 
-  // Store session ID if provided
+  // Store session ID per-project if provided
   if (sessionId) {
-    localStorage.setItem("chatbot_session_id", sessionId);
+    const { SessionManager } = await import("./chatbotApi");
+    SessionManager.setSessionId(sessionId, projectId);
   }
 
   console.log("[GENERATE] BRD generated successfully, BRD ID:", brdId);
@@ -280,4 +284,126 @@ export const downloadBRD = async (text: string, filename: string, brdId?: string
   // Client-side fallback: create text blob
   const blob = new Blob([text], { type: "text/plain" });
   return blob;
+};
+
+// ============================================
+// BRD SESSION PERSISTENCE
+// ============================================
+
+export interface BrdSession {
+  brd_id: string | null;
+  session_id: string | null;
+  brd_content?: string | null;
+}
+
+export const fetchProjectBrdSession = async (projectId: string): Promise<BrdSession> => {
+  try {
+    const response = await apiGet(`${BASE_URL}/api/projects/${projectId}/brd-session`);
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch BRD session for project ${projectId}`);
+      return { brd_id: null, session_id: null };
+    }
+
+    return response.json();
+  } catch (e) {
+    console.warn("Error fetching BRD session:", e);
+    return { brd_id: null, session_id: null };
+  }
+};
+
+export const saveProjectBrdSession = async (
+  projectId: string,
+  brdId: string | null,
+  sessionId: string | null,
+  brdContent?: string | null
+): Promise<void> => {
+  try {
+    const payload: Record<string, string | null> = { brd_id: brdId, session_id: sessionId };
+    if (brdContent !== undefined) {
+      payload.brd_content = brdContent;
+    }
+    await apiRequest(`${BASE_URL}/api/projects/${projectId}/brd-session`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    console.error("Error saving BRD session:", e);
+  }
+};
+
+// ============================================
+// BRD SECTION APIs (S3-backed)
+// ============================================
+
+export interface BrdSectionInfo {
+  number: number;
+  title: string;
+}
+
+export interface BrdSectionDetail {
+  brd_id: string;
+  section_number: number;
+  title: string;
+  section: Record<string, unknown>;
+  markdown: string;
+}
+
+/** Fetch the list of BRD sections from S3 (lightweight — titles + numbers only). */
+export const fetchBrdSections = async (brdId: string): Promise<BrdSectionInfo[]> => {
+  try {
+    const response = await apiGet(`${BASE_URL}/api/brd/${brdId}/sections`);
+    if (!response.ok) {
+      console.warn(`Failed to fetch BRD sections for ${brdId}: ${response.status}`);
+      return [];
+    }
+    const data = await response.json();
+    return data.sections || [];
+  } catch (e) {
+    console.warn("Error fetching BRD sections:", e);
+    return [];
+  }
+};
+
+/** Fetch a single section's full content (markdown) from S3. */
+export const fetchBrdSectionContent = async (
+  brdId: string,
+  sectionNumber: number
+): Promise<BrdSectionDetail | null> => {
+  try {
+    const response = await apiGet(`${BASE_URL}/api/brd/${brdId}/section/${sectionNumber}`);
+    if (!response.ok) {
+      console.warn(`Failed to fetch section ${sectionNumber} for BRD ${brdId}: ${response.status}`);
+      return null;
+    }
+    return response.json();
+  } catch (e) {
+    console.warn("Error fetching BRD section content:", e);
+    return null;
+  }
+};
+
+// ============================================
+// BRD CHAT HISTORY (my_agent memory)
+// ============================================
+
+/** Fetch BRD chat history (DB-backed, with AgentCore Memory fallback). */
+export const fetchBrdHistory = async (
+  sessionId: string,
+  projectId?: string
+): Promise<Array<{ role: string; content: string; isBot: boolean }>> => {
+  try {
+    const params = projectId ? `?project_id=${encodeURIComponent(projectId)}` : "";
+    const response = await apiGet(`${BASE_URL}/api/brd-history/${sessionId}${params}`);
+    if (!response.ok) {
+      console.warn(`Failed to fetch BRD history for session ${sessionId}: ${response.status}`);
+      return [];
+    }
+    const data = await response.json();
+    return data.messages || [];
+  } catch (e) {
+    console.warn("Error fetching BRD history:", e);
+    return [];
+  }
 };

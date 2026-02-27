@@ -390,7 +390,6 @@ export const JiraDashboard = () => {
                                     </AvatarFallback>
                                   </Avatar>
                                   <span className="truncate">{epic.assignee}</span>
-                                  <span className="flex-shrink-0">• {epic.points} pts</span>
                                 </div>
                                 <Badge className={`${getStatusBadge(epic.status)} text-xs px-2 py-0 flex-shrink-0 ml-2`}>
                                   {epic.status}
@@ -439,7 +438,6 @@ export const JiraDashboard = () => {
                                           </AvatarFallback>
                                         </Avatar>
                                         <span className="truncate text-xs">{story.assignee}</span>
-                                        <span className="flex-shrink-0 text-xs">• {story.points} pts</span>
                                       </div>
                                       <Badge className={`${getStatusBadge(story.status)} text-xs px-1.5 py-0 flex-shrink-0 ml-2`}>
                                         {story.status}
@@ -492,7 +490,6 @@ export const JiraDashboard = () => {
                                     </AvatarFallback>
                                   </Avatar>
                                   <span className="truncate">{issue.assignee}</span>
-                                  <span className="flex-shrink-0">• {issue.points} pts</span>
                                 </div>
                                 <Badge className={`${getStatusBadge(issue.status)} text-xs px-2 py-0 flex-shrink-0 ml-2`}>
                                   {issue.status}
@@ -582,7 +579,7 @@ export const JiraDashboard = () => {
 
                 {/* Issue Details Grid */}
                 <div className="grid grid-cols-11 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                  {/* Priority, Story Points, Sprint Column */}
+                  {/* Priority, Sprint Column */}
                   <div className="col-span-6 border border-[#CCCCCC] rounded p-3 flex justify-between">
                     <div>
                       <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Priority</span>
@@ -590,10 +587,6 @@ export const JiraDashboard = () => {
                         {getPriorityIcon(selectedIssue.priority)}
                         <span style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="text-sm capitalize">{selectedIssue.priority}</span>
                       </div>
-                    </div>
-                    <div>
-                      <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Story Points</span>
-                      <div style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="text-sm mt-1">{selectedIssue.points}</div>
                     </div>
                     <div>
                       <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Sprint</span>

@@ -53,6 +53,7 @@ interface AppStateContextType {
   setPendingUploadResponse: (response: any | null) => void;
   uploadedFileBatches: UploadedFileBatch[];
   addUploadedFileBatch: (batch: UploadedFileBatch) => void;
+  clearUploadedFileBatches: () => void;
   uploadedFiles: UploadedFile[];
   setUploadedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
   brdSections: BRDSection[];
@@ -104,6 +105,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     setUploadedFileBatches(prev => [...prev, batch]);
   };
 
+  const clearUploadedFileBatches = () => {
+    setUploadedFileBatches([]);
+  };
+
   return (
     <AppStateContext.Provider
       value={{
@@ -121,6 +126,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         setPendingUploadResponse,
         uploadedFileBatches,
         addUploadedFileBatch,
+        clearUploadedFileBatches,
         uploadedFiles,
         setUploadedFiles,
         brdSections,

@@ -32,6 +32,7 @@ interface ChatInterfaceProps {
   onResponseReceived?: (response: string) => void;
   disableStreamForJira?: boolean;
   brdId?: string | null;
+  isRestoringChat?: boolean;
 }
 export const ChatInterface = ({
   title,
@@ -49,6 +50,7 @@ export const ChatInterface = ({
   onResponseReceived,
   disableStreamForJira = false,
   brdId = null,
+  isRestoringChat = false,
 }: ChatInterfaceProps) => {
   const { setIsBRDApproved, brdSections } = useAppState();
   const [internalMessages, setInternalMessages] = useState<ChatMessageType[]>([
@@ -253,7 +255,12 @@ export const ChatInterface = ({
             scrollbarColor: "#cbd5e1 transparent",
           }}
         >
-          {disabled ? (
+          {isRestoringChat ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+              <div className="w-6 h-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <p className="text-sm">Restoring previous chat session...</p>
+            </div>
+          ) : disabled ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <p className="text-sm">Please upload and submit files to enable chat</p>
             </div>

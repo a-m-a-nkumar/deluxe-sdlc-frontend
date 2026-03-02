@@ -1,5 +1,5 @@
 pipeline:
-  name: sdlc_nextjs_frontend_CI_Pipeline
+  name: sdlc_vite_react_frontend_CI_Pipeline
   identifier: sdlc_nextjs_frontend_CI_Pipeline
   projectIdentifier: SDLCOR
   orgIdentifier: Tools

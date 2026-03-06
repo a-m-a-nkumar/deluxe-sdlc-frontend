@@ -11,7 +11,7 @@ export interface BRDSection {
  * @returns Array of parsed BRD sections
  */
 export const parseBRDSections = (content: string): BRDSection[] => {
-    const sections: BRDSection[] = [];
+    const rawSections: BRDSection[] = [];
 
     // Split content by markdown headers (##)
     const lines = content.split('\n');
@@ -26,7 +26,7 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             // Save previous section if it exists
             if (currentSection) {
                 currentSection.content = currentContent.join('\n').trim();
-                sections.push(currentSection);
+                rawSections.push(currentSection);
             }
 
             // Extract section number and title
@@ -41,8 +41,7 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             } else {
                 // No number: "## Purpose"
                 title = line.replace(/^##\s*/, '').trim();
-                // Try to infer number from position (first section = 1, etc.)
-                sectionNumber = sections.length + 1;
+                sectionNumber = null; // will be assigned after filtering
             }
 
             currentSection = {
@@ -65,9 +64,34 @@ export const parseBRDSections = (content: string): BRDSection[] => {
 
     // Don't forget to add the last section
     if (currentSection) {
-        // @ts-ignore - we know currentSection is not null here
         currentSection.content = currentContent.join('\n').trim();
-        sections.push(currentSection);
+        rawSections.push(currentSection);
+    }
+
+    // Filter out non-user-visible sections to match backend numbering:
+    // 1. Skip the first section if it has no number prefix (document title)
+    // 2. Skip subsections like "# In Scope" / "# Out of Scope" (handled by backend's Scope merge)
+    const sections: BRDSection[] = [];
+    for (let i = 0; i < rawSections.length; i++) {
+        const sec = rawSections[i];
+
+        // Skip first section if it doesn't have an explicit number (it's a document title)
+        if (i === 0 && sec.sectionNumber === null) {
+            continue;
+        }
+
+        // Skip scope subsections (titles starting with #)
+        const titleLower = sec.title.toLowerCase();
+        if (sec.title.startsWith('#') && (titleLower.includes('in scope') || titleLower.includes('out of scope'))) {
+            continue;
+        }
+
+        // Assign inferred number for non-numbered sections that pass the filter
+        if (sec.sectionNumber === null) {
+            sec.sectionNumber = sections.length + 1;
+        }
+
+        sections.push(sec);
     }
 
     // If no sections found in markdown format, return empty array

@@ -4,7 +4,16 @@ module.exports = {
   coverageDirectory: "./coverage",
   coverageReporters: ["lcov", "text", "html"],
   transform: {
-    "^.+\\.tsx?$": "ts-jest"
+    "^.+\\.tsx?$": ["ts-jest", {
+      tsconfig: {
+        jsx: "react-jsx",
+        esModuleInterop: true,
+        module: "commonjs",
+        moduleResolution: "node",
+        baseUrl: ".",
+        paths: { "@/*": ["./src/*"] }
+      }
+    }]
   },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1"

@@ -1,15 +1,11 @@
-# Pipeline Dockerfile — packages pre-built Vite output into nginx
-# The CI "Build React" step runs: npm install → npm run build → produces dist/
-# Then this Dockerfile packages dist/ into an nginx image.
-
-# Staging: hold the pre-built files
+# Use the official Node.js image as the build image
 FROM docker.artifacts.deluxe.com/nodejs/node:20 AS build
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the pre-built Vite output (dist/, not build/)
-COPY ./dist/ .
+# Copy the pre-built code
+COPY ./build/ .
 
 # Final stage to create the runtime image
 FROM nginx:alpine AS final

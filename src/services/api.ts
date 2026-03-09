@@ -8,11 +8,15 @@ export async function apiRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = await getAccessToken();
-  
+  // Check for dev bypass session first, then fall back to Azure AD MSAL token
+  const devSession = sessionStorage.getItem("dev-bypass-session");
+  const token = devSession
+    ? JSON.parse(devSession).token
+    : await getAccessToken();
+
   const headers = new Headers(options.headers);
-  
-  // Add Azure AD token to Authorization header
+
+  // Add token to Authorization header
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
     console.log("[API] Token included in request:", token.substring(0, 20) + "...");

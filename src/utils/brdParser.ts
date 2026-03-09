@@ -80,9 +80,10 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             continue;
         }
 
-        // Skip scope subsections (titles starting with #)
-        const titleLower = sec.title.toLowerCase();
-        if (sec.title.startsWith('#') && (titleLower.includes('in scope') || titleLower.includes('out of scope'))) {
+        // Skip ALL subsections (titles starting with #)
+        // These are sub-headers within a parent section (e.g. "# User Story 1",
+        // "# In Scope", "# Out of Scope", "# Acronyms and Abbreviations", "# Appendix")
+        if (sec.title.startsWith('#')) {
             continue;
         }
 

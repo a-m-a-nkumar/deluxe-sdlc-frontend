@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   accessToken: string | null;
   login: () => Promise<void>;
+  devLogin: () => void;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -27,11 +28,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // Check for persisted dev bypass session first
+        const devSession = sessionStorage.getItem("dev-bypass-session");
+        if (devSession) {
+          const parsed = JSON.parse(devSession);
+          setUser(parsed.user);
+          setAccessToken(parsed.token);
+          setIsLoading(false);
+          return;
+        }
+
         if (checkAzureAuth()) {
           const userInfo = getUserInfo();
           if (userInfo) {
             setUser(userInfo);
-            // Get access token
             const token = await getAccessToken();
             setAccessToken(token);
           }
@@ -45,6 +55,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initializeAuth();
   }, []);
+
+  const devLogin = () => {
+    const devUser: User = {
+      id: "dev-bypass-T479888",
+      email: "T479888@deluxe.com",
+      name: "Dev User (T479888)",
+    };
+    const devToken = "dev-bypass-T479888";
+    setUser(devUser);
+    setAccessToken(devToken);
+    sessionStorage.setItem(
+      "dev-bypass-session",
+      JSON.stringify({ user: devUser, token: devToken })
+    );
+  };
 
   const login = async () => {
     try {
@@ -68,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setIsLoading(true);
+      sessionStorage.removeItem("dev-bypass-session");
       await azureLogout();
       setUser(null);
       setAccessToken(null);
@@ -88,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!user,
         accessToken,
         login,
+        devLogin,
         logout,
         isLoading,
       }}

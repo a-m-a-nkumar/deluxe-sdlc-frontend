@@ -1,26 +1,29 @@
-# Use the official Node.js image as the build image
-FROM docker.artifacts.deluxe.com/nodejs/node:20 AS build
+FROM public.ecr.aws/docker/library/node:18-alpine AS builder
 
-# Set the working directory
+# Azure service principal / app registration inputs (embedded by Vite at build time)
+ARG VITE_AZURE_CLIENT_ID
+ARG VITE_AZURE_TENANT_ID
+ARG VITE_API_BASE_URL=
+ARG VITE_S3_TEMPLATE_URL=
+
+ENV VITE_AZURE_CLIENT_ID=$VITE_AZURE_CLIENT_ID
+ENV VITE_AZURE_TENANT_ID=$VITE_AZURE_TENANT_ID
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_S3_TEMPLATE_URL=$VITE_S3_TEMPLATE_URL
+
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Copy the pre-built code
-COPY ./build/ .
+FROM public.ecr.aws/nginx/nginx:alpine
 
-# Final stage to create the runtime image
-FROM nginx:alpine AS final
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Set the working directory inside the container
-WORKDIR /usr/share/nginx/html
+EXPOSE 8080
 
-# Remove default static assets
-RUN rm -rf ./*
-
-# Copy the build artifacts from the build stage
-COPY --from=build /app .
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+ENV BACKEND_URL=http://localhost:8000
+ENV CONFLUENCE_URL=https://siriusai-team-test.atlassian.net
+ENV CONFLUENCE_HOST=siriusai-team-test.atlassian.net

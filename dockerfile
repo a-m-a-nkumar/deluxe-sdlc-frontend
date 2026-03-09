@@ -7,7 +7,7 @@
 # Run:   docker run -p 8080:8080 -e BACKEND_URL=http://backend:8000 frontend
 
 # Build stage
-FROM node:18-alpine AS builder
+FROM public.ecr.aws/docker/library/node:18-alpine AS builder
 
 # Azure AD / MSAL - MUST be set at build time (Vite embeds VITE_* in the bundle)
 ARG VITE_AZURE_CLIENT_ID
@@ -35,7 +35,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM public.ecr.aws/docker/library/nginx:alpine
 
 # Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html

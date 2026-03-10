@@ -67,6 +67,14 @@ export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
 /**
  * Get access token for API calls
  */
+export async function getEffectiveToken(): Promise<string | null> {
+  const devSession = sessionStorage.getItem("dev-bypass-session");
+  if (devSession) {
+    return JSON.parse(devSession).token;
+  }
+  return getAccessToken();
+}
+
 export async function getAccessToken(): Promise<string | null> {
   try {
     await ensureMsalInitialized();

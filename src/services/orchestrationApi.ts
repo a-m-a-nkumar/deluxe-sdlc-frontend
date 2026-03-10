@@ -1,5 +1,5 @@
 import { API_CONFIG } from "@/config/api";
-import { getAccessToken } from "./authService";
+import { getEffectiveToken } from "./authService";
 
 export interface OrchestrationQueryRequest {
     project_id: string;
@@ -33,7 +33,7 @@ export async function* streamOrchestrationQuery(
     const API_URL = `${API_CONFIG.BASE_URL}/api/orchestration/query`;
 
     try {
-        const token = await getAccessToken();
+        const token = await getEffectiveToken();
 
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -108,7 +108,7 @@ export async function triggerIncrementalSync(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/sync`;
 
     try {
-        const token = await getAccessToken();
+        const token = await getEffectiveToken();
 
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -151,7 +151,7 @@ export async function getSyncStatus(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/status`;
 
     try {
-        const token = await getAccessToken();
+        const token = await getEffectiveToken();
 
         const response = await fetch(API_URL, {
             method: 'GET',

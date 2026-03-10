@@ -204,10 +204,20 @@ export const ConfluenceDashboard = () => {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     variant="outline"
-                    className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
+                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
                     style={{
                       fontSize: '14px',
-                      fontWeight: 'normal'
+                      fontWeight: 'normal',
+                      backgroundColor: '#FF7F22',
+                      color: '#fff',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F4F2F0';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#FF7F22';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FF7F22';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                     }}
                     onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                     disabled={!pageDetails}
@@ -218,10 +228,20 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="bg-purple-600 text-white border border-purple-600 text-sm flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
                     style={{
                       fontSize: '14px',
-                      fontWeight: 'normal'
+                      fontWeight: 'normal',
+                      backgroundColor: '#1B3C71',
+                      color: '#fff',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                     }}
                     onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
                     disabled={!selectedPageId}

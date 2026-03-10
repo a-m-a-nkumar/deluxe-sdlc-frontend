@@ -73,16 +73,12 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   return (
     <div className={`${isMobile ? 'w-60' : (collapsed ? 'w-16' : 'w-60')} h-full bg-sidebar-bg border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden`}>
       {/* Header */}
-      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'rgba(230, 12, 35, 0.06)' }}>
+      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'rgba(27, 60, 113, 0.06)' }}>
         <Link
           to="/"
           className="flex items-center gap-2 px-4 hover:opacity-80 transition-opacity"
         >
-          <img
-            src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
-            alt="Deluxe"
-            className="w-[65px]"
-          />
+
           {(!collapsed || isMobile) && (
             <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
           )}

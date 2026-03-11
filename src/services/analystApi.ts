@@ -235,100 +235,61 @@ export class AnalystSessionManager {
   }
 }
 
-// SSE event types from the streaming analyst endpoint
-export interface AnalystSSEEvent {
-  type: 'chunk' | 'metadata' | 'done' | 'error';
-  content?: string;
-  session_id?: string;
-  brd_id?: string;
-  message?: string;
-}
-
-// Stream chat message from analyst agent using SSE
+// Stream chat message from analyst agent
 export async function* streamAnalystMessage(
   message: string,
   sessionId: string | null,  // CRITICAL: Session ID from React state (database)
   projectId?: string | null
-): AsyncGenerator<AnalystSSEEvent, void, unknown> {
-  const API_URL = `${API_CONFIG.BASE_URL}/api/analyst-chat-stream`;
+): AsyncGenerator<string, void, unknown> {
+  const API_BASE_URL = API_CONFIG.ANALYST_API_URL || API_CONFIG.CHATBOT_API_URL.replace('/chat', '/analyst-chat');
 
   // Use the session ID from React state (database), not localStorage
   const effectiveSessionId = sessionId || "none";
   console.log(`[streamAnalystMessage] Using session_id from React state: ${effectiveSessionId}`);
 
-  try {
-    const { getAccessToken } = await import("./authService");
-    const token = await getAccessToken();
+  const formData = new FormData();
+  formData.append("message", message);
+  formData.append("session_id", effectiveSessionId);
+  if (projectId) {
+    formData.append("project_id", projectId);
+  }
 
-    const formData = new FormData();
-    formData.append("message", message);
-    formData.append("session_id", effectiveSessionId);
-    if (projectId) {
-      formData.append("project_id", projectId);
-    }
+  console.log(`[streamAnalystMessage] Sending with session_id: ${AnalystSessionManager.getSessionId() || "none"}`);
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData,
-    });
+  const { apiPost } = await import("./api");
+  const response = await apiPost(API_BASE_URL, formData);
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
+  if (!response.ok) {
+    const text = await response.text().catch(() => "Unable to read error response");
+    throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+  }
 
-    // Read SSE stream (same pattern as orchestrationApi.ts)
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
+  const data = await response.json().catch(() => ({}));
 
-    if (!reader) {
-      throw new Error('Response body is not readable');
-    }
+  // Store session_id if present
+  if (data.session_id && data.session_id !== "none") {
+    AnalystSessionManager.setSessionId(data.session_id);
+  }
 
-    let buffer = '';
+  if (data.brd_id) {
+    AnalystSessionManager.setBrdId(data.brd_id);
+  }
 
-    while (true) {
-      const { done, value } = await reader.read();
+  // Extract text content logic (simplified for brevity, assume backend sends 'response' or 'result')
+  // Reusing the robust extraction logic from previous file is better.
 
-      if (done) break;
+  let content = data?.response || data?.result || data?.message || "";
 
-      buffer += decoder.decode(value, { stream: true });
+  // Basic cleaning if it's JSON string
+  if (typeof content === 'string' && content.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(content);
+      content = parsed.response || parsed.result || parsed.message || content;
+    } catch (e) { }
+  }
 
-      // Process complete SSE messages
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6)) as AnalystSSEEvent;
-
-            // Handle metadata: update session manager
-            if (data.type === 'metadata') {
-              if (data.session_id && data.session_id !== 'none') {
-                AnalystSessionManager.setSessionId(data.session_id);
-              }
-              if (data.brd_id) {
-                AnalystSessionManager.setBrdId(data.brd_id);
-              }
-            }
-
-            yield data;
-          } catch (e) {
-            console.error('Failed to parse SSE data:', line, e);
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Analyst stream error:', error);
-    yield {
-      type: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred',
-    };
+  if (content) {
+    yield content;
   }
 }
 
@@ -365,23 +326,6 @@ export async function sendAnalystMessage(
     AnalystSessionManager.setBrdId(data.brd_id);
   }
   return data;
-}
-
-// ─── Lambda warm-up ────────────────────────────────────────────────────────
-// Call this silently when the Analyst page mounts so Lambdas are warm
-// before the user sends their first message.
-export async function warmAnalystLambdas(): Promise<void> {
-  try {
-    const { apiPost } = await import("./api");
-    const BASE_URL = API_CONFIG.BASE_URL;
-    // Fire-and-forget — we don't care about the response
-    apiPost(`${BASE_URL}/api/analyst-warm`, new FormData()).catch(() => {
-      // Silently ignore — warming is best-effort
-    });
-    console.log("[analystApi] Lambda warm-up triggered");
-  } catch {
-    // Non-fatal: ignore all errors
-  }
 }
 
 // Fetch conversation history for a session

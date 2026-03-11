@@ -242,7 +242,7 @@ export const SessionSidebar = ({
                                                         onClick={handleCancelEdit}
                                                         size="icon"
                                                         variant="outline"
-                                                        className="w-8 h-8 hover:bg-blue-50" style={{ color: '#1B3C71' }}
+                                                        className="w-8 h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                         title="Cancel"
                                                     >
                                                         <X className="w-4 h-4" />
@@ -277,7 +277,7 @@ export const SessionSidebar = ({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8" style={{ color: '#1B3C71' }}
+                                                            className="h-8 w-8 hover:text-red-600"
                                                             title="Delete"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();

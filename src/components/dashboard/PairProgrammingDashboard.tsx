@@ -53,7 +53,7 @@ const CodeBlock = ({ code, language = "bash" }: { code: string; language?: strin
 const StepBadge = ({ number }: { number: number }) => (
     <div
         className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-        style={{ background: 'linear-gradient(135deg, #E60C23 0%, #c7001b 100%)', color: '#fff', boxShadow: '0 2px 8px rgba(230,12,35,0.3)' }}
+        style={{ background: '#1B3C71', color: '#fff', boxShadow: '0 2px 8px rgba(27,60,113,0.3)' }}
     >
         {number}
     </div>
@@ -145,7 +145,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     <div className="flex items-center gap-2">
                         <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #E60C23 0%, #c7001b 100%)' }}
+                            style={{ background: '#1B3C71' }}
                         >
                             <Code2 className="w-4 h-4 text-white" />
                         </div>
@@ -163,13 +163,13 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
             {selectedProject ? (
                 <div
                     className="rounded-xl p-4 mb-6 flex items-center gap-3"
-                    style={{ background: 'linear-gradient(135deg, rgba(230,12,35,0.04) 0%, rgba(230,12,35,0.08) 100%)', border: '1px solid rgba(230,12,35,0.15)' }}
+                    style={{ background: 'rgba(27,60,113,0.04)', border: '1px solid rgba(27,60,113,0.15)' }}
                 >
                     <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(230,12,35,0.1)' }}
+                        style={{ background: 'rgba(27,60,113,0.1)' }}
                     >
-                        <Package className="w-4 h-4" style={{ color: '#E60C23' }} />
+                        <Package className="w-4 h-4" style={{ color: '#1B3C71' }} />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800">Active Project: {selectedProject.project_name}</p>
@@ -378,9 +378,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                     },
                                 ].map((row, i) => (
                                     <tr key={row.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                                        <td className="px-4 py-3 border-b font-mono font-semibold text-xs" style={{ borderColor: '#f0f0f0', color: '#E60C23' }}>{row.key}</td>
+                                        <td className="px-4 py-3 border-b font-mono font-semibold text-xs" style={{ borderColor: '#f0f0f0', color: '#1B3C71' }}>{row.key}</td>
                                         <td className="px-4 py-3 border-b" style={{ borderColor: '#f0f0f0' }}>
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.required ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.required ? 'bg-blue-50 text-blue-800' : 'bg-gray-100 text-gray-500'}`}>
                                                 {row.required ? "Required" : "Optional"}
                                             </span>
                                         </td>
@@ -418,7 +418,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             {/* Explicit */}
                             <div className="rounded-xl p-4" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(230,12,35,0.08)', color: '#E60C23' }}>Natural Language</span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(27,60,113,0.08)', color: '#1B3C71' }}>Natural Language</span>
                                     <span className="text-xs text-gray-500">— just type your task</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mb-2">

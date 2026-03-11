@@ -204,10 +204,20 @@ export const ConfluenceDashboard = () => {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     variant="outline"
-                    className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
+                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
                     style={{
                       fontSize: '14px',
-                      fontWeight: 'normal'
+                      fontWeight: 'normal',
+                      backgroundColor: '#1B3C71',
+                      color: '#fff',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                     }}
                     onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                     disabled={!pageDetails}
@@ -218,10 +228,20 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="bg-purple-600 text-white border border-purple-600 text-sm flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
                     style={{
                       fontSize: '14px',
-                      fontWeight: 'normal'
+                      fontWeight: 'normal',
+                      backgroundColor: '#1B3C71',
+                      color: '#fff',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                     }}
                     onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
                     disabled={!selectedPageId}
@@ -245,7 +265,7 @@ export const ConfluenceDashboard = () => {
                     <>
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-sm bg-red-600 text-white">
+                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: '#1B3C71' }}>
                             {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -254,11 +274,11 @@ export const ConfluenceDashboard = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 flex-shrink-0 text-red-600" />
+                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: '#1B3C71' }} />
                           <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
                         </div>
                         <Badge
-                          className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'hover:bg-red-600' : ''}`}
+                          className={`${getStatusBadge(pageDetails.status)} self-start`}
                           style={{
                             backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
                             borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,

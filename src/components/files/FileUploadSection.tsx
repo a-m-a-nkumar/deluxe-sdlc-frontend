@@ -312,7 +312,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
               ref={fileInputRef}
               type="file"
               multiple
-              accept="*/*"
+              accept=".txt,.docx,.pdf"
               onChange={handleFileUpload}
               className="hidden"
             />

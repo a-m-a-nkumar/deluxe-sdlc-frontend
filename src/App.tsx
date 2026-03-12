@@ -13,6 +13,7 @@ import AnalystAgent from "./pages/AnalystAgent";
 import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
+import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
 import NotFound from "./pages/NotFound";
@@ -90,6 +91,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <PairProgramming />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/test-generation/:confluencePageId"
+                  element={
+                    <ProtectedRoute>
+                      <TestScenarioPage />
                     </ProtectedRoute>
                   }
                 />

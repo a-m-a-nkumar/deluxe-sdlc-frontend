@@ -1,9 +1,10 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
@@ -226,30 +227,79 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">View in Confluence</span>
                     <span className="sm:hidden">View</span>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal',
-                      backgroundColor: '#1B3C71',
-                      color: '#fff',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
-                    }}
-                    onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
-                    disabled={!selectedPageId}
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span className="hidden sm:inline">Generate Jira Items</span>
-                    <span className="sm:hidden">Generate</span>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 'normal',
+                            backgroundColor: '#1B3C71',
+                            color: '#fff',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (selectedPageId) {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
+                              (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#fff';
+                          }}
+                          onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
+                          disabled={!selectedPageId}
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate Jira Items</span>
+                          <span className="sm:hidden">Generate</span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!selectedPageId && (
+                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
+                    )}
+                  </Tooltip>
+
+                  {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 'normal',
+                            backgroundColor: '#1B3C71',
+                            color: '#fff',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (selectedPageId) {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
+                              (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#fff';
+                          }}
+                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
+                          disabled={!selectedPageId}
+                        >
+                          <FlaskConical className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate Test Scenarios</span>
+                          <span className="sm:hidden">Test</span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!selectedPageId && (
+                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
+                    )}
+                  </Tooltip>
+                  {/* END TEST_SCENARIO_FEATURE */}
 
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
+import { loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth, setOnAuthFailure } from "@/services/authService";
 
 interface User {
   id: string;
@@ -22,6 +22,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Wire global auth failure handler — redirect to login when tokens can't be refreshed
+  useEffect(() => {
+    setOnAuthFailure(() => {
+      console.error("[AUTH] Unrecoverable auth failure — forcing logout");
+      setUser(null);
+      setAccessToken(null);
+      window.location.href = "/login";
+    });
+    return () => setOnAuthFailure(null);
+  }, []);
 
   // Check if user is already logged in on mount
   useEffect(() => {

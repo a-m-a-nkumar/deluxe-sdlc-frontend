@@ -19,7 +19,7 @@ const msalConfig = {
     redirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: "sessionStorage", // This configures where your cache will be stored
+    cacheLocation: "localStorage", // This configures where your cache will be stored
     storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
   },
 };
@@ -44,6 +44,14 @@ const loginRequest = {
   scopes: ["User.Read"],
 };
 
+// Global auth failure callback — invoked when tokens cannot be refreshed at all
+type AuthFailureCallback = () => void;
+let _onAuthFailure: AuthFailureCallback | null = null;
+
+export function setOnAuthFailure(callback: AuthFailureCallback | null) {
+  _onAuthFailure = callback;
+}
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -65,9 +73,11 @@ export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
 }
 
 /**
- * Get access token for API calls
+ * Get access token for API calls.
+ * @param forceRefresh - If true, bypasses MSAL cache and fetches a fresh token from Azure AD.
+ *                       Use this when retrying after a 401 response.
  */
-export async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(forceRefresh: boolean = false): Promise<string | null> {
   try {
     await ensureMsalInitialized();
     const accounts = msalInstance.getAllAccounts();
@@ -77,10 +87,10 @@ export async function getAccessToken(): Promise<string | null> {
 
     const account = accounts[0];
 
-    // Use only User.Read scope (no .default scope)
     const tokenRequest = {
       scopes: ["User.Read"],
       account: account,
+      forceRefresh: forceRefresh,
     };
 
     const response = await msalInstance.acquireTokenSilent(tokenRequest);
@@ -102,7 +112,7 @@ export async function getAccessToken(): Promise<string | null> {
             scopes: ["User.Read"],
             account: account,
           });
-          return response.accessToken;
+          return response.idToken;
         }
       } catch (retryError) {
         console.error("Error after cache clear:", retryError);
@@ -118,6 +128,8 @@ export async function getAccessToken(): Promise<string | null> {
       return response.idToken;
     } catch (popupError) {
       console.error("Error acquiring token via popup:", popupError);
+      // Both silent and interactive failed — auth is unrecoverable
+      if (_onAuthFailure) _onAuthFailure();
       return null;
     }
   }

@@ -7,13 +7,14 @@ export interface BRDSection {
 
 /**
  * Parses BRD markdown content into structured sections.
+ * Uses two-phase parsing: first collect raw sections, then filter to match backend numbering.
  * @param content The raw markdown content of the BRD
  * @returns Array of parsed BRD sections
  */
 export const parseBRDSections = (content: string): BRDSection[] => {
-    const sections: BRDSection[] = [];
+    const rawSections: BRDSection[] = [];
 
-    // Split content by markdown headers (##)
+    // Phase 1: Parse all sections from markdown
     const lines = content.split('\n');
     let currentSection: BRDSection | null = null;
     let currentContent: string[] = [];
@@ -26,7 +27,7 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             // Save previous section if it exists
             if (currentSection) {
                 currentSection.content = currentContent.join('\n').trim();
-                sections.push(currentSection);
+                rawSections.push(currentSection);
             }
 
             // Extract section number and title
@@ -41,8 +42,7 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             } else {
                 // No number: "## Purpose"
                 title = line.replace(/^##\s*/, '').trim();
-                // Try to infer number from position (first section = 1, etc.)
-                sectionNumber = sections.length + 1;
+                sectionNumber = null;
             }
 
             currentSection = {
@@ -65,12 +65,27 @@ export const parseBRDSections = (content: string): BRDSection[] => {
 
     // Don't forget to add the last section
     if (currentSection) {
-        // @ts-ignore - we know currentSection is not null here
         currentSection.content = currentContent.join('\n').trim();
-        sections.push(currentSection);
+        rawSections.push(currentSection);
     }
 
-    // If no sections found in markdown format, return empty array
-    // (Document Overview will still show as it's independent)
+    // Phase 2: Filter to match backend numbering
+    const sections: BRDSection[] = [];
+    for (let i = 0; i < rawSections.length; i++) {
+        const sec = rawSections[i];
+
+        // Skip document title (first section without explicit number)
+        if (i === 0 && sec.sectionNumber === null) continue;
+
+        // Skip ALL subsections (titles starting with #)
+        if (sec.title.startsWith('#')) continue;
+
+        // Assign number using filtered count (matches backend)
+        if (sec.sectionNumber === null) {
+            sec.sectionNumber = sections.length + 1;
+        }
+        sections.push(sec);
+    }
+
     return sections;
 };

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import siriusLogo from "@/assets/images/Logo - SiriusAI.png";
+import siriusIcon from "@/assets/images/Logo - S Only.png";
 
 const navigationItems = [
   {
@@ -73,14 +75,18 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   return (
     <div className={`${isMobile ? 'w-60' : (collapsed ? 'w-16' : 'w-60')} h-full bg-sidebar-bg border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden`}>
       {/* Header */}
-      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'rgba(27, 60, 113, 0.06)' }}>
+      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: '#EDF4FF' }}>
         <Link
           to="/"
           className="flex items-center gap-2 px-4 hover:opacity-80 transition-opacity"
         >
-
+          <img
+            src={collapsed && !isMobile ? siriusIcon : siriusLogo}
+            alt="SiriusAI"
+            className={collapsed && !isMobile ? "h-7 w-auto" : "h-8 w-auto"}
+          />
           {(!collapsed || isMobile) && (
-            <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
+            <div className="text-xs font-semibold text-muted-foreground hidden sm:block whitespace-nowrap">SDLC Orchestration</div>
           )}
         </Link>
 

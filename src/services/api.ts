@@ -30,11 +30,11 @@ export async function apiRequest(
     headers,
   });
 
-  // If unauthorized, try to refresh token and retry once
+  // If unauthorized, force-refresh the token from Azure AD and retry once
   if (response.status === 401 && token) {
-    // Token might be expired, try to get a fresh one
-    const newToken = await getAccessToken();
-    if (newToken && newToken !== token) {
+    console.warn("[API] Got 401, forcing token refresh...");
+    const newToken = await getAccessToken(true);
+    if (newToken) {
       headers.set("Authorization", `Bearer ${newToken}`);
       return fetch(url, {
         ...options,
@@ -102,5 +102,38 @@ export async function apiPut(
  */
 export async function apiDelete(url: string, options: RequestInit = {}): Promise<Response> {
   return apiRequest(url, { ...options, method: "DELETE" });
+}
+
+/**
+ * Make an authenticated fetch for SSE/streaming endpoints.
+ * On 401, forces token refresh and retries once.
+ * Use this instead of apiRequest() when you need access to response.body for streaming.
+ */
+export async function apiStreamFetch(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const token = await getAccessToken();
+  const headers = new Headers(options.headers);
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401 && token) {
+    console.warn("[API] SSE request got 401, forcing token refresh...");
+    const newToken = await getAccessToken(true);
+    if (newToken) {
+      headers.set("Authorization", `Bearer ${newToken}`);
+      return fetch(url, { ...options, headers });
+    }
+  }
+
+  return response;
 }
 

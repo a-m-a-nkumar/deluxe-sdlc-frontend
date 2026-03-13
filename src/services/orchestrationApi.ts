@@ -1,5 +1,5 @@
 import { API_CONFIG } from "@/config/api";
-import { getAccessToken } from "./authService";
+import { apiStreamFetch, apiPost, apiGet } from "./api";
 
 export interface OrchestrationQueryRequest {
     project_id: string;
@@ -33,14 +33,8 @@ export async function* streamOrchestrationQuery(
     const API_URL = `${API_CONFIG.BASE_URL}/api/orchestration/query`;
 
     try {
-        const token = await getAccessToken();
-
-        const response = await fetch(API_URL, {
+        const response = await apiStreamFetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 project_id: request.project_id,
                 query: request.query,
@@ -108,17 +102,8 @@ export async function triggerIncrementalSync(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/sync`;
 
     try {
-        const token = await getAccessToken();
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sync_type: 'incremental',
-            }),
+        const response = await apiPost(API_URL, {
+            sync_type: 'incremental',
         });
 
         if (!response.ok) {
@@ -151,14 +136,7 @@ export async function getSyncStatus(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/status`;
 
     try {
-        const token = await getAccessToken();
-
-        const response = await fetch(API_URL, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        const response = await apiGet(API_URL);
 
         if (!response.ok) {
             return null;

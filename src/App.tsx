@@ -16,6 +16,7 @@ import JiraGenerationPage from "./pages/JiraGenerationPage";
 import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
+import TestingPage from "./pages/TestingPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -99,6 +100,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <TestScenarioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/testing"
+                  element={
+                    <ProtectedRoute>
+                      <TestingPage />
                     </ProtectedRoute>
                   }
                 />

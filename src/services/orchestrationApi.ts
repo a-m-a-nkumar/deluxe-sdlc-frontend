@@ -144,6 +144,8 @@ export async function triggerIncrementalSync(projectId: string): Promise<{
  * Get sync status for a project
  */
 export async function getSyncStatus(projectId: string): Promise<{
+    is_syncing: boolean;
+    sync_message: string;
     confluence_pages: number;
     jira_issues: number;
     total_embeddings: number;

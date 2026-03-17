@@ -73,10 +73,10 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     const { selectedProject } = useAppState();
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
-    const apiUrl = API_CONFIG.BASE_URL || "http://localhost:8000";
-    const apiKey = "<YOUR_API_KEY>";
+    const apiUrl = "https://sdlc-dev.deluxe.com";
+    const apiKey = "dev-key-aman";
 
-    const githubRepo = "https://github.com/arushsingh17/mcp.git";
+    const githubRepo = "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
 
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(
@@ -364,17 +364,17 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                     },
                                     {
                                         key: "API_URL",
-                                        required: false,
+                                        required: true,
                                         value: apiUrl,
-                                        desc: "The base URL of your SiriusAI backend. Defaults to http://localhost:8000 if not set.",
-                                        highlight: false,
+                                        desc: "The base URL of the deployed SDLC backend.",
+                                        highlight: true,
                                     },
                                     {
                                         key: "API_KEY",
                                         required: true,
-                                        value: "<YOUR_API_KEY>",
+                                        value: apiKey,
                                         desc: "Your API key for authenticating requests to the backend.",
-                                        highlight: false,
+                                        highlight: true,
                                     },
                                 ].map((row, i) => (
                                     <tr key={row.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>

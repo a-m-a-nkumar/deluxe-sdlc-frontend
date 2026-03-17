@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, RefreshCw } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { streamOrchestrationQuery, triggerIncrementalSync, type Source } from "@/services/orchestrationApi";
+import { streamOrchestrationQuery, triggerIncrementalSync, getSyncStatus, type Source } from "@/services/orchestrationApi";
 import { toast } from "sonner";
 import { useAppState } from "@/contexts/AppStateContext";
 
@@ -18,7 +18,7 @@ interface Message {
 }
 
 export const OrchestrationChat = () => {
-    const { selectedProject } = useAppState();
+    const { selectedProject, isSyncInProgress, setIsSyncInProgress, syncMessage, setSyncMessage } = useAppState();
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
@@ -34,6 +34,47 @@ export const OrchestrationChat = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Poll sync status when a project is selected
+    const pollSyncStatus = useCallback(async () => {
+        if (!selectedProject?.id) return;
+        try {
+            const status = await getSyncStatus(selectedProject.id);
+            if (status) {
+                setIsSyncInProgress(status.is_syncing);
+                setSyncMessage(status.sync_message || "");
+            }
+        } catch {
+            // Silently ignore polling errors
+        }
+    }, [selectedProject?.id, setIsSyncInProgress, setSyncMessage]);
+
+    // Start/stop polling based on project selection
+    useEffect(() => {
+        // Clear any existing interval
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+
+        if (selectedProject?.id) {
+            // Poll immediately on project select
+            pollSyncStatus();
+            // Then poll every 5 seconds
+            pollIntervalRef.current = setInterval(pollSyncStatus, 5000);
+        } else {
+            setIsSyncInProgress(false);
+            setSyncMessage("");
+        }
+
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+    }, [selectedProject?.id, pollSyncStatus, setIsSyncInProgress, setSyncMessage]);
 
     // Auto scroll to bottom
     useEffect(() => {
@@ -259,14 +300,25 @@ export const OrchestrationChat = () => {
                     </div>
                 </div>
 
+                {isSyncInProgress && (
+                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                        <span className="truncate">
+                            {syncMessage || "Syncing your knowledge base..."}
+                        </span>
+                    </div>
+                )}
+
                 <div className="flex gap-2">
                     <Input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={
-                            selectedProject
-                                ? "Ask about your project documentation..."
-                                : "Select a project to start..."
+                            isSyncInProgress
+                                ? "Knowledge base is syncing — you can still ask questions..."
+                                : selectedProject
+                                    ? "Ask about your project documentation..."
+                                    : "Select a project to start..."
                         }
                         onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         disabled={isLoading || !selectedProject}

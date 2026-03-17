@@ -209,7 +209,7 @@ export const ConfluenceDashboard = () => {
                       fontSize: '14px',
                       fontWeight: 'normal'
                     }}
-                    onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
+                    onClick={() => pageDetails && window.open(`https://deluxe.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                     disabled={!pageDetails}
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -317,7 +317,7 @@ export const ConfluenceDashboard = () => {
                       <Button
                         variant="outline"
                         className="mt-4"
-                        onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
+                        onClick={() => pageDetails && window.open(`https://deluxe.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                       >
                         View in Confluence
                       </Button>

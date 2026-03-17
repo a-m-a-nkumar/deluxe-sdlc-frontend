@@ -54,7 +54,7 @@ interface CreateProjectModalProps {
   onOpenChange: (open: boolean) => void;
   projects: Project[];
   isLoadingProjects: boolean;
-  onProjectCreated?: () => void;
+  onProjectCreated?: (project: Project) => void;
   onProjectSelected?: (projectId: string) => void;
 }
 
@@ -89,14 +89,14 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
   const createProjectMutation = useMutation({
     mutationFn: createProject,
-    onSuccess: () => {
+    onSuccess: (newProject) => {
       toast({
         title: "Success",
         description: "Project created successfully!",
       });
       form.reset();
       onOpenChange(false);
-      onProjectCreated?.();
+      onProjectCreated?.(newProject);
     },
     onError: (error) => {
       toast({
@@ -258,8 +258,19 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!createProjectMutation.isPending) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-[400px] bg-white border border-border p-0 overflow-hidden">
+        {/* Loading overlay while project is being created */}
+        {createProjectMutation.isPending && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-lg">
+            <Loader2 className="h-10 w-10 animate-spin text-red-600 mb-4" />
+            <p className="text-lg font-semibold text-gray-800">Creating your project...</p>
+            <p className="text-sm text-gray-500 mt-2 text-center px-6">
+              Setting up integrations and syncing your knowledge base. This may take a moment.
+            </p>
+          </div>
+        )}
+
         <div className="p-4 border-b bg-muted/30">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
             <FolderKanban className="w-5 h-5 text-red-600" />

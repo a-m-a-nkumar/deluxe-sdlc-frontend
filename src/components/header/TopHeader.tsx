@@ -105,9 +105,13 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
     }
   };
 
-  // Callback to refresh data after mutations
-  const handleProjectCreated = () => {
+  // Callback to refresh data and auto-select newly created project
+  const handleProjectCreated = (newProject?: import("@/services/projectApi").Project) => {
     queryClient.invalidateQueries({ queryKey: ["projects"] });
+    if (newProject) {
+      setSelectedProject(newProject);
+      navigate("/");
+    }
   };
 
   const handleLinkSuccess = () => {
@@ -142,14 +146,12 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
             </Button>
           )}
 
-          <Select defaultValue="model">
-            <SelectTrigger className="w-24 sm:w-32" style={{ backgroundColor: '#fff' }}>
-              <SelectValue placeholder="Model" />
+          <Select value="claude-sonnet-4.5">
+            <SelectTrigger className="w-36 sm:w-44" style={{ backgroundColor: '#fff' }}>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="model">Model</SelectItem>
-              <SelectItem value="gpt-4">GPT-4</SelectItem>
-              <SelectItem value="claude">Claude</SelectItem>
+              <SelectItem value="claude-sonnet-4.5">Claude Sonnet 4.5</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -68,6 +68,10 @@ interface AppStateContextType {
   setIsCreatingJiraStory: (creating: boolean) => void;
   newlyCreatedJiraIssueId: string | null;
   setNewlyCreatedJiraIssueId: (issueId: string | null) => void;
+  isSyncInProgress: boolean;
+  setIsSyncInProgress: (syncing: boolean) => void;
+  syncMessage: string;
+  setSyncMessage: (message: string) => void;
 }
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -93,6 +97,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   const [activeConfluencePageId, setActiveConfluencePageId] = useState<string | null>(null);
   const [isCreatingJiraStory, setIsCreatingJiraStory] = useState(false);
   const [newlyCreatedJiraIssueId, setNewlyCreatedJiraIssueId] = useState<string | null>(null);
+  const [isSyncInProgress, setIsSyncInProgress] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
 
   const setChatMessages = (view: keyof AppStateContextType["chatMessages"], messages: ChatMessageType[]) => {
     setChatMessagesState(prev => ({
@@ -141,6 +147,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         setIsCreatingJiraStory,
         newlyCreatedJiraIssueId,
         setNewlyCreatedJiraIssueId,
+        isSyncInProgress,
+        setIsSyncInProgress,
+        syncMessage,
+        setSyncMessage,
       }}
     >
       {children}

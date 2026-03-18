@@ -248,13 +248,7 @@ export const ChatInterface = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col min-h-0">
-        <div
-          className="flex-1 mb-4 overflow-y-auto max-h-full pr-2"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#cbd5e1 transparent",
-          }}
-        >
+        <div className="flex-1 mb-4 overflow-y-auto max-h-full pr-2 scrollbar-thin-muted">
           {isRestoringChat ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
               <div className="w-6 h-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -285,8 +279,7 @@ export const ChatInterface = ({
             placeholder={disabled ? "Upload files to enable chat..." : placeholder}
             onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             disabled={isLoading || disabled}
-            className="flex-1"
-            style={{ backgroundColor: "#fff" }}
+            className="flex-1 bg-white"
           />
           <Button
             onClick={handleSend}

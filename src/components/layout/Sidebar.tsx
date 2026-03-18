@@ -73,7 +73,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   return (
     <div className={`${isMobile ? 'w-60' : (collapsed ? 'w-16' : 'w-60')} h-full bg-sidebar-bg border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden`}>
       {/* Header */}
-      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'rgba(230, 12, 35, 0.06)' }}>
+      <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0 bg-primary-soft">
         <Link
           to="/"
           className="flex items-center gap-2 px-4 hover:opacity-80 transition-opacity"
@@ -153,13 +153,13 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                     <Button
                       variant="ghost"
                       className={`w-full justify-start h-auto p-3 text-left hover:bg-accent`}
-                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : {}}
+                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : undefined}
                     >
                       <div className="flex items-start gap-3 w-full">
                         <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div style={{ color: '#3B3B3B', fontSize: '14px', fontWeight: 'normal' }}>{item.label}</div>
-                          <div style={{ fontSize: '12px', color: '#858585', fontWeight: 'normal' }}>
+                          <div className="text-sm text-body-dark font-normal">{item.label}</div>
+                          <div className="text-xs font-normal text-icon-gray">
                             {item.description}
                           </div>
                         </div>
@@ -182,7 +182,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                     <Button
                       variant="ghost"
                       className={`w-full h-10 p-0 justify-center hover:bg-accent`}
-                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : {}}
+                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : undefined}
                       title={item.label}
                     >
                       <item.icon className="w-4 h-4" />
@@ -200,12 +200,11 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
             <Button
               key={item.label}
               variant="ghost"
-              className={`w-full justify-start ${collapsed ? 'p-3 h-10' : 'h-9 p-3'} hover:bg-accent`}
-              style={{ fontSize: '14px', color: '#3B3B3B', fontWeight: 'normal' }}
+              className={`w-full justify-start ${collapsed ? 'p-3 h-10' : 'h-9 p-3'} hover:bg-accent text-sm text-body-dark font-normal`}
               title={collapsed ? item.label : undefined}
             >
               <item.icon className={`w-4 h-4 ${(isMobile || !collapsed) ? 'mr-2' : ''}`} />
-              {(isMobile || !collapsed) && <span style={{ fontSize: '14px', color: '#3B3B3B', fontWeight: 'normal' }}>{item.label}</span>}
+              {(isMobile || !collapsed) && <span className="text-sm text-body-dark font-normal">{item.label}</span>}
             </Button>
           ))}
         </div>

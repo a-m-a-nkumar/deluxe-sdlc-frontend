@@ -303,7 +303,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
             <CardTitle className="text-base font-bold text-[hsl(var(--heading-primary))] break-words">
               Uploaded Files
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1" style={{ color: "#727272" }}>
+            <p className="text-sm mt-1 text-muted-label">
               {uploadedFiles.length} files ready to submit
             </p>
           </div>
@@ -352,7 +352,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
           {/* Current files being prepared */}
           {uploadedFiles.length === 0 && uploadedFileBatches.length === 0 ? (
             <div className="flex items-center justify-center h-24 sm:h-32 text-muted-foreground text-center">
-              <p className="text-sm" style={{ color: "#727272" }}>
+              <p className="text-sm text-muted-label">
                 No file selected.
               </p>
             </div>
@@ -448,7 +448,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
                   </>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground px-2" style={{ color: "#727272" }}>
+              <p className="text-xs px-2 text-muted-label">
                 Generate a BRD first, then upload it to your linked Confluence space
               </p>
             </div>

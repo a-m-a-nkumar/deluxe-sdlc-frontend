@@ -284,18 +284,18 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             <div className={`text-sm break-words whitespace-pre-wrap ${message.isBot ? 'text-foreground' : 'text-white [&_*]:text-white'}`}>
               {message.isLoading ? (
                 <span className="inline-flex gap-1 align-middle items-center h-4">
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0s' }} />
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.2s' }} />
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.4s' }} />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-0" />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-200" />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-400" />
                 </span>
               ) : (
                 <>
                   {formatChatContent(message.content)}
                   {message.isTyping && isTyping && (
                     <span className="inline-flex gap-1 ml-2 align-middle items-center h-4">
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0s' }} />
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.2s' }} />
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.4s' }} />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-0" />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-200" />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-400" />
                     </span>
                   )}
                 </>

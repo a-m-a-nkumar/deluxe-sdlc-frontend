@@ -5,7 +5,7 @@ import { useAppState } from "@/contexts/AppStateContext";
 export const DesignDashboard = () => {
   const { chatMessages, setChatMessages } = useAppState();
   return (
-    <div className="p-2 sm:p-4 md:p-6 lg:p-8" style={{ backgroundColor: '#fff' }}>
+    <div className="p-2 sm:p-4 md:p-6 lg:p-8 bg-white">
       <div className="mb-4 lg:mb-8">
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Design Assistant</h1>
         <p className="text-muted-foreground text-sm">Technical architecture planning and system design</p>

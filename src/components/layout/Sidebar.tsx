@@ -9,7 +9,8 @@ import {
   ArrowLeft,
   ChevronLeft,
   X,
-  Code2
+  Code2,
+  FlaskConical
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,13 @@ const navigationItems = [
     description: "MCP setup & IDE integration",
     id: "pair-programming",
     path: "/pair-programming",
+  },
+  {
+    icon: FlaskConical,
+    label: "Testing",
+    description: "Test scenarios & Katalon pipeline",
+    id: "testing",
+    path: "/testing",
   },
 ];
 

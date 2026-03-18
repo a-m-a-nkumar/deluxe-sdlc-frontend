@@ -16,6 +16,7 @@ export interface LinkAtlassianRequest {
 
 export interface AtlassianStatus {
     linked: boolean;
+    token_expired?: boolean;
     domain?: string;
     email?: string;
     linked_at?: number;

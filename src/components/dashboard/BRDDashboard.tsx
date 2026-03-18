@@ -288,10 +288,7 @@ export const BRDDashboard = ({
       </div>
     </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-stretch" style={{
-      scrollbarWidth: 'thin',
-      scrollbarColor: '#E6E6E6 transparent'
-    }}>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-stretch scrollbar-thin-muted">
       <div className="lg:col-span-3 order-1 lg:order-1">
         <BRDProgress
           selectedSection={selectedSection}

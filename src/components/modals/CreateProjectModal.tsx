@@ -321,7 +321,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               <ScrollArea className="h-[240px] w-full rounded-md border p-1">
                 {isLoadingProjects ? (
                   <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#D61120' }} />
+                    <Loader2 className="h-6 w-6 animate-spin text-primary-red" />
                   </div>
                 ) : filteredProjects.length === 0 ? (
                   <div className="text-center py-8 text-sm text-muted-foreground">
@@ -478,7 +478,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             <SelectContent className="bg-white">
                               {isLoadingTemplates ? (
                                 <div className="flex items-center justify-center py-6">
-                                  <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#D61120' }} />
+                                  <Loader2 className="h-5 w-5 animate-spin text-primary-red" />
                                 </div>
                               ) : brdTemplates.length > 0 ? (
                                 brdTemplates.map((template) => (
@@ -579,10 +579,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                           !selectedConfluenceSpace ||
                           selectedConfluenceSpace === 'none'
                         }
-                        className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90"
-                        style={{
-                          backgroundColor: '#D61120',
-                        }}
+                        className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90 bg-[#D61120]"
                       >
                         {createProjectMutation.isPending ? (
                           <div className="flex items-center gap-2">

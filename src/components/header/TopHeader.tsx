@@ -133,7 +133,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
         onProjectCreated={handleProjectCreated}
         onProjectSelected={handleProjectSelect}
       />
-      <div className="h-16 border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{ backgroundColor: '#fff' }}>
+      <div className="h-16 border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between bg-white">
         <div className="flex items-center gap-4">
           {isMobile && (
             <Button
@@ -147,7 +147,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
           )}
 
           <Select value="claude-sonnet-4.5">
-            <SelectTrigger className="w-36 sm:w-44" style={{ backgroundColor: '#fff' }}>
+            <SelectTrigger className="w-36 sm:w-44 bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -158,8 +158,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Button
-            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:opacity-90"
-            style={{ backgroundColor: '#E7E7E7', color: '#222' }}
+            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:opacity-90 bg-btn-gray hover:bg-gray-300 text-[#222]"
             onClick={() => setIsCreateModalOpen(true)}
           >
             <FolderKanban size={16} />

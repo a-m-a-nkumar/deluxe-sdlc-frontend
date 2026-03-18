@@ -631,13 +631,7 @@ const AnalystAgent = () => {
                 </CardHeader>
 
                 <CardContent className="flex-1 flex flex-col min-h-0 p-4">
-                  <div
-                    className="flex-1 mb-4 overflow-y-auto max-h-full pr-2"
-                    style={{
-                      scrollbarWidth: "thin",
-                      scrollbarColor: "#cbd5e1 transparent",
-                    }}
-                  >
+                  <div className="flex-1 mb-4 overflow-y-auto max-h-full pr-2 scrollbar-thin-muted">
                     {messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-muted-foreground">
                         <p className="text-sm">Start a conversation...</p>
@@ -673,8 +667,7 @@ const AnalystAgent = () => {
                         }
                       }}
                       disabled={isLoading}
-                      className="flex-1 min-h-[40px] max-h-[200px] resize-none"
-                      style={{ backgroundColor: "#fff" }}
+                      className="flex-1 min-h-[40px] max-h-[200px] resize-none bg-white"
                     />
                     <Button
                       onClick={handleSend}

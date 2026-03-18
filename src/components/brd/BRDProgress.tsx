@@ -199,13 +199,7 @@ export const BRDProgress = ({ selectedSection, onSectionChange, completedSection
                     </div>
                     {isBRDApproved && (
                       <div className="flex-shrink-0">
-                        <div
-                          className="px-2 py-1 rounded-md text-xs font-medium"
-                          style={{
-                            color: '#008236',
-                            backgroundColor: '#DBFCE7'
-                          }}
-                        >
+                        <div className="px-2 py-1 rounded-md text-xs font-medium badge-success">
                           Done
                         </div>
                       </div>
@@ -226,19 +220,13 @@ export const BRDProgress = ({ selectedSection, onSectionChange, completedSection
               >
                 <div className="flex-1">
                   <div className="font-medium text-sm">{section.title}</div>
-                  <div className="text-xs" style={{color: '#727272'}}>
+                  <div className="text-xs text-muted-label">
                     {section.description}
                   </div>
                 </div>
                 {completedSections.includes(section.title) && (
                   <div className="flex-shrink-0">
-                    <div 
-                      className="px-2 py-1 rounded-md text-xs font-medium"
-                      style={{ 
-                        color: '#008236', 
-                        backgroundColor: '#DBFCE7' 
-                      }}
-                    >
+                    <div className="px-2 py-1 rounded-md text-xs font-medium badge-success">
                       Done
                     </div>
                   </div>

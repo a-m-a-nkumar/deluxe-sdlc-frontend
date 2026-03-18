@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import pako from "pako";
 import { RefreshCw, FileText, CheckSquare, Square, Wand2, Code2, Download, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppState } from "@/contexts/AppStateContext";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage } from "@/services/confluenceApi";
 import { generateArchitecturePrompt, generateDrawioXML } from "@/services/designApi";
+
+function encodeXmlForDrawioViewer(xml: string): string {
+  const data = new TextEncoder().encode(xml);
+  const compressed = pako.deflateRaw(data);
+  let binary = "";
+  compressed.forEach((byte) => (binary += String.fromCharCode(byte)));
+  return encodeURIComponent(btoa(binary));
+}
 
 export const DesignDashboard = () => {
   const { accessToken } = useAuth();
@@ -30,7 +39,10 @@ export const DesignDashboard = () => {
   // Step 3 — draw.io XML
   const [generatedXML, setGeneratedXML] = useState("");
   const [isGeneratingXML, setIsGeneratingXML] = useState(false);
-  const [showXMLPreview, setShowXMLPreview] = useState(false);
+
+  // Card collapse state
+  const [showPromptCard, setShowPromptCard] = useState(true);
+  const [showXMLCard, setShowXMLCard] = useState(true);
 
   const filteredPages = pages.filter((p) =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -122,10 +134,16 @@ export const DesignDashboard = () => {
     try {
       const xml = await generateDrawioXML(generatedPrompt);
       setGeneratedXML(xml);
-      setShowXMLPreview(true);
       toast({ title: "XML generated", description: "draw.io XML is ready to download." });
     } catch (error: any) {
-      toast({ title: "XML generation failed", description: error.message, variant: "destructive" });
+      const isTimeout = /timeout|timed out/i.test(error.message);
+      toast({
+        title: isTimeout ? "Generation timed out" : "XML generation failed",
+        description: isTimeout
+          ? "The AI model took too long to respond. Please try again."
+          : error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsGeneratingXML(false);
     }
@@ -145,14 +163,14 @@ export const DesignDashboard = () => {
   };
 
   return (
-    <div className="p-2 sm:p-4 md:p-6 lg:p-8" style={{ backgroundColor: "#fff" }}>
+    <div className="flex-1 flex flex-col min-h-0 p-2 sm:p-4 md:p-6 lg:p-8" style={{ backgroundColor: "#fff" }}>
       {/* Header */}
       <div className="mb-4 lg:mb-6">
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-1">Design Assistant</h1>
         <p className="text-muted-foreground text-sm">Generate architecture diagrams from Confluence documentation</p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
+      <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-5 gap-4 sm:gap-6">
         {/* ── Left Panel: Confluence Page Selector ── */}
         <div className="xl:col-span-2">
           <Card className="flex flex-col h-full">
@@ -302,28 +320,41 @@ export const DesignDashboard = () => {
         </div>
 
         {/* ── Right Panel: Prompt + XML ── */}
-        <div className="xl:col-span-3 flex flex-col gap-4">
+        <div className="xl:col-span-3 flex flex-col gap-4 min-h-0">
           {/* Enhanced Prompt Card */}
-          <Card>
+          <Card className={showPromptCard ? "flex-1 flex flex-col min-h-0" : ""}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold">Enhanced Architecture Prompt</CardTitle>
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                  Lucid Chart
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                    Lucid Chart
+                  </span>
+                  <button
+                    onClick={() => setShowPromptCard((v) => !v)}
+                    className="p-0.5 rounded hover:bg-muted/60 transition-colors"
+                    title={showPromptCard ? "Collapse" : "Expand"}
+                  >
+                    {showPromptCard ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Edit the prompt before using it in Lucid Chart or generating a draw.io XML file
-              </p>
+              {showPromptCard && (
+                <p className="text-xs text-muted-foreground">
+                  Edit the prompt before using it in Lucid Chart or generating a draw.io XML file
+                </p>
+              )}
             </CardHeader>
-            <CardContent>
-              <Textarea
-                value={generatedPrompt}
-                onChange={(e) => setGeneratedPrompt(e.target.value)}
-                placeholder="Select Confluence pages on the left and click 'Generate Architecture Prompt' to create an AI-enhanced prompt for your architecture diagram..."
-                className="min-h-[200px] text-sm font-mono resize-none"
-              />
-            </CardContent>
+            {showPromptCard && (
+              <CardContent className="flex-1 flex flex-col min-h-0">
+                <Textarea
+                  value={generatedPrompt}
+                  onChange={(e) => setGeneratedPrompt(e.target.value)}
+                  placeholder="Select Confluence pages on the left and click 'Generate Architecture Prompt' to create an AI-enhanced prompt for your architecture diagram..."
+                  className="flex-1 min-h-0 text-sm font-mono resize-none"
+                />
+              </CardContent>
+            )}
           </Card>
 
           {/* draw.io XML Card */}
@@ -331,68 +362,71 @@ export const DesignDashboard = () => {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-bold">draw.io XML Export</CardTitle>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                  draw.io
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Generate an importable XML diagram file from your finalised prompt
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 border-[#8C8C8C] bg-white hover:bg-gray-50"
-                  onClick={handleGenerateXML}
-                  disabled={!generatedPrompt.trim() || isGeneratingXML}
-                >
-                  {isGeneratingXML ? (
-                    <>
-                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
-                      Generating XML...
-                    </>
-                  ) : (
-                    <>
-                      <Code2 className="w-4 h-4 mr-2" />
-                      Generate draw.io XML
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={handleDownloadXML}
-                  disabled={!generatedXML}
-                  className="flex-shrink-0"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download XML
-                </Button>
-              </div>
-
-              {/* XML Preview (collapsible) */}
-              {generatedXML && (
-                <div className="border border-border rounded-md overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                    draw.io
+                  </span>
                   <button
-                    onClick={() => setShowXMLPreview((v) => !v)}
-                    className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium bg-muted/40 hover:bg-muted/70 transition-colors"
+                    onClick={() => setShowXMLCard((v) => !v)}
+                    className="p-0.5 rounded hover:bg-muted/60 transition-colors"
+                    title={showXMLCard ? "Collapse" : "Expand"}
                   >
-                    <span>XML Preview</span>
-                    {showXMLPreview ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
+                    {showXMLCard ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
-                  {showXMLPreview && (
-                    <pre className="p-3 text-xs overflow-x-auto max-h-52 bg-gray-50 text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {generatedXML}
-                    </pre>
-                  )}
                 </div>
+              </div>
+              {showXMLCard && (
+                <p className="text-xs text-muted-foreground">
+                  Generate an importable XML diagram file from your finalised prompt
+                </p>
               )}
-            </CardContent>
+            </CardHeader>
+            {showXMLCard && (
+              <CardContent className="space-y-3">
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-[#8C8C8C] bg-white hover:bg-gray-50"
+                    onClick={handleGenerateXML}
+                    disabled={!generatedPrompt.trim() || isGeneratingXML}
+                  >
+                    {isGeneratingXML ? (
+                      <>
+                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 flex-shrink-0" />
+                        Generating XML...
+                      </>
+                    ) : (
+                      <>
+                        <Code2 className="w-4 h-4 mr-2" />
+                        Generate draw.io XML
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleDownloadXML}
+                    disabled={!generatedXML}
+                    className="flex-shrink-0"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download XML
+                  </Button>
+                </div>
+
+                {/* Diagram Preview */}
+                {generatedXML && (
+                  <div className="border border-border rounded-md overflow-hidden">
+                    <iframe
+                      src={`https://viewer.diagrams.net/?lightbox=0&highlight=0000ff&edit=_blank&layers=1&nav=1#R${encodeXmlForDrawioViewer(generatedXML)}`}
+                      className="w-full border-0"
+                      style={{ height: "480px" }}
+                      title="Architecture Diagram Preview"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            )}
           </Card>
         </div>
       </div>

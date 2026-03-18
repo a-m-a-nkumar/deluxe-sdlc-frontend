@@ -19,6 +19,13 @@ const TestScenarioPage = () => {
   const [content, setContent] = useState('');
   const [pageTitle, setPageTitle] = useState('');
   const [pushedPageUrl, setPushedPageUrl] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!isGenerating) { setElapsedSeconds(0); return; }
+    const interval = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   useEffect(() => {
     if (!confluencePageId || !selectedProject || !accessToken) {
@@ -150,7 +157,11 @@ const TestScenarioPage = () => {
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-[#1B3C71]" />
             <p className="text-gray-500 text-sm">Generating test scenarios from BRD...</p>
-            <p className="text-gray-400 text-xs">This may take a minute</p>
+            <p className="text-gray-400 text-xs">
+              {elapsedSeconds < 120
+                ? 'Please wait 1–2 minutes while we analyse your BRD.'
+                : 'Large BRD detected — this is taking longer than usual, please wait...'}
+            </p>
           </div>
         ) : (
           <textarea

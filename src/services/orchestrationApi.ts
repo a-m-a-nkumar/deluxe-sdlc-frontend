@@ -44,7 +44,7 @@ export async function* streamOrchestrationQuery(
             body: JSON.stringify({
                 project_id: request.project_id,
                 query: request.query,
-                max_chunks: request.max_chunks || 10,
+                max_chunks: request.max_chunks || 5,
                 source_filter: request.source_filter || null,
                 include_context: request.include_context !== false,
             }),

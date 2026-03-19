@@ -59,10 +59,14 @@ export const OrchestrationChat = () => {
         }
 
         if (selectedProject?.id) {
-            // Poll immediately on project select
+            // Poll once on project select to get initial status
             pollSyncStatus();
-            // Then poll every 5 seconds
-            pollIntervalRef.current = setInterval(pollSyncStatus, 5000);
+            // Only poll every 5s while a sync is actively running
+            pollIntervalRef.current = setInterval(() => {
+                if (isSyncInProgress || isSyncing) {
+                    pollSyncStatus();
+                }
+            }, 5000);
         } else {
             setIsSyncInProgress(false);
             setSyncMessage("");
@@ -74,7 +78,7 @@ export const OrchestrationChat = () => {
                 pollIntervalRef.current = null;
             }
         };
-    }, [selectedProject?.id, pollSyncStatus, setIsSyncInProgress, setSyncMessage]);
+    }, [selectedProject?.id, pollSyncStatus, isSyncInProgress, isSyncing, setIsSyncInProgress, setSyncMessage]);
 
     // Auto scroll to bottom
     useEffect(() => {

@@ -65,8 +65,15 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
   const isAtlassianLinked = atlassianStatus?.linked || false;
 
   const handleLogout = () => {
-    // Clear cache on logout
+    // Clear cache and app state on logout
     queryClient.clear();
+    setSelectedProject(null);
+    // Clear localStorage session data from previous account
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith("chatbot_session_id") || key.startsWith("analyst_")) {
+        localStorage.removeItem(key);
+      }
+    });
     logout();
     navigate("/login");
     toast({

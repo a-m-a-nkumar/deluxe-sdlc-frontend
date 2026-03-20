@@ -3,11 +3,13 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Sparkles, Send, FileText, Menu } from "lucide-react";
+import { Sparkles, Send, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { streamAnalystMessage, AnalystSessionManager, ChatSession, StoredMessage } from "@/services/analystApi";
 import { toast } from "sonner";
 import { downloadBRD } from "@/services/projectApi";
+import { getEffectiveToken } from "@/services/authService";
+import { API_CONFIG } from "@/config/api";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { SessionSidebar } from "@/components/analyst/SessionSidebar";
 import { useAppState } from "@/contexts/AppStateContext";
@@ -54,6 +56,7 @@ const AnalystAgent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isGeneratingBRD, setIsGeneratingBRD] = useState(false);
+  const [isPushingToConfluence, setIsPushingToConfluence] = useState(false);
   const [brdId, setBrdId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -527,6 +530,56 @@ const AnalystAgent = () => {
     }
   };
 
+  const handlePushToConfluence = async () => {
+    if (!brdId) {
+      toast.error("No BRD available. Please generate a BRD first.");
+      return;
+    }
+    if (!selectedProject?.project_id) {
+      toast.error("No project selected.");
+      return;
+    }
+
+    setIsPushingToConfluence(true);
+    try {
+      const token = await getEffectiveToken();
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/integrations/confluence/upload-brd`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          brd_id: brdId,
+          project_id: selectedProject.project_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(err.detail || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const pageUrl = data.confluence_page?.web_url;
+
+      toast.success("BRD pushed to Confluence successfully!");
+
+      const successMessage: ChatMessageType = {
+        id: `confluence-${Date.now()}`,
+        content: `BRD published to Confluence!\n\n${pageUrl ? `[View page](${pageUrl})` : "Check your Confluence space for the new page."}`,
+        isBot: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error: any) {
+      console.error("Push to Confluence error:", error);
+      toast.error(error.message || "Failed to push BRD to Confluence.");
+    } finally {
+      setIsPushingToConfluence(false);
+    }
+  };
+
   const handleBack = () => {
     navigate("/");
   };
@@ -548,6 +601,12 @@ const AnalystAgent = () => {
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             isLoading={isSessionsLoading}
+            brdId={brdId}
+            isGeneratingBRD={isGeneratingBRD}
+            onGenerateBRD={handleGenerateBRD}
+            onDownloadBRD={handleDownloadBRD}
+            onPushToConfluence={handlePushToConfluence}
+            isPushingToConfluence={isPushingToConfluence}
           />
         </div>
 
@@ -563,6 +622,12 @@ const AnalystAgent = () => {
                 onDeleteSession={handleDeleteSession}
                 onRenameSession={handleRenameSession}
                 isLoading={isSessionsLoading}
+                brdId={brdId}
+                isGeneratingBRD={isGeneratingBRD}
+                onGenerateBRD={handleGenerateBRD}
+                onDownloadBRD={handleDownloadBRD}
+                onPushToConfluence={handlePushToConfluence}
+                isPushingToConfluence={isPushingToConfluence}
               />
             </div>
           </div>
@@ -587,33 +652,6 @@ const AnalystAgent = () => {
 
                   <Sparkles className="w-5 h-5 text-primary" />
                   <h1 className="text-xl font-bold sm:text-2xl">Business Analyst Agent</h1>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={handleGenerateBRD}
-                    disabled={isGeneratingBRD || !currentSessionId}
-                    className="flex items-center gap-2"
-                    variant="outline"
-                    size="sm"
-                  >
-                    {isGeneratingBRD ? (
-                      <>
-                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        <span className="hidden sm:inline">Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FileText className="w-4 h-4" />
-                        <span className="hidden sm:inline">Generate BRD</span>
-                      </>
-                    )}
-                  </Button>
-                  {brdId && (
-                    <Button onClick={handleDownloadBRD} className="flex items-center gap-2" size="sm">
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline">Download</span>
-                    </Button>
-                  )}
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">

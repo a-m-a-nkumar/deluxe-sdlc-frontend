@@ -254,49 +254,68 @@ export const OrchestrationChat = () => {
                         {messages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`flex ${message.isBot ? "justify-start" : "justify-end"}`}
+                                className={`flex ${message.isBot ? "justify-start" : "justify-end"} mb-4`}
                             >
-                                <div
-                                    className={`max-w-[80%] rounded-lg p-3 ${message.isBot
-                                        ? "bg-muted"
-                                        : "bg-primary text-primary-foreground"
-                                        }`}
-                                >
-                                    {message.isLoading ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-100" />
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-200" />
-                                        </div>
+                                <div className={`flex ${message.isBot ? "flex-row" : "flex-row-reverse"} items-start gap-2 max-w-[80%]`}>
+                                    {message.isBot ? (
+                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: '#FBE7E9' }}>
+                                            <AvatarFallback style={{ backgroundColor: '#FBE7E9', color: '#D61120' }} className="text-xs font-semibold">
+                                                AI
+                                            </AvatarFallback>
+                                        </Avatar>
                                     ) : (
-                                        <>
-                                            <div className="text-sm whitespace-pre-wrap">
-                                                {message.content}
-                                            </div>
-                                            {message.sources && message.sources.length > 0 && (
-                                                <div className="mt-3 pt-3 border-t border-border/50">
-                                                    <p className="text-xs font-semibold mb-2">Sources:</p>
-                                                    <div className="space-y-1">
-                                                        {message.sources.map((source, idx) => (
-                                                            <a
-                                                                key={idx}
-                                                                href={source.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="block text-xs hover:underline text-blue-600 dark:text-blue-400"
-                                                            >
-                                                                [{source.type}] {source.title} (
-                                                                {(source.similarity * 100).toFixed(0)}% match)
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
+                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0 bg-muted">
+                                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                                                You
+                                            </AvatarFallback>
+                                        </Avatar>
                                     )}
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        {message.timestamp}
-                                    </p>
+                                    <div className="space-y-1">
+                                        <div className={`text-xs text-muted-foreground px-1 ${message.isBot ? "text-left" : "text-right"}`}>
+                                            {message.isBot ? "RAG Assistant" : "You"} &nbsp; {message.timestamp}
+                                        </div>
+                                        <div
+                                            className={`px-4 py-3 rounded-2xl ${message.isBot ? "rounded-bl-md" : "rounded-br-md"}`}
+                                            style={message.isBot
+                                                ? { backgroundColor: '#F0F0F0', color: '#1a1a1a' }
+                                                : { backgroundColor: '#1a1a2e', color: '#ffffff' }
+                                            }
+                                        >
+                                            {message.isLoading ? (
+                                                <span className="inline-flex gap-1 align-middle items-center h-4">
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <div className="text-sm whitespace-pre-wrap break-words">
+                                                        {message.content}
+                                                    </div>
+                                                    {message.sources && message.sources.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-border/50">
+                                                            <p className="text-xs font-semibold mb-2">Sources:</p>
+                                                            <div className="space-y-1">
+                                                                {message.sources.map((source, idx) => (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={source.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="block text-xs hover:underline"
+                                                                        style={{ color: message.isBot ? '#2563eb' : '#93c5fd' }}
+                                                                    >
+                                                                        [{source.type}] {source.title} (
+                                                                        {(source.similarity * 100).toFixed(0)}% match)
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}

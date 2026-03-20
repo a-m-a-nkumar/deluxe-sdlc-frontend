@@ -11,16 +11,11 @@ import {
     FileText,
     ChevronLeft,
     ChevronRight,
-    MoreHorizontal
+    Download,
+    Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession } from "@/services/analystApi";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface SessionSidebarProps {
     sessions: ChatSession[];
@@ -32,6 +27,13 @@ interface SessionSidebarProps {
     isCollapsed?: boolean;
     onToggleCollapse?: () => void;
     isLoading?: boolean;
+    // BRD action props
+    brdId?: string | null;
+    isGeneratingBRD?: boolean;
+    onGenerateBRD?: () => void;
+    onDownloadBRD?: () => void;
+    onPushToConfluence?: () => void;
+    isPushingToConfluence?: boolean;
 }
 
 export const SessionSidebar = ({
@@ -44,6 +46,12 @@ export const SessionSidebar = ({
     isCollapsed = false,
     onToggleCollapse,
     isLoading = false,
+    brdId,
+    isGeneratingBRD = false,
+    onGenerateBRD,
+    onDownloadBRD,
+    onPushToConfluence,
+    isPushingToConfluence = false,
 }: SessionSidebarProps) => {
     const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
@@ -171,24 +179,23 @@ export const SessionSidebar = ({
                 </div>
                 <Button
                     onClick={onNewSession}
-                    className="w-full flex items-center gap-2"
-                    size="sm"
+                    className="w-full flex items-center gap-2 text-white hover:opacity-90"
+                    style={{ backgroundColor: '#D61120', padding: '20px 16px' }}
                 >
                     <Plus className="w-4 h-4" />
                     New Chat
                 </Button>
             </div>
 
-            {/* Sessions List */}
-            <ScrollArea className="flex-1">
+            {/* Sessions List - Scrollable */}
+            <ScrollArea className="flex-1 min-h-0">
                 <div className="p-2">
                     {isLoading ? (
                         <div className="space-y-4 p-2">
-                            {/* Skeleton Loader */}
                             {Array.from({ length: 4 }).map((_, i) => (
                                 <div key={i} className="flex flex-col gap-2">
-                                    <div className="h-4 w-16 bg-muted rounded animate-pulse" /> {/* Date label */}
-                                    <div className="h-14 w-full bg-muted rounded-md animate-pulse" /> {/* Card */}
+                                    <div className="h-4 w-16 bg-muted rounded animate-pulse" />
+                                    <div className="h-14 w-full bg-muted rounded-md animate-pulse" />
                                 </div>
                             ))}
                         </div>
@@ -206,12 +213,7 @@ export const SessionSidebar = ({
                                     {dateSessions.map((session) => (
                                         <div
                                             key={session.id}
-                                            className={cn(
-                                                "group relative rounded-lg transition-colors",
-                                                currentSessionId === session.id
-                                                    ? "bg-accent"
-                                                    : "hover:bg-accent/50"
-                                            )}
+                                            className="group relative rounded-lg transition-colors"
                                         >
                                             {editingSessionId === session.id ? (
                                                 <div className="flex items-center gap-1 p-2">
@@ -249,35 +251,42 @@ export const SessionSidebar = ({
                                                     </Button>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 p-2 rounded-md hover:bg-accent/50 group/session transition-colors">
+                                                <div
+                                                    className="flex items-center gap-2 rounded-md group/session transition-colors overflow-hidden"
+                                                    style={{ backgroundColor: currentSessionId === session.id ? '#FDEDEF' : '#f6f6f6', padding: '16px' }}
+                                                    onMouseEnter={e => { if (currentSessionId !== session.id) e.currentTarget.style.backgroundColor = '#eeeeee'; }}
+                                                    onMouseLeave={e => { if (currentSessionId !== session.id) e.currentTarget.style.backgroundColor = '#f6f6f6'; }}
+                                                >
                                                     <div
                                                         onClick={() => onSelectSession(session.id)}
                                                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                                                     >
-                                                        <MessageSquare className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+                                                        <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: '#6b7280' }} />
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-sm font-medium truncate">
-                                                                {session.title}
+                                                            <div className="text-sm font-medium whitespace-nowrap" style={{ color: '#111827' }}>
+                                                                {session.title.length > 25 ? session.title.slice(0, 25) + '...' : session.title}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-1 flex-shrink-0 text-muted-foreground">
+                                                    <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover/session:opacity-100 transition-opacity">
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 hover:text-foreground"
+                                                            className="h-7 w-7 hover:text-foreground"
+                                                            style={{ color: '#6b7280' }}
                                                             title="Rename"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleStartEdit(session);
                                                             }}
                                                         >
-                                                            <Edit2 className="h-4 w-4" />
+                                                            <Edit2 className="h-3.5 w-3.5" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 hover:text-red-600"
+                                                            className="h-7 w-7 hover:text-red-600"
+                                                            style={{ color: '#6b7280' }}
                                                             title="Delete"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -286,7 +295,7 @@ export const SessionSidebar = ({
                                                                 }
                                                             }}
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Trash2 className="h-3.5 w-3.5" />
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -299,6 +308,64 @@ export const SessionSidebar = ({
                     )}
                 </div>
             </ScrollArea>
+
+            {/* BRD Action Buttons - Fixed at bottom */}
+            <div className="border-t p-3 space-y-2">
+                <div className="flex gap-2">
+                    <button
+                        onClick={onGenerateBRD}
+                        disabled={isGeneratingBRD || !currentSessionId}
+                        className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                        style={{ backgroundColor: '#FBE7E9', color: '#D61120', border: 'none', padding: '10px 16px' }}
+                        onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#F5CDD1'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FBE7E9'; }}
+                    >
+                        {isGeneratingBRD ? (
+                            <>
+                                <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <FileText className="w-4 h-4" />
+                                Generate BRD
+                            </>
+                        )}
+                    </button>
+                    {brdId && (
+                        <button
+                            onClick={onDownloadBRD}
+                            className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors"
+                            style={{ backgroundColor: '#FBE7E9', color: '#D61120', border: 'none', padding: '10px 16px' }}
+                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5CDD1'; }}
+                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FBE7E9'; }}
+                        >
+                            <Download className="w-4 h-4" />
+                            Download BRD
+                        </button>
+                    )}
+                </div>
+                {brdId && (
+                    <Button
+                        onClick={onPushToConfluence}
+                        disabled={isPushingToConfluence}
+                        className="w-full flex items-center justify-center gap-2 text-xs text-white hover:opacity-90"
+                        style={{ backgroundColor: '#D61120', padding: '20px 16px' }}
+                    >
+                        {isPushingToConfluence ? (
+                            <>
+                                <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                Pushing...
+                            </>
+                        ) : (
+                            <>
+                                <Upload className="w-4 h-4" />
+                                Push to Confluence
+                            </>
+                        )}
+                    </Button>
+                )}
+            </div>
         </div>
     );
 };

@@ -165,13 +165,15 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Button
-            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:opacity-90"
-            style={{ backgroundColor: '#E7E7E7', color: '#222' }}
+            variant="outline"
+            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:bg-accent"
+            style={{ backgroundColor: '#fff' }}
             onClick={() => setIsCreateModalOpen(true)}
           >
             <FolderKanban size={16} />
             <span className="hidden sm:inline">{selectedProject?.project_name || "Project Workspace"}</span>
             <span className="sm:hidden">{selectedProject?.project_name || "Workspace"}</span>
+            <ChevronDown size={14} className="text-muted-foreground" />
           </Button>
 
           {user && (
@@ -179,7 +181,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback style={{ backgroundColor: '#6b7280' }} className="text-white">
                       {getInitials(user.email)}
                     </AvatarFallback>
                   </Avatar>

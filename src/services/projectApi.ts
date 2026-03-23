@@ -194,7 +194,7 @@ export const uploadFiles = async (files: File[], projectId?: string | null): Pro
 
   // Step 1: Upload transcript to S3 via backend
   const uploadFormData = new FormData();
-  uploadFormData.append("transcript", transcript, transcript.name);
+  uploadFormData.append("transcripts", transcript, transcript.name);
 
   console.log("[UPLOAD] Uploading transcript to S3...");
   const uploadResponse = await apiPost(`${API_BASE_URL}/api/upload-transcript`, uploadFormData);

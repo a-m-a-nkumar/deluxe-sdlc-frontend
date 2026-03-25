@@ -37,6 +37,10 @@ export const JiraDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all-status");
   const [typeFilter, setTypeFilter] = useState("all-type");
+
+  // Derive unique statuses and types from actual data
+  const uniqueStatuses = Array.from(new Set(issues.map(i => i.status))).sort();
+  const uniqueTypes = Array.from(new Set(issues.map(i => i.type))).sort();
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { selectedProject, newlyCreatedJiraIssueId, setNewlyCreatedJiraIssueId } = useAppState();
@@ -181,26 +185,33 @@ export const JiraDashboard = () => {
       issue.id.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === "all-status" ||
-      issue.status.toLowerCase().replace(/[-\s]/g, '') === statusFilter.replace(/[-\s]/g, '');
+      issue.status === statusFilter;
 
     const matchesType = typeFilter === "all-type" ||
-      issue.type.toLowerCase() === typeFilter;
+      issue.type === typeFilter;
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  // Organize issues into hierarchical structure (Epics with child Stories)
+  // Organize issues into hierarchical structure (Epics with child issues)
   const organizedIssues = (() => {
     const epics: DisplayIssue[] = [];
-    const stories: DisplayIssue[] = [];
+    const childIssues: DisplayIssue[] = [];
     const orphans: DisplayIssue[] = [];
+
+    // Collect epic IDs present in the filtered set
+    const epicIds = new Set(
+      filteredIssues.filter(i => i.type.toLowerCase() === 'epic').map(i => i.id)
+    );
 
     filteredIssues.forEach(issue => {
       if (issue.type.toLowerCase() === 'epic') {
         epics.push(issue);
-      } else if (issue.parentKey) {
-        stories.push(issue);
+      } else if (issue.parentKey && epicIds.has(issue.parentKey)) {
+        // Only nest under parent if that parent epic is also in filtered results
+        childIssues.push(issue);
       } else {
+        // Show standalone: no parent, parent filtered out, or parent is not an epic
         orphans.push(issue);
       }
     });
@@ -210,11 +221,11 @@ export const JiraDashboard = () => {
 
     // Add epics with their children
     epics.forEach(epic => {
-      const children = stories.filter(story => story.parentKey === epic.id);
+      const children = childIssues.filter(child => child.parentKey === epic.id);
       hierarchical.push({ epic, children });
     });
 
-    // Add orphaned issues (no parent)
+    // Add standalone issues
     orphans.forEach(issue => {
       hierarchical.push({ issue });
     });
@@ -277,26 +288,25 @@ export const JiraDashboard = () => {
                 <div className="flex gap-2">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="flex-1 bg-white">
-                      <SelectValue placeholder="Status" />
+                      <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-status">All Status</SelectItem>
-                      <SelectItem value="inprogress">In Progress</SelectItem>
-                      <SelectItem value="todo">To-do</SelectItem>
-                      <SelectItem value="underreview">Under Review</SelectItem>
+                      {uniqueStatuses.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger className="flex-1 bg-white">
-                      <SelectValue placeholder="Type" />
+                      <SelectValue placeholder="All Type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all-type">All Type</SelectItem>
-                      <SelectItem value="story">Story</SelectItem>
-                      <SelectItem value="bug">Bug</SelectItem>
-                      <SelectItem value="task">Task</SelectItem>
-                      <SelectItem value="epic">Epic</SelectItem>
+                      {uniqueTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

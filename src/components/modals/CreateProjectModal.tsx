@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { FolderKanban, Loader2, Pencil, Trash2, X, Check as CheckIcon, Info, Link2, LayoutGrid, FileText } from "lucide-react";
+import { FolderKanban, Loader2, Pencil, Trash2, X, Check as CheckIcon, Info, Link2, LayoutGrid, FileText, ChevronsUpDown, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { createProject, updateProject, deleteProject, type CreateProjectRequest, type UpdateProjectRequest, getBRDTemplates, type BRDTemplate, type Project } from "@/services/projectApi";
 import { integrationsApi, type JiraProject, type ConfluenceSpace } from "@/services/integrationsApi";
@@ -78,6 +81,8 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   const [selectedJiraProject, setSelectedJiraProject] = useState("");
   const [selectedConfluenceSpace, setSelectedConfluenceSpace] = useState("");
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
+  const [jiraPopoverOpen, setJiraPopoverOpen] = useState(false);
+  const [confluencePopoverOpen, setConfluencePopoverOpen] = useState(false);
 
   const form = useForm<CreateProjectFormData>({
     resolver: zodResolver(createProjectSchema),
@@ -508,23 +513,51 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
                         {/* Jira Project Selector */}
                         <FormItem>
-                          <Select
-                            onValueChange={setSelectedJiraProject}
-                            value={selectedJiraProject}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedJiraProject || selectedJiraProject === 'none' ? 'border-red-300' : 'border-green-400'}`}>
-                                <SelectValue placeholder="Select Jira Project *" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white">
-                              {jiraProjects.map(project => (
-                                <SelectItem key={project.key} value={project.key} className="text-sm">
-                                  <span className="font-medium">{project.key}</span> - {project.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={jiraPopoverOpen} onOpenChange={setJiraPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={jiraPopoverOpen}
+                                className={cn(
+                                  "w-full justify-between h-10 bg-white font-normal",
+                                  !selectedJiraProject || selectedJiraProject === 'none' ? 'border-red-300' : 'border-green-400'
+                                )}
+                              >
+                                {selectedJiraProject
+                                  ? (() => {
+                                      const proj = jiraProjects.find(p => p.key === selectedJiraProject);
+                                      return proj ? `${proj.key} - ${proj.name}` : selectedJiraProject;
+                                    })()
+                                  : "Select Jira Project *"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search Jira projects..." />
+                                <CommandList>
+                                  <CommandEmpty>No project found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {jiraProjects.map(project => (
+                                      <CommandItem
+                                        key={project.key}
+                                        value={`${project.key} ${project.name}`}
+                                        onSelect={() => {
+                                          setSelectedJiraProject(project.key);
+                                          setJiraPopoverOpen(false);
+                                        }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", selectedJiraProject === project.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium">{project.key}</span>
+                                        <span className="ml-1 text-muted-foreground">- {project.name}</span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           {(!selectedJiraProject || selectedJiraProject === 'none') && (
                             <p className="text-xs text-red-500 mt-1">Jira project is required</p>
                           )}
@@ -532,23 +565,51 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
                         {/* Confluence Space Selector */}
                         <FormItem>
-                          <Select
-                            onValueChange={setSelectedConfluenceSpace}
-                            value={selectedConfluenceSpace}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-red-300' : 'border-green-400'}`}>
-                                <SelectValue placeholder="Select Confluence Space *" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white">
-                              {confluenceSpaces.map(space => (
-                                <SelectItem key={space.key} value={space.key} className="text-sm">
-                                  <span className="font-medium">{space.key}</span> - {space.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={confluencePopoverOpen} onOpenChange={setConfluencePopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={confluencePopoverOpen}
+                                className={cn(
+                                  "w-full justify-between h-10 bg-white font-normal",
+                                  !selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-red-300' : 'border-green-400'
+                                )}
+                              >
+                                {selectedConfluenceSpace
+                                  ? (() => {
+                                      const space = confluenceSpaces.find(s => s.key === selectedConfluenceSpace);
+                                      return space ? `${space.key} - ${space.name}` : selectedConfluenceSpace;
+                                    })()
+                                  : "Select Confluence Space *"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search Confluence spaces..." />
+                                <CommandList>
+                                  <CommandEmpty>No space found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {confluenceSpaces.map(space => (
+                                      <CommandItem
+                                        key={space.key}
+                                        value={`${space.key} ${space.name}`}
+                                        onSelect={() => {
+                                          setSelectedConfluenceSpace(space.key);
+                                          setConfluencePopoverOpen(false);
+                                        }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", selectedConfluenceSpace === space.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium">{space.key}</span>
+                                        <span className="ml-1 text-muted-foreground">- {space.name}</span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           {(!selectedConfluenceSpace || selectedConfluenceSpace === 'none') && (
                             <p className="text-xs text-red-500 mt-1">Confluence space is required</p>
                           )}

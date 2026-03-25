@@ -7,6 +7,22 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, ExternalLink, ArrowLeft } from 'lucide-react';
 
+/** Remove any trailing incomplete section — a ### or #### heading with no Expected Outcome after it. */
+const stripIncompleteScenario = (content: string): string => {
+  // Find the last occurrence of a scenario (####) or section (###) heading
+  const lastScenario = content.lastIndexOf('\n#### TS-');
+  const lastSection = content.lastIndexOf('\n### ');
+
+  const cutFrom = Math.max(lastScenario, lastSection);
+  if (cutFrom === -1) return content;
+
+  const tail = content.slice(cutFrom);
+  if (!tail.includes('**Expected Outcome:**')) {
+    return content.slice(0, cutFrom).trimEnd();
+  }
+  return content;
+};
+
 const TestScenarioPage = () => {
   const { confluencePageId } = useParams<{ confluencePageId: string }>();
   const navigate = useNavigate();
@@ -43,20 +59,50 @@ const TestScenarioPage = () => {
   const generateScenarios = async () => {
     if (!confluencePageId || !selectedProject || !accessToken) return;
     setIsGenerating(true);
+    setContent('');
     try {
-      const response = await testGenerationApi.generateFromConfluence(
-        confluencePageId,
-        selectedProject.project_id,
-        accessToken
-      );
-      setContent(response.content);
-      setPageTitle(`Test Scenarios - ${response.page_title}`);
-    } catch (error: any) {
-      toast({
-        title: 'Generation failed',
-        description: error.message,
-        variant: 'destructive',
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/test/generate-from-confluence-stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
+        body: JSON.stringify({ confluence_page_id: confluencePageId, project_id: selectedProject.project_id }),
       });
+
+      if (!response.ok || !response.body) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to start generation');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === 'title') {
+              setPageTitle(`Test Scenarios - ${data.page_title}`);
+              setIsGenerating(false);
+            } else if (data.type === 'chunk') {
+              setContent(prev => prev + data.text);
+            } else if (data.type === 'done') {
+              // Strip any trailing incomplete scenario
+              setContent(prev => stripIncompleteScenario(prev));
+            } else if (data.type === 'error') {
+              throw new Error(data.message);
+            }
+          } catch { /* skip malformed lines */ }
+        }
+      }
+    } catch (error: any) {
+      toast({ title: 'Generation failed', description: error.message, variant: 'destructive' });
     } finally {
       setIsGenerating(false);
     }

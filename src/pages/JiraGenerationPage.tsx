@@ -143,7 +143,7 @@ export const JiraGenerationPage = () => {
         if (!selectedProject.jira_project_key) {
             toast({
                 title: 'Jira project not configured',
-                description: 'Please configure a Jira project key in project settings.',
+                description: 'Please select a Jira project when creating or editing your project in the Project Workspace.',
                 variant: 'destructive',
             });
             return;

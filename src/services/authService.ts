@@ -68,6 +68,12 @@ export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
  * Get access token for API calls
  */
 export async function getEffectiveToken(): Promise<string | null> {
+  // ── DEV BYPASS — remove once nonprod SSO is fully configured ──
+  const devSession = sessionStorage.getItem("dev-bypass-session");
+  if (devSession) {
+    return JSON.parse(devSession).token;
+  }
+  // ──────────────────────────────────────────────────────────────
   return getAccessToken();
 }
 

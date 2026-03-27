@@ -128,7 +128,7 @@ export const JiraDashboard = () => {
         setSelectedIssue(null);
         toast({
           title: "No Jira Project Linked",
-          description: "This project doesn't have a linked Jira project. Please link one in project settings.",
+          description: "This project doesn't have a linked Jira project. Please select one when creating or editing your project in the Project Workspace.",
           variant: "default",
         });
         return;

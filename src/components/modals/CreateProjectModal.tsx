@@ -622,7 +622,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                           <div>
                             <p className="text-sm font-medium text-red-800">Atlassian account required</p>
                             <p className="text-xs text-red-600 mt-1">
-                              Please link your Atlassian account first to create a project. Go to Settings → Link Atlassian Account.
+                              Please link your Atlassian account first to create a project. Click your profile avatar (top-right) → Link Atlassian Account.
                             </p>
                           </div>
                         </div>

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Building2 } from "lucide-react";
 
 const Login = () => {
-  const { isAuthenticated, login, isLoading } = useAuth();
+  const { isAuthenticated, login, devLogin, isLoading } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
@@ -68,6 +68,25 @@ const Login = () => {
             <p className="text-xs text-center text-muted-foreground mt-4">
               You will be redirected to Microsoft's login page
             </p>
+
+            {/* ── DEV BYPASS — remove once nonprod SSO is fully configured ── */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => { devLogin(); navigate("/", { replace: true }); }}
+              className="w-full"
+              size="lg"
+            >
+              Dev Login (T479888)
+            </Button>
+            {/* ─────────────────────────────────────────────────────────────── */}
           </div>
         </CardContent>
       </Card>

@@ -1,0 +1,16 @@
+/* ============================================================
+   Animation delay utilities
+   Used by ChatMessage thinking dots
+   ============================================================ */
+
+.anim-delay-0 {
+  animation-delay: 0s;
+}
+
+.anim-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.anim-delay-400 {
+  animation-delay: 0.4s;
+}

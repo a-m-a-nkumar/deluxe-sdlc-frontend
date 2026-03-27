@@ -243,13 +243,7 @@ export const OrchestrationChat = () => {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col min-h-0">
-                <div
-                    className="flex-1 mb-4 overflow-y-auto max-h-full pr-2"
-                    style={{
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#cbd5e1 transparent",
-                    }}
-                >
+                <div className="flex-1 mb-4 overflow-y-auto max-h-full pr-2 scrollbar-thin-muted">
                     <div className="space-y-4">
                         {messages.map((message) => (
                             <div
@@ -345,8 +339,7 @@ export const OrchestrationChat = () => {
                         }
                         onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         disabled={isLoading || !selectedProject}
-                        className="flex-1"
-                        style={{ backgroundColor: "#fff" }}
+                        className="flex-1 bg-white"
                     />
                     <Button
                         onClick={handleSend}

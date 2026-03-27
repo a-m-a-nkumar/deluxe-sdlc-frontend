@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import "./JiraDashboard.css";
 import { Search, ChevronDown, ArrowUp, User, Calendar, Link, FileText, Clock, ExternalLink, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -322,24 +323,7 @@ export const JiraDashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-100 overflow-y-auto issues-scrollbar" style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#E6E6E6 transparent'
-                  }}>
-                    <style dangerouslySetInnerHTML={{
-                      __html: `
-                    .issues-scrollbar::-webkit-scrollbar {
-                      width: 6px;
-                    }
-                    .issues-scrollbar::-webkit-scrollbar-thumb {
-                      background-color: #E6E6E6;
-                      border-radius: 3px;
-                    }
-                    .issues-scrollbar::-webkit-scrollbar-track {
-                      background: transparent;
-                    }
-                  `
-                    }} />
+                  <div className="space-y-2 max-h-100 overflow-y-auto scrollbar-thin-muted">
                     {organizedIssues.map((item, index) => {
                       // Check if it's an epic with children or a standalone issue
                       if ('epic' in item) {
@@ -368,10 +352,7 @@ export const JiraDashboard = () => {
                                         }`}
                                     />
                                   </button>
-                                  <span className="font-medium" style={{
-                                    color: '#6C6C6C',
-                                    fontSize: '12px'
-                                  }}>{epic.id}</span>
+                                  <span className="font-medium jira-id-text">{epic.id}</span>
                                   <Badge className={`${getTypeBadge(epic.type)} text-xs px-2 py-0`}>
                                     {epic.type}
                                   </Badge>
@@ -382,18 +363,12 @@ export const JiraDashboard = () => {
                                 {getPriorityIcon(epic.priority)}
                               </div>
 
-                              <h4 className="font-medium mb-2 line-clamp-2" style={{
-                                fontSize: '16px',
-                                color: '#3B3B3B',
-                                fontWeight: 'medium'
-                              }}>
+                              <h4 className="font-medium mb-2 line-clamp-2 text-base jira-title-text">
                                 {epic.title}
                               </h4>
 
                               <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1 min-w-0 flex-1" style={{
-                                  color: '#747474'
-                                }}>
+                                <div className="flex items-center gap-1 min-w-0 flex-1 jira-meta-text">
                                   <Avatar className="h-4 w-4 flex-shrink-0">
                                     <AvatarFallback className="text-xs">
                                       {epic.assignee.split(' ').map(n => n[0]).join('')}
@@ -419,10 +394,7 @@ export const JiraDashboard = () => {
                                   >
                                     <div className="flex items-center justify-between mb-1">
                                       <div className="flex items-center gap-2">
-                                        <span className="font-medium" style={{
-                                          color: '#6C6C6C',
-                                          fontSize: '11px'
-                                        }}>{story.id}</span>
+                                        <span className="font-medium jira-id-text-sm">{story.id}</span>
                                         <Badge className={`${getTypeBadge(story.type)} text-xs px-1.5 py-0`}>
                                           {story.type}
                                         </Badge>
@@ -430,18 +402,12 @@ export const JiraDashboard = () => {
                                       {getPriorityIcon(story.priority)}
                                     </div>
 
-                                    <h4 className="font-medium mb-1 line-clamp-2 text-sm" style={{
-                                      fontSize: '14px',
-                                      color: '#3B3B3B',
-                                      fontWeight: 'normal'
-                                    }}>
+                                    <h4 className="font-medium mb-1 line-clamp-2 text-sm jira-title-text">
                                       {story.title}
                                     </h4>
 
                                     <div className="flex items-center justify-between text-xs">
-                                      <div className="flex items-center gap-1 min-w-0 flex-1" style={{
-                                        color: '#747474'
-                                      }}>
+                                      <div className="flex items-center gap-1 min-w-0 flex-1 jira-meta-text">
                                         <Avatar className="h-3 w-3 flex-shrink-0">
                                           <AvatarFallback className="text-xs">
                                             {story.assignee.split(' ').map(n => n[0]).join('')}
@@ -471,10 +437,7 @@ export const JiraDashboard = () => {
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium" style={{
-                                    color: '#6C6C6C',
-                                    fontSize: '12px'
-                                  }}>{issue.id}</span>
+                                  <span className="font-medium jira-id-text">{issue.id}</span>
                                   <Badge className={`${getTypeBadge(issue.type)} text-xs px-2 py-0`}>
                                     {issue.type}
                                   </Badge>
@@ -482,18 +445,12 @@ export const JiraDashboard = () => {
                                 {getPriorityIcon(issue.priority)}
                               </div>
 
-                              <h4 className="font-medium mb-2 line-clamp-2" style={{
-                                fontSize: '16px',
-                                color: '#3B3B3B',
-                                fontWeight: 'medium'
-                              }}>
+                              <h4 className="font-medium mb-2 line-clamp-2 text-base jira-title-text">
                                 {issue.title}
                               </h4>
 
                               <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-1 min-w-0 flex-1" style={{
-                                  color: '#747474'
-                                }}>
+                                <div className="flex items-center gap-1 min-w-0 flex-1 jira-meta-text">
                                   <Avatar className="h-4 w-4 flex-shrink-0">
                                     <AvatarFallback className="text-xs">
                                       {issue.assignee.split(' ').map(n => n[0]).join('')}
@@ -564,20 +521,20 @@ export const JiraDashboard = () => {
                 {/* Issue Metadata */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6 text-sm">
                   <div>
-                    <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Assignee:</span>
-                    <div style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="truncate">{selectedIssue.assignee}</div>
+                    <span className="jira-detail-label">Assignee:</span>
+                    <div className="jira-detail-value truncate">{selectedIssue.assignee}</div>
                   </div>
                   <div>
-                    <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Reporter:</span>
-                    <div style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="truncate">{selectedIssue.reporter}</div>
+                    <span className="jira-detail-label">Reporter:</span>
+                    <div className="jira-detail-value truncate">{selectedIssue.reporter}</div>
                   </div>
                   <div>
-                    <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Created:</span>
-                    <div style={{ color: '#3B3B3B', fontWeight: 'normal' }}>{selectedIssue.created}</div>
+                    <span className="jira-detail-label">Created:</span>
+                    <div className="jira-detail-value">{selectedIssue.created}</div>
                   </div>
                   <div>
-                    <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Updated:</span>
-                    <div style={{ color: '#3B3B3B', fontWeight: 'normal' }}>{selectedIssue.updated}</div>
+                    <span className="jira-detail-label">Updated:</span>
+                    <div className="jira-detail-value">{selectedIssue.updated}</div>
                   </div>
                 </div>
 
@@ -592,28 +549,28 @@ export const JiraDashboard = () => {
                   {/* Priority, Sprint Column */}
                   <div className="col-span-6 border border-[#CCCCCC] rounded p-3 flex justify-between">
                     <div>
-                      <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Priority</span>
+                      <span className="jira-detail-label">Priority</span>
                       <div className="flex items-center gap-1 mt-1">
                         {getPriorityIcon(selectedIssue.priority)}
-                        <span style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="text-sm capitalize">{selectedIssue.priority}</span>
+                        <span className="jira-detail-value text-sm capitalize">{selectedIssue.priority}</span>
                       </div>
                     </div>
                     <div>
-                      <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Sprint</span>
-                      <div style={{ color: '#3B3B3B', fontWeight: 'normal' }} className="text-sm mt-1">{selectedIssue.sprint}</div>
+                      <span className="jira-detail-label">Sprint</span>
+                      <div className="jira-detail-value text-sm mt-1">{selectedIssue.sprint}</div>
                     </div>
                   </div>
 
                   {/* Labels Column */}
                   <div className="col-span-5 border border-[#CCCCCC] rounded p-3">
-                    <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>Labels</span>
+                    <span className="jira-detail-label">Labels</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {selectedIssue.labels.length > 0 ? (
                         selectedIssue.labels.map((label, index) => <Badge key={index} variant="secondary" className="text-xs">
                           {label}
                         </Badge>)
                       ) : (
-                        <span style={{ color: '#747474', fontSize: '12px', fontWeight: 'normal' }}>No labels found</span>
+                        <span className="jira-detail-label">No labels found</span>
                       )}
                     </div>
                   </div>
@@ -622,7 +579,7 @@ export const JiraDashboard = () => {
 
               {/* BRD Integration Actions */}
               <div className="border border-[#CCCCCC] rounded-md p-4">
-                <h3 className="font-semibold mb-4 text-[#3B3B3B]">BRD Integration Actions</h3>
+                <h3 className="font-semibold mb-4 jira-title-text">BRD Integration Actions</h3>
 
                 {/* Blue background section */}
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
@@ -632,7 +589,7 @@ export const JiraDashboard = () => {
                   <p className="text-[#3B3B3B] text-sm mb-4">
                     Generate a Business Requirements Document based on this Jira issue and its details.
                   </p>
-                  <Button className="bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))]/90 w-full sm:w-auto">
+                  <Button className="bg-primary text-white hover:bg-primary/90 w-full sm:w-auto">
                     Generate BRD from Issue
                   </Button>
                 </div>

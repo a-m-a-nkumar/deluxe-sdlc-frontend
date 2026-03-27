@@ -175,8 +175,7 @@ export const ConfluenceDashboard = () => {
 
                           <div className="flex items-center justify-between">
                             <span
-                              className="text-[10px] truncate text-black px-2 py-1"
-                              style={{ backgroundColor: '#E5E5E5', borderRadius: '50px' }}
+                              className="text-[10px] truncate text-black px-2 py-1 bg-[#E5E5E5] rounded-full"
                             >
                               {page.status}
                             </span>
@@ -204,11 +203,7 @@ export const ConfluenceDashboard = () => {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     variant="outline"
-                    className="bg-red-600 text-white border border-red-600 text-sm flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal'
-                    }}
+                    className="bg-red-600 text-white border border-red-600 text-sm font-normal flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
                     onClick={() => pageDetails && window.open(`https://deluxe.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                     disabled={!pageDetails}
                   >
@@ -218,11 +213,7 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="bg-purple-600 text-white border border-purple-600 text-sm flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal'
-                    }}
+                    className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
                     onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
                     disabled={!selectedPageId}
                   >

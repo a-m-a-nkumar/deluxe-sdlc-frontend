@@ -18,6 +18,11 @@ import PairProgramming from "./pages/PairProgramming";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
+// Sub-path prefix: reads VITE_BASE_PATH env var (e.g. "/sdlc/"), strips trailing slash for React Router
+const basePath: string = import.meta.env.VITE_BASE_PATH
+  ? String(import.meta.env.VITE_BASE_PATH).replace(/\/$/, '')
+  : '/';
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -26,7 +31,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter basename={basePath}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route

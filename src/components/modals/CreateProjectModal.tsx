@@ -57,7 +57,7 @@ interface CreateProjectModalProps {
   onOpenChange: (open: boolean) => void;
   projects: Project[];
   isLoadingProjects: boolean;
-  onProjectCreated?: (project: Project) => void;
+  onProjectCreated?: (project?: Project) => void;
   onProjectSelected?: (projectId: string) => void;
 }
 

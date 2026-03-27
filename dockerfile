@@ -27,5 +27,5 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 8080
 
 ENV BACKEND_URL=http://localhost:8000
-ENV CONFLUENCE_URL=https://siriusai-team-test.atlassian.net
-ENV CONFLUENCE_HOST=siriusai-team-test.atlassian.net
+ENV CONFLUENCE_URL=https://deluxe.atlassian.net
+ENV CONFLUENCE_HOST=deluxe.atlassian.net

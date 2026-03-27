@@ -1,11 +1,14 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  base: process.env.VITE_BASE_PATH || '/',
+export default defineConfig(({ mode }) => {
+  // Load .env files so VITE_BASE_PATH is available at config time (not just in client code)
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+  base: env.VITE_BASE_PATH || '/',
   server: {
     host: "::",
     port: 8080,
@@ -31,4 +34,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+};
+});

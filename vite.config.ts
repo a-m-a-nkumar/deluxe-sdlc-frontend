@@ -5,10 +5,13 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load .env files AND check process.env (Docker build args set process.env, not .env files)
   const env = loadEnv(mode, process.cwd(), '');
+  const basePath = process.env.VITE_BASE_PATH || env.VITE_BASE_PATH || '/';
+  console.log('[vite.config] VITE_BASE_PATH from process.env:', process.env.VITE_BASE_PATH);
+  console.log('[vite.config] VITE_BASE_PATH from loadEnv:', env.VITE_BASE_PATH);
+  console.log('[vite.config] Using base:', basePath);
   return {
-  base: env.VITE_BASE_PATH || process.env.VITE_BASE_PATH || '/',
+  base: basePath,
   server: {
     host: "::",
     port: 8080,

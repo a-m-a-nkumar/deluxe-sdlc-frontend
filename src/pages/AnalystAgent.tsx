@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Send, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { streamAnalystMessage, AnalystSessionManager, ChatSession, StoredMessage } from "@/services/analystApi";
+import { streamAnalystMessage, AnalystSessionManager, ChatSession, StoredMessage, warmAnalystLambdas, AnalystSSEEvent } from "@/services/analystApi";
 import { toast } from "sonner";
 import { downloadBRD } from "@/services/projectApi";
 import { getEffectiveToken } from "@/services/authService";
@@ -65,11 +65,14 @@ const AnalystAgent = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Pre-warm Lambda containers on page mount so the first real message has no cold start
+  useEffect(() => {
+    warmAnalystLambdas();
+  }, []);
 
 
 
 
-  // Reload sessions when project changes
   useEffect(() => {
     if (selectedProject) {
       console.log(`[AnalystAgent] Project changed to: ${selectedProject.project_name} (${selectedProject.project_id})`);
@@ -125,25 +128,25 @@ const AnalystAgent = () => {
     return () => { active = false; };
   }, [currentSessionId]);
 
-  // Save messages to localStorage - REMOVED/NO-OP
-  // We rely on backend persistence now.
-  // We only rename session based on first message
+  // Rename session based on first user message (skip while streaming)
   useEffect(() => {
+    if (isLoading) return; // Don't run during streaming
     const checkRename = async () => {
       if (currentSessionId && messages.length === 3 && !isHistoryLoading) {
         const firstUserMessage = messages.find(m => !m.isBot);
         if (firstUserMessage) {
           const title = firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? "..." : "");
           await AnalystSessionManager.renameSession(currentSessionId, title);
-          loadSessions(false); // Silent reload
+          loadSessions(false);
         }
       }
     };
     checkRename();
-  }, [messages, currentSessionId, isHistoryLoading]);
+  }, [messages, currentSessionId, isHistoryLoading, isLoading]);
 
-  // Check for BRD ID in messages
+  // Check for BRD ID in messages (skip while streaming)
   useEffect(() => {
+    if (isLoading) return; // Don't run during streaming
     const checkBrd = async () => {
       let latestFoundBrdId: string | null = null;
       for (let i = messages.length - 1; i >= 0; i--) {
@@ -167,7 +170,7 @@ const AnalystAgent = () => {
       }
     };
     checkBrd();
-  }, [messages, brdId, currentSessionId]);
+  }, [messages, brdId, currentSessionId, isLoading]);
 
   // Load sessions using API
   // Load sessions using API
@@ -380,7 +383,7 @@ const AnalystAgent = () => {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      isTyping: true,
+      isLoading: true,
     };
     setMessages((prev) => [...prev, botPlaceholder]);
 
@@ -405,18 +408,29 @@ const AnalystAgent = () => {
       console.log(`[AnalystAgent] Sending message with session ID from state: ${sessionId}`);
 
       let fullResponse = "";
-      for await (const chunk of streamAnalystMessage(userContent, sessionId, projectIdToUse)) {
-        fullResponse += chunk;
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMessageId
-              ? { ...msg, content: fullResponse, isTyping: false }
-              : msg
-          )
-        );
+      for await (const event of streamAnalystMessage(userContent, sessionId, projectIdToUse)) {
+        if (event.type === 'chunk' && event.content) {
+          fullResponse += event.content;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId
+                ? { ...msg, content: fullResponse, isLoading: false, isTyping: false }
+                : msg
+            )
+          );
+        } else if (event.type === 'metadata') {
+          // Session and BRD metadata handled by analystApi + useEffect
+          if (event.brd_id) {
+            setBrdId(event.brd_id);
+            if (sessionId) {
+              await AnalystSessionManager.setBrdIdForSession(sessionId, event.brd_id);
+            }
+          }
+        } else if (event.type === 'error') {
+          throw new Error(event.message || 'Unknown streaming error');
+        }
+        // 'done' event: loop ends naturally
       }
-
-      // Update session if BRD ID found etc. (handled by useEffect on messages)
 
       // Refresh sessions to update timestamp
       loadSessions(false);

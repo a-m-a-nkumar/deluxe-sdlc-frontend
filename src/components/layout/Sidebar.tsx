@@ -9,10 +9,12 @@ import {
   ArrowLeft,
   ChevronLeft,
   X,
-  Code2
+  Code2,
+  FlaskConical
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { THEME } from "@/config/theme";
 
 const navigationItems = [
   {
@@ -50,6 +52,13 @@ const navigationItems = [
     id: "pair-programming",
     path: "/pair-programming",
   },
+  {
+    icon: FlaskConical,
+    label: "Testing",
+    description: "Test scenarios & Katalon pipeline",
+    id: "testing",
+    path: "/testing",
+  },
 ];
 
 const bottomItems = [
@@ -78,11 +87,14 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           to="/"
           className="flex items-center gap-2 px-4 hover:opacity-80 transition-opacity"
         >
-          <img
-            src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
-            alt="Deluxe"
-            className="w-[65px]"
-          />
+
+          {THEME === "deluxe" && (
+            <img
+              src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
+              alt="Deluxe"
+              className="w-[65px]"
+            />
+          )}
           {(!collapsed || isMobile) && (
             <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
           )}

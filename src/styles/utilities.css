@@ -43,12 +43,12 @@
 }
 
 .text-primary-red {
-  color: #D61120;
+  color: hsl(var(--primary));
 }
 
 /* --- Backgrounds --- */
 .bg-primary-soft {
-  background-color: rgba(230, 12, 35, 0.06);
+  background-color: hsl(var(--primary) / 0.06);
 }
 
 .bg-btn-gray {

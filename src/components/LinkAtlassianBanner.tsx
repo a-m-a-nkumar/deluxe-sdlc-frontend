@@ -10,6 +10,7 @@ interface LinkAtlassianBannerProps {
 export const LinkAtlassianBanner: React.FC<LinkAtlassianBannerProps> = ({ onLink }) => {
     const { accessToken } = useAuth();
     const [isLinked, setIsLinked] = useState(false);
+    const [tokenExpired, setTokenExpired] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isDismissed, setIsDismissed] = useState(false);
 
@@ -25,7 +26,8 @@ export const LinkAtlassianBanner: React.FC<LinkAtlassianBannerProps> = ({ onLink
 
         try {
             const status = await integrationsApi.getAtlassianStatus(accessToken);
-            setIsLinked(status.linked);
+            setIsLinked(status.linked && !status.token_expired);
+            setTokenExpired(status.linked === true && status.token_expired === true);
         } catch (error) {
             console.error('Error checking Atlassian status:', error);
         } finally {
@@ -41,8 +43,17 @@ export const LinkAtlassianBanner: React.FC<LinkAtlassianBannerProps> = ({ onLink
             <div className="banner-content">
                 <div className="banner-icon">🔗</div>
                 <div className="banner-text">
-                    <strong>Link your Atlassian account</strong>
-                    <p>Connect Jira and Confluence to sync your projects and spaces</p>
+                    {tokenExpired ? (
+                        <>
+                            <strong>Atlassian API token expired</strong>
+                            <p>Your saved token is no longer valid. Please re-link your account with a new API token.</p>
+                        </>
+                    ) : (
+                        <>
+                            <strong>Link your Atlassian account</strong>
+                            <p>Connect Jira and Confluence to sync your projects and spaces</p>
+                        </>
+                    )}
                 </div>
             </div>
             <div className="banner-actions">
@@ -50,7 +61,7 @@ export const LinkAtlassianBanner: React.FC<LinkAtlassianBannerProps> = ({ onLink
                     Dismiss
                 </button>
                 <button onClick={onLink} className="btn-link">
-                    Link Account
+                    {tokenExpired ? 'Re-link Account' : 'Link Account'}
                 </button>
             </div>
         </div>

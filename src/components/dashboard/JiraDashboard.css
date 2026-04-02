@@ -1,0 +1,38 @@
+/* ============================================================
+   JiraDashboard — component-specific styles
+   ============================================================ */
+
+/* Issue ID text (small, muted) */
+.jira-id-text {
+  color: #6C6C6C;
+  font-size: 12px;
+}
+
+/* Issue ID text for child stories (slightly smaller) */
+.jira-id-text-sm {
+  color: #6C6C6C;
+  font-size: 11px;
+}
+
+/* Issue title */
+.jira-title-text {
+  color: #3B3B3B;
+}
+
+/* Assignee / meta text */
+.jira-meta-text {
+  color: #747474;
+}
+
+/* Issue detail metadata labels (Assignee:, Reporter:, etc.) */
+.jira-detail-label {
+  color: #747474;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+/* Issue detail metadata values */
+.jira-detail-value {
+  color: #3B3B3B;
+  font-weight: normal;
+}

@@ -13,10 +13,17 @@ import AnalystAgent from "./pages/AnalystAgent";
 import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
+import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
+import TestingPage from "./pages/TestingPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
+
+// Sub-path prefix: reads VITE_BASE_PATH env var (e.g. "/sdlc/"), strips trailing slash for React Router
+const basePath: string = import.meta.env.VITE_BASE_PATH
+  ? String(import.meta.env.VITE_BASE_PATH).replace(/\/$/, '')
+  : '/';
 
 const App = () => {
   return (
@@ -26,7 +33,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter basename={basePath}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route
@@ -90,6 +97,22 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <PairProgramming />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/test-generation/:confluencePageId"
+                  element={
+                    <ProtectedRoute>
+                      <TestScenarioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/testing"
+                  element={
+                    <ProtectedRoute>
+                      <TestingPage />
                     </ProtectedRoute>
                   }
                 />

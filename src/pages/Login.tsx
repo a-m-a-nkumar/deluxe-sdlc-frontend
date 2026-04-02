@@ -68,6 +68,7 @@ const Login = () => {
             <p className="text-xs text-center text-muted-foreground mt-4">
               You will be redirected to Microsoft's login page
             </p>
+
           </div>
         </CardContent>
       </Card>
@@ -76,4 +77,3 @@ const Login = () => {
 };
 
 export default Login;
-

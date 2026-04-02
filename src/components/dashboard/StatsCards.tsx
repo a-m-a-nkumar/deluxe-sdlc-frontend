@@ -32,7 +32,7 @@ export const StatsCards = () => {
             <div className={`text-2xl sm:text-3xl lg:text-4xl font-medium mb-2 ${stat.color}`}>
               {stat.value}
             </div>
-            <div className="text-sm font-normal" style={{ color: '#3B3B3B' }}>{stat.label}</div>
+            <div className="text-sm font-normal text-body-dark">{stat.label}</div>
           </CardContent>
         </Card>
       ))}

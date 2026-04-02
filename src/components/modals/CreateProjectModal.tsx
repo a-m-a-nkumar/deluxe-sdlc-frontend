@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { FolderKanban, Loader2, Pencil, Trash2, X, Check as CheckIcon, Info, Link2, LayoutGrid, FileText } from "lucide-react";
+import { FolderKanban, Loader2, Pencil, Trash2, X, Check as CheckIcon, Info, Link2, LayoutGrid, FileText, ChevronsUpDown, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,10 +37,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { createProject, updateProject, deleteProject, type CreateProjectRequest, type UpdateProjectRequest, getBRDTemplates, type BRDTemplate, type Project } from "@/services/projectApi";
 import { integrationsApi, type JiraProject, type ConfluenceSpace } from "@/services/integrationsApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { colors } from '@/config/theme';
 
 const createProjectSchema = z.object({
   project_name: z.string().min(1, "Project name is required"),
@@ -54,7 +58,7 @@ interface CreateProjectModalProps {
   onOpenChange: (open: boolean) => void;
   projects: Project[];
   isLoadingProjects: boolean;
-  onProjectCreated?: () => void;
+  onProjectCreated?: (project?: Project) => void;
   onProjectSelected?: (projectId: string) => void;
 }
 
@@ -78,6 +82,8 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   const [selectedJiraProject, setSelectedJiraProject] = useState("");
   const [selectedConfluenceSpace, setSelectedConfluenceSpace] = useState("");
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
+  const [jiraPopoverOpen, setJiraPopoverOpen] = useState(false);
+  const [confluencePopoverOpen, setConfluencePopoverOpen] = useState(false);
 
   const form = useForm<CreateProjectFormData>({
     resolver: zodResolver(createProjectSchema),
@@ -89,14 +95,14 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
   const createProjectMutation = useMutation({
     mutationFn: createProject,
-    onSuccess: () => {
+    onSuccess: (newProject) => {
       toast({
         title: "Success",
         description: "Project created successfully!",
       });
       form.reset();
       onOpenChange(false);
-      onProjectCreated?.();
+      onProjectCreated?.(newProject);
     },
     onError: (error) => {
       toast({
@@ -258,11 +264,22 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!createProjectMutation.isPending) onOpenChange(v); }}>
       <DialogContent className="sm:max-w-[400px] bg-white border border-border p-0 overflow-hidden">
+        {/* Loading overlay while project is being created */}
+        {createProjectMutation.isPending && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-lg">
+            <Loader2 className="h-10 w-10 animate-spin text-red-600 mb-4" />
+            <p className="text-lg font-semibold text-gray-800">Creating your project...</p>
+            <p className="text-sm text-gray-500 mt-2 text-center px-6">
+              Setting up integrations and syncing your knowledge base. This may take a moment.
+            </p>
+          </div>
+        )}
+
         <div className="p-4 border-b bg-muted/30">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-            <FolderKanban className="w-5 h-5" style={{ color: '#1B3C71' }} />
+            <FolderKanban className="w-5 h-5" style={{ color: colors.brand }} />
             Project Workspace
           </DialogTitle>
           <DialogDescription>
@@ -278,7 +295,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               ? "text-white rounded-tl-lg"
               : "text-muted-foreground hover:text-foreground"
               } `}
-            style={activeTab === "my-project" ? { backgroundColor: '#1B3C71', color: '#fff' } : { color: '#858585' }}
+            style={activeTab === "my-project" ? { backgroundColor: colors.brand, color: '#fff' } : { color: '#858585' }}
           >
             My Project
           </button>
@@ -289,7 +306,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               ? "text-white rounded-tr-lg"
               : "text-muted-foreground hover:text-foreground"
               } `}
-            style={activeTab === "new-project" ? { backgroundColor: '#1B3C71', color: '#fff' } : { color: '#858585' }}
+            style={activeTab === "new-project" ? { backgroundColor: colors.brand, color: '#fff' } : { color: '#858585' }}
           >
             New Project
           </button>
@@ -310,7 +327,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               <ScrollArea className="h-[240px] w-full rounded-md border p-1">
                 {isLoadingProjects ? (
                   <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#1B3C71' }} />
+                    <Loader2 className="h-6 w-6 animate-spin text-primary-red" />
                   </div>
                 ) : filteredProjects.length === 0 ? (
                   <div className="text-center py-8 text-sm text-muted-foreground">
@@ -347,7 +364,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 hover:bg-blue-50" style={{ color: '#1B3C71' }}
+                              className="h-8 w-8 hover:bg-blue-50" style={{ color: colors.brand }}
                               onClick={() => setEditingProject(null)}
                               disabled={isUpdating}
                             >
@@ -401,7 +418,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 text-muted-foreground hover:bg-blue-50" style={{ '--hover-color': '#1B3C71' } as React.CSSProperties}
+                                className="h-8 w-8 text-muted-foreground hover:bg-blue-50" style={{ '--hover-color': colors.brand } as React.CSSProperties}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setProjectToDelete(project.project_id);
@@ -423,9 +440,9 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               {loadingIntegrations ? (
                 <div className="bg-muted/30 border border-border rounded-lg p-6 flex flex-col items-center justify-center space-y-4 animate-pulse">
                   <div className="relative">
-                    <Loader2 className="h-10 w-10 animate-spin" style={{ color: '#1B3C71' }} />
+                    <Loader2 className="h-10 w-10 animate-spin" style={{ color: colors.brand }} />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-4 w-4 bg-white rounded-full border-2" style={{ borderColor: '#1B3C71' }} />
+                      <div className="h-4 w-4 bg-white rounded-full border-2" style={{ borderColor: colors.brand }} />
                     </div>
                   </div>
                   <div className="text-center">
@@ -467,7 +484,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             <SelectContent className="bg-white">
                               {isLoadingTemplates ? (
                                 <div className="flex items-center justify-center py-6">
-                                  <Loader2 className="h-5 w-5 animate-spin" style={{ color: '#1B3C71' }} />
+                                  <Loader2 className="h-5 w-5 animate-spin text-primary-red" />
                                 </div>
                               ) : brdTemplates.length > 0 ? (
                                 brdTemplates.map((template) => (
@@ -490,67 +507,123 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                     {/* Atlassian Integration Section - REQUIRED */}
                     {isAtlassianLinked ? (
                       <div className="space-y-3 pt-2">
-                        <div className="flex items-center gap-2 text-xs font-semibold pb-1" style={{ color: '#1B3C71' }}>
+                        <div className="flex items-center gap-2 text-xs font-semibold pb-1" style={{ color: colors.brand }}>
                           <Info className="w-3 h-3" />
                           LINK TO ATLASSIAN (REQUIRED)
                         </div>
 
                         {/* Jira Project Selector */}
                         <FormItem>
-                          <Select
-                            onValueChange={setSelectedJiraProject}
-                            value={selectedJiraProject}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedJiraProject || selectedJiraProject === 'none' ? 'border-blue-300' : 'border-green-400'}`}>
-                                <SelectValue placeholder="Select Jira Project *" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white">
-                              {jiraProjects.map(project => (
-                                <SelectItem key={project.key} value={project.key} className="text-sm">
-                                  <span className="font-medium">{project.key}</span> - {project.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={jiraPopoverOpen} onOpenChange={setJiraPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={jiraPopoverOpen}
+                                className={cn(
+                                  "w-full justify-between h-10 bg-white font-normal",
+                                  !selectedJiraProject || selectedJiraProject === 'none' ? 'border-red-300' : 'border-green-400'
+                                )}
+                              >
+                                {selectedJiraProject
+                                  ? (() => {
+                                      const proj = jiraProjects.find(p => p.key === selectedJiraProject);
+                                      return proj ? `${proj.key} - ${proj.name}` : selectedJiraProject;
+                                    })()
+                                  : "Select Jira Project *"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search Jira projects..." />
+                                <CommandList>
+                                  <CommandEmpty>No project found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {jiraProjects.map(project => (
+                                      <CommandItem
+                                        key={project.key}
+                                        value={`${project.key} ${project.name}`}
+                                        onSelect={() => {
+                                          setSelectedJiraProject(project.key);
+                                          setJiraPopoverOpen(false);
+                                        }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", selectedJiraProject === project.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium">{project.key}</span>
+                                        <span className="ml-1 text-muted-foreground">- {project.name}</span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           {(!selectedJiraProject || selectedJiraProject === 'none') && (
-                            <p className="text-xs mt-1" style={{ color: '#1B3C71' }}>Jira project is required</p>
+                            <p className="text-xs mt-1" style={{ color: colors.brand }}>Jira project is required</p>
                           )}
                         </FormItem>
 
                         {/* Confluence Space Selector */}
                         <FormItem>
-                          <Select
-                            onValueChange={setSelectedConfluenceSpace}
-                            value={selectedConfluenceSpace}
-                          >
-                            <FormControl>
-                              <SelectTrigger className={`bg-white border-border h-10 ${!selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-blue-300' : 'border-green-400'}`}>
-                                <SelectValue placeholder="Select Confluence Space *" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white">
-                              {confluenceSpaces.map(space => (
-                                <SelectItem key={space.key} value={space.key} className="text-sm">
-                                  <span className="font-medium">{space.key}</span> - {space.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={confluencePopoverOpen} onOpenChange={setConfluencePopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={confluencePopoverOpen}
+                                className={cn(
+                                  "w-full justify-between h-10 bg-white font-normal",
+                                  !selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-red-300' : 'border-green-400'
+                                )}
+                              >
+                                {selectedConfluenceSpace
+                                  ? (() => {
+                                      const space = confluenceSpaces.find(s => s.key === selectedConfluenceSpace);
+                                      return space ? `${space.key} - ${space.name}` : selectedConfluenceSpace;
+                                    })()
+                                  : "Select Confluence Space *"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
+                              <Command>
+                                <CommandInput placeholder="Search Confluence spaces..." />
+                                <CommandList>
+                                  <CommandEmpty>No space found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {confluenceSpaces.map(space => (
+                                      <CommandItem
+                                        key={space.key}
+                                        value={`${space.key} ${space.name}`}
+                                        onSelect={() => {
+                                          setSelectedConfluenceSpace(space.key);
+                                          setConfluencePopoverOpen(false);
+                                        }}
+                                      >
+                                        <Check className={cn("mr-2 h-4 w-4", selectedConfluenceSpace === space.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium">{space.key}</span>
+                                        <span className="ml-1 text-muted-foreground">- {space.name}</span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           {(!selectedConfluenceSpace || selectedConfluenceSpace === 'none') && (
-                            <p className="text-xs mt-1" style={{ color: '#1B3C71' }}>Confluence space is required</p>
+                            <p className="text-xs mt-1" style={{ color: colors.brand }}>Confluence space is required</p>
                           )}
                         </FormItem>
                       </div>
                     ) : (
                       <div className="rounded-lg p-4 mt-2" style={{ backgroundColor: '#EEF2F9', border: '1px solid #B8C9E4' }}>
                         <div className="flex items-start gap-2">
-                          <Info className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1B3C71' }} />
+                          <Info className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: colors.brand }} />
                           <div>
-                            <p className="text-sm font-medium" style={{ color: '#1B3C71' }}>Atlassian account required</p>
-                            <p className="text-xs mt-1" style={{ color: '#1B3C71' }}>
-                              Please link your Atlassian account first to create a project. Go to Settings → Link Atlassian Account.
+                            <p className="text-sm font-medium text-red-800">Atlassian account required</p>
+                            <p className="text-xs text-red-600 mt-1">
+                              Please link your Atlassian account first to create a project. Click your profile avatar (top-right) → Link Atlassian Account.
                             </p>
                           </div>
                         </div>
@@ -568,10 +641,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                           !selectedConfluenceSpace ||
                           selectedConfluenceSpace === 'none'
                         }
-                        className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90"
-                        style={{
-                          backgroundColor: '#1B3C71',
-                        }}
+                        className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90 bg-primary"
                       >
                         {createProjectMutation.isPending ? (
                           <div className="flex items-center gap-2">
@@ -606,7 +676,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                 handleDeleteProject();
               }}
               disabled={isDeleting}
-              className="text-white" style={{ backgroundColor: '#1B3C71' }}
+              className="text-white" style={{ backgroundColor: colors.brand }}
             >
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Delete Project

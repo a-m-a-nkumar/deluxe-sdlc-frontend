@@ -1,0 +1,181 @@
+/* ============================================================
+   PairProgrammingDashboard — terminal and UI-specific styles
+   ============================================================ */
+
+/* Code block container */
+.pp-code-block {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+}
+
+/* Code block header bar */
+.pp-code-header {
+  border-color: #1e293b;
+  background: #0a0f1e;
+}
+
+/* Code block language label */
+.pp-code-lang {
+  color: #64748b;
+  font-family: monospace;
+}
+
+/* Copy button: default */
+.pp-copy-btn {
+  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Copy button: copied state */
+.pp-copy-btn-copied {
+  color: #22c55e;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Code pre element */
+.pp-code-pre {
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  background: transparent;
+}
+
+/* Step badge (numbered circle) */
+.pp-step-badge {
+  background: linear-gradient(135deg, #E60C23 0%, #c7001b 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(230, 12, 35, 0.3);
+}
+
+/* Info box */
+.pp-info-box {
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #374151;
+}
+
+/* Header icon badge */
+.pp-header-icon {
+  background: linear-gradient(135deg, #E60C23 0%, #c7001b 100%);
+}
+
+/* Project context banner (project selected) */
+.pp-project-banner {
+  background: linear-gradient(135deg, rgba(230, 12, 35, 0.04) 0%, rgba(230, 12, 35, 0.08) 100%);
+  border: 1px solid rgba(230, 12, 35, 0.15);
+}
+
+/* Project banner icon */
+.pp-project-icon {
+  background: rgba(230, 12, 35, 0.1);
+}
+
+/* Project banner icon color */
+.pp-project-icon-color {
+  color: #E60C23;
+}
+
+/* Project banner success badge */
+.pp-project-badge {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+/* Warning banner (no project selected) */
+.pp-warning-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+/* Section divider line — left fade */
+.pp-divider-left {
+  background: linear-gradient(90deg, #e5e7eb 0%, transparent 100%);
+}
+
+/* Section divider line — right fade */
+.pp-divider-right {
+  background: linear-gradient(90deg, transparent 0%, #e5e7eb 100%);
+}
+
+/* Feature card */
+.pp-feature-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+/* Table container */
+.pp-table-container {
+  border: 1px solid #e5e7eb;
+}
+
+/* Table header row */
+.pp-table-header {
+  background: #f8fafc;
+}
+
+/* Table header/body border color */
+.pp-table-border {
+  border-color: #e5e7eb;
+}
+
+/* Table row cell border */
+.pp-table-cell-border {
+  border-color: #f0f0f0;
+}
+
+/* Table alternating row bg */
+.pp-table-row-even {
+  background: #ffffff;
+}
+
+.pp-table-row-odd {
+  background: #f9fafb;
+}
+
+/* Light card bg */
+.pp-card-light {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+/* Terminal inline code block */
+.pp-terminal-block {
+  background: #0f172a;
+  color: #94a3b8;
+}
+
+/* Terminal comment color */
+.pp-terminal-comment {
+  color: #64748b;
+}
+
+/* Terminal keyword color */
+.pp-terminal-keyword {
+  color: #7dd3fc;
+}
+
+/* Terminal value color */
+.pp-terminal-value {
+  color: #e2e8f0;
+}
+
+/* Terminal mention color */
+.pp-terminal-mention {
+  color: #c084fc;
+}
+
+/* Natural language badge */
+.pp-badge-natural {
+  background: rgba(230, 12, 35, 0.08);
+  color: #E60C23;
+}
+
+/* Mention badge */
+.pp-badge-mention {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+}
+
+/* ENV variable key (table) */
+.pp-env-key {
+  color: #E60C23;
+}

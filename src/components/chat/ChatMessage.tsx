@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTypingEffect } from "@/hooks/useTypingEffect";
+import { colors } from '@/config/theme';
 
 interface ChatMessageProps {
   message: {
@@ -256,7 +257,7 @@ const formatInlineContent = (text: string) => {
 
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   const { displayedText, isTyping } = useTypingEffect(
-    message.isTyping ? message.content : '', 
+    message.isTyping ? message.content : '',
     15
   );
 
@@ -264,53 +265,63 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
 
   return (
     <div className={`flex ${message.isBot ? 'justify-start' : 'justify-end'} mb-4`}>
-      <div className={`flex ${message.isBot ? 'flex-row' : 'flex-row-reverse'} items-end gap-2 max-w-[80%]`}>
+      <div className={`flex ${message.isBot ? 'flex-row' : 'flex-row-reverse'} items-start gap-2 max-w-[80%]`}>
         {message.isBot && (
-          <Avatar className="w-6 h-6 bg-primary">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-              AI
+          <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: colors.brandLight }}>
+            <AvatarFallback style={{ backgroundColor: colors.brandLight, color: colors.brand }} className="text-xs font-semibold">
+              BA
             </AvatarFallback>
           </Avatar>
         )}
-        
+
+        {!message.isBot && (
+          <Avatar className="w-8 h-8 mt-5 flex-shrink-0 bg-muted">
+            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+              You
+            </AvatarFallback>
+          </Avatar>
+        )}
+
         <div className="space-y-1">
+          <div className={`text-xs text-muted-foreground px-1 ${
+            message.isBot ? 'text-left' : 'text-right'
+          }`}>
+            {message.isBot ? 'BRD Assistant' : 'You'} &nbsp; {message.timestamp}
+          </div>
           <div className={`
             px-4 py-3 rounded-2xl max-w-full
-            ${message.isBot 
-              ? 'bg-muted text-foreground rounded-bl-md' 
-              : 'bg-primary text-white rounded-br-md'
+            ${message.isBot
+              ? 'rounded-bl-md'
+              : 'rounded-br-md'
             }
-          `}>
-            <div className={`text-sm break-words whitespace-pre-wrap ${message.isBot ? 'text-foreground' : 'text-white [&_*]:text-white'}`}>
+          `}
+          style={message.isBot
+            ? { backgroundColor: '#F0F0F0', color: '#1a1a1a' }
+            : { backgroundColor: '#1a1a2e', color: '#ffffff' }
+          }
+          >
+            <div className={`text-sm break-words whitespace-pre-wrap ${message.isBot ? '' : '[&_*]:text-white'}`}>
               {message.isLoading ? (
                 <span className="inline-flex gap-1 align-middle items-center h-4">
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0s' }} />
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.2s' }} />
-                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.4s' }} />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-0" />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-200" />
+                  <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-400" />
                 </span>
               ) : (
                 <>
                   {formatChatContent(message.content)}
                   {message.isTyping && isTyping && (
                     <span className="inline-flex gap-1 ml-2 align-middle items-center h-4">
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0s' }} />
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.2s' }} />
-                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking" style={{ animationDelay: '0.4s' }} />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-0" />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-200" />
+                      <span className="inline-block w-2 h-2 bg-current rounded-full animate-thinking anim-delay-400" />
                     </span>
                   )}
                 </>
               )}
             </div>
           </div>
-          
-          <div className={`text-xs text-muted-foreground px-2 ${
-            message.isBot ? 'text-left' : 'text-right'
-          }`}>
-            {message.timestamp}
-          </div>
         </div>
-
-       
       </div>
     </div>
   );

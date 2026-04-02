@@ -22,7 +22,7 @@ const msalConfig = {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored
     storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
   },
-};
+};  
 
 // Create MSAL instance
 const msalInstance = new PublicClientApplication(msalConfig);
@@ -67,6 +67,10 @@ export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
 /**
  * Get access token for API calls
  */
+export async function getEffectiveToken(): Promise<string | null> {
+  return getAccessToken();
+}
+
 export async function getAccessToken(): Promise<string | null> {
   try {
     await ensureMsalInitialized();

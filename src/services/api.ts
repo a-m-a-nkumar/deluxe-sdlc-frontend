@@ -1,4 +1,4 @@
-import { getAccessToken } from "./authService";
+import { getEffectiveToken } from "./authService";
 import { API_CONFIG } from "@/config/api";
 
 /**
@@ -8,11 +8,11 @@ export async function apiRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = await getAccessToken();
-  
+  const token = await getEffectiveToken();
+
   const headers = new Headers(options.headers);
-  
-  // Add Azure AD token to Authorization header
+
+  // Add token to Authorization header
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
     console.log("[API] Token included in request:", token.substring(0, 20) + "...");
@@ -33,7 +33,7 @@ export async function apiRequest(
   // If unauthorized, try to refresh token and retry once
   if (response.status === 401 && token) {
     // Token might be expired, try to get a fresh one
-    const newToken = await getAccessToken();
+    const newToken = await getEffectiveToken();
     if (newToken && newToken !== token) {
       headers.set("Authorization", `Bearer ${newToken}`);
       return fetch(url, {

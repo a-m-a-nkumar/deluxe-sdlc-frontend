@@ -187,16 +187,17 @@ export const uploadFiles = async (files: File[], projectId?: string | null): Pro
   const { apiPost } = await import("./api");
 
   // Expect at least one transcript file
-  const transcript = files[0];
-  if (!transcript) {
+  if (files.length === 0) {
     throw new Error("No transcript file provided");
   }
 
-  // Step 1: Upload transcript to S3 via backend
+  // Step 1: Upload all transcript files to S3 via backend
   const uploadFormData = new FormData();
-  uploadFormData.append("transcript", transcript, transcript.name);
+  for (const file of files) {
+    uploadFormData.append("transcripts", file, file.name);
+  }
 
-  console.log("[UPLOAD] Uploading transcript to S3...");
+  console.log(`[UPLOAD] Uploading ${files.length} transcript(s) to S3...`);
   const uploadResponse = await apiPost(`${API_BASE_URL}/api/upload-transcript`, uploadFormData);
 
   if (!uploadResponse.ok) {
@@ -205,17 +206,21 @@ export const uploadFiles = async (files: File[], projectId?: string | null): Pro
   }
 
   const uploadData = await uploadResponse.json();
-  const transcriptS3Path = uploadData.s3_path;
 
-  if (!transcriptS3Path) {
+  // Collect all S3 paths (multi-file support)
+  const s3Paths: string[] = uploadData.files
+    ? uploadData.files.map((f: { s3_path: string }) => f.s3_path)
+    : [uploadData.s3_path];
+
+  if (s3Paths.length === 0 || !s3Paths[0]) {
     throw new Error("Backend did not return S3 path for transcript");
   }
 
-  console.log("[UPLOAD] Transcript uploaded to S3:", transcriptS3Path);
+  console.log(`[UPLOAD] ${s3Paths.length} transcript(s) uploaded to S3:`, s3Paths);
 
   // Step 2: Generate BRD from S3 (backend fetches transcript and template from S3)
   const generateFormData = new FormData();
-  generateFormData.append("transcript_s3_path", transcriptS3Path);
+  generateFormData.append("transcript_s3_paths", s3Paths.join(","));
   if (projectId) {
     generateFormData.append("project_id", projectId);
   }
@@ -245,16 +250,16 @@ export const uploadFiles = async (files: File[], projectId?: string | null): Pro
 
   return {
     message: "BRD generated successfully",
-    filename: transcript.name,
-    size: transcript.size,
-    type: transcript.type,
+    filename: files[0].name,
+    size: files[0].size,
+    type: files[0].type,
     processed_for_querying: true,
     s3_uploaded: true,
     brd_auto_generated: {
       success: true,
       brd_id: brdId,
       content_preview: brdContent,
-      file_path: transcriptS3Path,
+      file_path: s3Paths.join(","),
       frontend_url: "",
     },
   };

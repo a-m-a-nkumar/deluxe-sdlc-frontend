@@ -1,15 +1,17 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { colors } from '@/config/theme';
 
 export const ConfluenceDashboard = () => {
   const { accessToken } = useAuth();
@@ -175,8 +177,7 @@ export const ConfluenceDashboard = () => {
 
                           <div className="flex items-center justify-between">
                             <span
-                              className="text-[10px] truncate text-black px-2 py-1"
-                              style={{ backgroundColor: '#E5E5E5', borderRadius: '50px' }}
+                              className="text-[10px] truncate text-black px-2 py-1 bg-[#E5E5E5] rounded-full"
                             >
                               {page.status}
                             </span>
@@ -204,22 +205,8 @@ export const ConfluenceDashboard = () => {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button
                     variant="outline"
-                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal',
-                      backgroundColor: '#1B3C71',
-                      color: '#fff',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
-                    }}
-                    onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
+                    className="bg-red-600 text-white border border-red-600 text-sm font-normal flex items-center gap-2 hover:bg-black hover:text-white hover:border-black transition-colors"
+                    onClick={() => pageDetails && window.open(`https://deluxe.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                     disabled={!pageDetails}
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -228,21 +215,7 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="text-white border-0 text-sm flex items-center gap-2 transition-colors"
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 'normal',
-                      backgroundColor: '#1B3C71',
-                      color: '#fff',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#1B3C71';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1B3C71';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#fff';
-                    }}
+                    className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
                     onClick={() => selectedPageId && navigate(`/jira-generation/${selectedPageId}`)}
                     disabled={!selectedPageId}
                   >
@@ -250,6 +223,28 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">Generate Jira Items</span>
                     <span className="sm:hidden">Generate</span>
                   </Button>
+
+                  {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
+                          disabled={!selectedPageId}
+                        >
+                          <FlaskConical className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate Test Scenarios</span>
+                          <span className="sm:hidden">Test</span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!selectedPageId && (
+                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
+                    )}
+                  </Tooltip>
+                  {/* END TEST_SCENARIO_FEATURE */}
 
                 </div>
               </div>
@@ -265,7 +260,7 @@ export const ConfluenceDashboard = () => {
                     <>
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: '#1B3C71' }}>
+                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: colors.brand }}>
                             {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -274,7 +269,7 @@ export const ConfluenceDashboard = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: '#1B3C71' }} />
+                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: colors.brand }} />
                           <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
                         </div>
                         <Badge
@@ -337,7 +332,7 @@ export const ConfluenceDashboard = () => {
                       <Button
                         variant="outline"
                         className="mt-4"
-                        onClick={() => pageDetails && window.open(`https://siriusai-team-test.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
+                        onClick={() => pageDetails && window.open(`https://deluxe.atlassian.net/wiki${pageDetails._links.webui}`, '_blank')}
                       >
                         View in Confluence
                       </Button>

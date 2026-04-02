@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, RefreshCw } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { streamOrchestrationQuery, triggerIncrementalSync, type Source } from "@/services/orchestrationApi";
+import { streamOrchestrationQuery, triggerIncrementalSync, getSyncStatus, type Source } from "@/services/orchestrationApi";
 import { toast } from "sonner";
 import { useAppState } from "@/contexts/AppStateContext";
+import { colors } from '@/config/theme';
 
 interface Message {
     id: string;
@@ -18,7 +19,7 @@ interface Message {
 }
 
 export const OrchestrationChat = () => {
-    const { selectedProject } = useAppState();
+    const { selectedProject, isSyncInProgress, setIsSyncInProgress, syncMessage, setSyncMessage } = useAppState();
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
@@ -34,6 +35,51 @@ export const OrchestrationChat = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Poll sync status when a project is selected
+    const pollSyncStatus = useCallback(async () => {
+        if (!selectedProject?.id) return;
+        try {
+            const status = await getSyncStatus(selectedProject.id);
+            if (status) {
+                setIsSyncInProgress(status.is_syncing);
+                setSyncMessage(status.sync_message || "");
+            }
+        } catch {
+            // Silently ignore polling errors
+        }
+    }, [selectedProject?.id, setIsSyncInProgress, setSyncMessage]);
+
+    // Start/stop polling based on project selection
+    useEffect(() => {
+        // Clear any existing interval
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+
+        if (selectedProject?.id) {
+            // Poll once on project select to get initial status
+            pollSyncStatus();
+            // Only poll every 5s while a sync is actively running
+            pollIntervalRef.current = setInterval(() => {
+                if (isSyncInProgress || isSyncing) {
+                    pollSyncStatus();
+                }
+            }, 5000);
+        } else {
+            setIsSyncInProgress(false);
+            setSyncMessage("");
+        }
+
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+    }, [selectedProject?.id, pollSyncStatus, isSyncInProgress, isSyncing, setIsSyncInProgress, setSyncMessage]);
 
     // Auto scroll to bottom
     useEffect(() => {
@@ -198,60 +244,73 @@ export const OrchestrationChat = () => {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col min-h-0">
-                <div
-                    className="flex-1 mb-4 overflow-y-auto max-h-full pr-2"
-                    style={{
-                        scrollbarWidth: "thin",
-                        scrollbarColor: "#cbd5e1 transparent",
-                    }}
-                >
+                <div className="flex-1 mb-4 overflow-y-auto max-h-full pr-2 scrollbar-thin-muted">
                     <div className="space-y-4">
                         {messages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`flex ${message.isBot ? "justify-start" : "justify-end"}`}
+                                className={`flex ${message.isBot ? "justify-start" : "justify-end"} mb-4`}
                             >
-                                <div
-                                    className={`max-w-[80%] rounded-lg p-3 ${message.isBot
-                                        ? "bg-muted"
-                                        : "bg-primary text-primary-foreground"
-                                        }`}
-                                >
-                                    {message.isLoading ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-100" />
-                                            <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-200" />
-                                        </div>
+                                <div className={`flex ${message.isBot ? "flex-row" : "flex-row-reverse"} items-start gap-2 max-w-[80%]`}>
+                                    {message.isBot ? (
+                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: colors.brandLight }}>
+                                            <AvatarFallback style={{ backgroundColor: colors.brandLight, color: colors.brand }} className="text-xs font-semibold">
+                                                AI
+                                            </AvatarFallback>
+                                        </Avatar>
                                     ) : (
-                                        <>
-                                            <div className="text-sm whitespace-pre-wrap">
-                                                {message.content}
-                                            </div>
-                                            {message.sources && message.sources.length > 0 && (
-                                                <div className="mt-3 pt-3 border-t border-border/50">
-                                                    <p className="text-xs font-semibold mb-2">Sources:</p>
-                                                    <div className="space-y-1">
-                                                        {message.sources.map((source, idx) => (
-                                                            <a
-                                                                key={idx}
-                                                                href={source.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="block text-xs hover:underline text-blue-600 dark:text-blue-400"
-                                                            >
-                                                                [{source.type}] {source.title} (
-                                                                {(source.similarity * 100).toFixed(0)}% match)
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
+                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0 bg-muted">
+                                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                                                You
+                                            </AvatarFallback>
+                                        </Avatar>
                                     )}
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        {message.timestamp}
-                                    </p>
+                                    <div className="space-y-1">
+                                        <div className={`text-xs text-muted-foreground px-1 ${message.isBot ? "text-left" : "text-right"}`}>
+                                            {message.isBot ? "RAG Assistant" : "You"} &nbsp; {message.timestamp}
+                                        </div>
+                                        <div
+                                            className={`px-4 py-3 rounded-2xl ${message.isBot ? "rounded-bl-md" : "rounded-br-md"}`}
+                                            style={message.isBot
+                                                ? { backgroundColor: '#F0F0F0', color: '#1a1a1a' }
+                                                : { backgroundColor: '#1a1a2e', color: '#ffffff' }
+                                            }
+                                        >
+                                            {message.isLoading ? (
+                                                <span className="inline-flex gap-1 align-middle items-center h-4">
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <div className="text-sm whitespace-pre-wrap break-words">
+                                                        {message.content}
+                                                    </div>
+                                                    {message.sources && message.sources.length > 0 && (
+                                                        <div className="mt-3 pt-3 border-t border-border/50">
+                                                            <p className="text-xs font-semibold mb-2">Sources:</p>
+                                                            <div className="space-y-1">
+                                                                {message.sources.map((source, idx) => (
+                                                                    <a
+                                                                        key={idx}
+                                                                        href={source.url}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="block text-xs hover:underline"
+                                                                        style={{ color: message.isBot ? '#2563eb' : '#93c5fd' }}
+                                                                    >
+                                                                        [{source.type}] {source.title} (
+                                                                        {(source.similarity * 100).toFixed(0)}% match)
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -259,19 +318,29 @@ export const OrchestrationChat = () => {
                     </div>
                 </div>
 
+                {isSyncInProgress && (
+                    <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                        <span className="truncate">
+                            {syncMessage || "Syncing your knowledge base..."}
+                        </span>
+                    </div>
+                )}
+
                 <div className="flex gap-2">
                     <Input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={
-                            selectedProject
-                                ? "Ask about your project documentation..."
-                                : "Select a project to start..."
+                            isSyncInProgress
+                                ? "Knowledge base is syncing — you can still ask questions..."
+                                : selectedProject
+                                    ? "Ask about your project documentation..."
+                                    : "Select a project to start..."
                         }
                         onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                         disabled={isLoading || !selectedProject}
-                        className="flex-1"
-                        style={{ backgroundColor: "#fff" }}
+                        className="flex-1 bg-white"
                     />
                     <Button
                         onClick={handleSend}

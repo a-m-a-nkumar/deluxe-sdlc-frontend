@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./PairProgrammingDashboard.css";
 import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/contexts/AppStateContext";
@@ -18,8 +19,7 @@ const CopyButton = ({ text }: { text: string }) => {
     return (
         <button
             onClick={handleCopy}
-            className="absolute top-3 right-3 p-1.5 rounded-md text-xs flex items-center gap-1 transition-all"
-            style={{ color: copied ? '#22c55e' : '#9ca3af', background: 'rgba(255,255,255,0.05)' }}
+            className={`absolute top-3 right-3 p-1.5 rounded-md text-xs flex items-center gap-1 transition-all ${copied ? 'pp-copy-btn-copied' : 'pp-copy-btn'}`}
             title="Copy to clipboard"
         >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -29,21 +29,18 @@ const CopyButton = ({ text }: { text: string }) => {
 };
 
 const CodeBlock = ({ code, language = "bash" }: { code: string; language?: string }) => (
-    <div className="relative rounded-lg overflow-hidden mt-3 mb-4" style={{ background: '#0f172a', border: '1px solid #1e293b' }}>
-        <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ borderColor: '#1e293b', background: '#0a0f1e' }}>
+    <div className="relative rounded-lg overflow-hidden mt-3 mb-4 pp-code-block">
+        <div className="flex items-center gap-2 px-4 py-2 border-b pp-code-header">
             <div className="flex gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-70" />
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 opacity-70" />
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500 opacity-70" />
             </div>
-            <span className="text-xs ml-1" style={{ color: '#64748b', fontFamily: 'monospace' }}>{language}</span>
+            <span className="text-xs ml-1 pp-code-lang">{language}</span>
         </div>
         <div className="relative">
             <CopyButton text={code} />
-            <pre
-                className="px-5 py-4 overflow-x-auto text-sm leading-relaxed"
-                style={{ color: '#e2e8f0', fontFamily: "'JetBrains Mono', 'Fira Code', monospace", background: 'transparent' }}
-            >
+            <pre className="px-5 py-4 overflow-x-auto text-sm leading-relaxed pp-code-pre">
                 <code>{code}</code>
             </pre>
         </div>
@@ -51,19 +48,13 @@ const CodeBlock = ({ code, language = "bash" }: { code: string; language?: strin
 );
 
 const StepBadge = ({ number }: { number: number }) => (
-    <div
-        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-        style={{ background: '#1B3C71', color: '#fff', boxShadow: '0 2px 8px rgba(27,60,113,0.3)' }}
-    >
+    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 pp-step-badge">
         {number}
     </div>
 );
 
 const InfoBox = ({ children }: { children: React.ReactNode }) => (
-    <div
-        className="flex gap-3 p-4 rounded-lg mt-3 mb-4 text-sm"
-        style={{ background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.2)', color: '#374151' }}
-    >
+    <div className="flex gap-3 p-4 rounded-lg mt-3 mb-4 text-sm pp-info-box">
         <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
         <div>{children}</div>
     </div>
@@ -73,10 +64,10 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     const { selectedProject } = useAppState();
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
-    const apiUrl = API_CONFIG.BASE_URL || "http://localhost:8000";
-    const apiKey = "<YOUR_API_KEY>";
+    const apiUrl = "https://sdlc-dev.deluxe.com";
+    const apiKey = "dev-key-aman";
 
-    const githubRepo = "https://github.com/arushsingh17/mcp.git";
+    const githubRepo = "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
 
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(
@@ -143,10 +134,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <ArrowLeft className="w-4 h-4" />
                     </Button>
                     <div className="flex items-center gap-2">
-                        <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center"
-                            style={{ background: '#1B3C71' }}
-                        >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center pp-header-icon">
                             <Code2 className="w-4 h-4 text-white" />
                         </div>
                         <div>
@@ -161,29 +149,20 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
 
             {/* Project Context Banner */}
             {selectedProject ? (
-                <div
-                    className="rounded-xl p-4 mb-6 flex items-center gap-3"
-                    style={{ background: 'rgba(27,60,113,0.04)', border: '1px solid rgba(27,60,113,0.15)' }}
-                >
-                    <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(27,60,113,0.1)' }}
-                    >
-                        <Package className="w-4 h-4" style={{ color: '#1B3C71' }} />
+                <div className="rounded-xl p-4 mb-6 flex items-center gap-3 pp-project-banner">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 pp-project-icon">
+                        <Package className="w-4 h-4 pp-project-icon-color" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800">Active Project: {selectedProject.project_name}</p>
                         <p className="text-xs text-gray-500 truncate">Project ID: <code className="font-mono bg-gray-100 px-1 rounded">{projectId}</code></p>
                     </div>
-                    <div className="px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a' }}>
+                    <div className="px-2 py-1 rounded-full text-xs font-medium pp-project-badge">
                         ✓ Config auto-filled
                     </div>
                 </div>
             ) : (
-                <div
-                    className="rounded-xl p-4 mb-6 flex items-center gap-3"
-                    style={{ background: '#fffbeb', border: '1px solid #fde68a' }}
-                >
+                <div className="rounded-xl p-4 mb-6 flex items-center gap-3 pp-warning-banner">
                     <Info className="w-4 h-4 text-yellow-600 flex-shrink-0" />
                     <p className="text-sm text-yellow-800">
                         <strong>No project selected.</strong> Select a project from the top bar to auto-fill your Project ID in the config snippets below.
@@ -196,9 +175,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 {/* Section 1: Overview */}
                 <section>
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #e5e7eb 0%, transparent 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">What is the Prompt Enhancer MCP?</h2>
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-right" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {[
@@ -206,7 +185,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             { icon: "⚡", title: "Real-time", desc: "Ask a task, get back an enhanced prompt instantly — scoped to your selected project's documentation" },
                             { icon: "🔌", title: "IDE Integration", desc: "Works with any MCP-compatible IDE: Cursor, VS Code, Claude Desktop, Windsurf" },
                         ].map((card) => (
-                            <div key={card.title} className="rounded-xl p-4" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                            <div key={card.title} className="rounded-xl p-4 pp-feature-card">
                                 <div className="text-2xl mb-2">{card.icon}</div>
                                 <div className="text-sm font-semibold text-gray-800 mb-1">{card.title}</div>
                                 <div className="text-xs text-gray-500 leading-relaxed">{card.desc}</div>
@@ -218,9 +197,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 {/* Section 2: Installation */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #e5e7eb 0%, transparent 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">Installation</h2>
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
                     <div className="space-y-6">
@@ -260,9 +239,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 {/* Section 3: MCP Config */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #e5e7eb 0%, transparent 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">MCP Configuration File</h2>
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
                     <p className="text-sm text-gray-600 mb-4">
@@ -270,12 +249,12 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     </p>
 
                     {/* Config location table */}
-                    <div className="rounded-xl overflow-hidden mb-5" style={{ border: '1px solid #e5e7eb' }}>
+                    <div className="rounded-xl overflow-hidden mb-5 pp-table-container">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>IDE / Tool</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>Config File Location</th>
+                                <tr className="pp-table-header">
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">IDE / Tool</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">Config File Location</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -285,9 +264,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                     { tool: "VS Code (Cline)", path: ".vscode/cline_mcp_settings.json" },
                                     { tool: "Windsurf", path: "~/.codeium/windsurf/mcp_config.json" },
                                 ].map((row, i) => (
-                                    <tr key={row.tool} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                                        <td className="px-4 py-3 font-medium text-gray-700 border-b whitespace-nowrap" style={{ borderColor: '#f0f0f0' }}>{row.tool}</td>
-                                        <td className="px-4 py-3 text-gray-500 border-b font-mono text-xs" style={{ borderColor: '#f0f0f0' }}>
+                                    <tr key={row.tool} className={i % 2 === 0 ? 'pp-table-row-even' : 'pp-table-row-odd'}>
+                                        <td className="px-4 py-3 font-medium text-gray-700 border-b pp-table-cell-border whitespace-nowrap">{row.tool}</td>
+                                        <td className="px-4 py-3 text-gray-500 border-b pp-table-cell-border font-mono text-xs">
                                             {row.path.split('\n').map((line, j) => <div key={j}>{line}</div>)}
                                         </td>
                                     </tr>
@@ -338,19 +317,19 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 {/* Section 4: Environment Variables */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #e5e7eb 0%, transparent 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">Environment Variables Reference</h2>
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
-                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #e5e7eb' }}>
+                    <div className="rounded-xl overflow-hidden pp-table-container">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>Variable</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>Required</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>Value</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b" style={{ borderColor: '#e5e7eb' }}>Description</th>
+                                <tr className="pp-table-header">
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">Variable</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">Required</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">Value</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-600 border-b pp-table-border">Description</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -364,27 +343,27 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                     },
                                     {
                                         key: "API_URL",
-                                        required: false,
+                                        required: true,
                                         value: apiUrl,
-                                        desc: "The base URL of your SiriusAI backend. Defaults to http://localhost:8000 if not set.",
-                                        highlight: false,
+                                        desc: "The base URL of the deployed SDLC backend.",
+                                        highlight: true,
                                     },
                                     {
                                         key: "API_KEY",
                                         required: true,
-                                        value: "<YOUR_API_KEY>",
+                                        value: apiKey,
                                         desc: "Your API key for authenticating requests to the backend.",
-                                        highlight: false,
+                                        highlight: true,
                                     },
                                 ].map((row, i) => (
-                                    <tr key={row.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb' }}>
-                                        <td className="px-4 py-3 border-b font-mono font-semibold text-xs" style={{ borderColor: '#f0f0f0', color: '#1B3C71' }}>{row.key}</td>
-                                        <td className="px-4 py-3 border-b" style={{ borderColor: '#f0f0f0' }}>
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.required ? 'bg-blue-50 text-blue-800' : 'bg-gray-100 text-gray-500'}`}>
+                                    <tr key={row.key} className={i % 2 === 0 ? 'pp-table-row-even' : 'pp-table-row-odd'}>
+                                        <td className="px-4 py-3 border-b pp-table-cell-border font-mono font-semibold text-xs pp-env-key">{row.key}</td>
+                                        <td className="px-4 py-3 border-b pp-table-cell-border">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${row.required ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
                                                 {row.required ? "Required" : "Optional"}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 border-b font-mono text-xs max-w-xs" style={{ borderColor: '#f0f0f0' }}>
+                                        <td className="px-4 py-3 border-b pp-table-cell-border font-mono text-xs max-w-xs">
                                             <span
                                                 className={`inline-block px-2 py-0.5 rounded truncate ${row.highlight ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}
                                                 title={row.value}
@@ -392,7 +371,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                                 {row.value}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 border-b text-xs text-gray-500 leading-relaxed" style={{ borderColor: '#f0f0f0' }}>{row.desc}</td>
+                                        <td className="px-4 py-3 border-b pp-table-cell-border text-xs text-gray-500 leading-relaxed">{row.desc}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -403,9 +382,9 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 {/* Section 5: Quick Test */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, #e5e7eb 0%, transparent 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">Test the Connection</h2>
-                        <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent 0%, #e5e7eb 100%)' }} />
+                        <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
                     <p className="text-sm text-gray-600 mb-4">
@@ -416,48 +395,48 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         {/* Two calling methods side by side */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Explicit */}
-                            <div className="rounded-xl p-4" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                            <div className="rounded-xl p-4 pp-card-light">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(27,60,113,0.08)', color: '#1B3C71' }}>Natural Language</span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full pp-badge-natural">Natural Language</span>
                                     <span className="text-xs text-gray-500">— just type your task</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mb-2">
                                     Just prefix your task with <code className="bg-gray-100 px-1 rounded font-mono">enhance</code> — that's it. The AI automatically calls <code className="bg-gray-100 px-1 rounded font-mono">enhance_task</code> and returns the enriched prompt.
                                 </p>
-                                <div className="rounded-lg p-3 text-xs font-mono leading-relaxed" style={{ background: '#0f172a', color: '#94a3b8' }}>
-                                    <span style={{ color: '#64748b' }}># What you type in your AI chat:</span>
+                                <div className="rounded-lg p-3 text-xs font-mono leading-relaxed pp-terminal-block">
+                                    <span className="pp-terminal-comment"># What you type in your AI chat:</span>
                                     <br /><br />
-                                    <span style={{ color: '#7dd3fc' }}>enhance</span>
-                                    <span style={{ color: '#e2e8f0' }}> implement frontend design</span>
+                                    <span className="pp-terminal-keyword">enhance</span>
+                                    <span className="pp-terminal-value"> implement frontend design</span>
                                     <br /><br />
-                                    <span style={{ color: '#7dd3fc' }}>enhance</span>
-                                    <span style={{ color: '#e2e8f0' }}> add JWT login flow</span>
+                                    <span className="pp-terminal-keyword">enhance</span>
+                                    <span className="pp-terminal-value"> add JWT login flow</span>
                                 </div>
                                 <p className="text-xs text-gray-400 mt-2 italic">→ The AI calls the tool, fetches your project context, and shows you the enriched prompt</p>
                             </div>
 
                             {/* Implicit */}
-                            <div className="rounded-xl p-4" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                            <div className="rounded-xl p-4 pp-card-light">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(99,102,241,0.08)', color: '#6366f1' }}>@mention</span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full pp-badge-mention">@mention</span>
                                     <span className="text-xs text-gray-500">— pin the server directly</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mb-2">
                                     Pin the tool using <code className="bg-gray-100 px-1 rounded font-mono">@mcp:enhance-prompt</code> in your message — the IDE routes it to the correct tool automatically.
                                 </p>
-                                <div className="rounded-lg p-3 text-xs font-mono leading-relaxed" style={{ background: '#0f172a', color: '#94a3b8' }}>
-                                    <span style={{ color: '#64748b' }}># What you type in your AI chat:</span>
+                                <div className="rounded-lg p-3 text-xs font-mono leading-relaxed pp-terminal-block">
+                                    <span className="pp-terminal-comment"># What you type in your AI chat:</span>
                                     <br /><br />
-                                    <span style={{ color: '#c084fc' }}>@mcp:enhance-prompt:enhance_task</span>
+                                    <span className="pp-terminal-mention">@mcp:enhance-prompt:enhance_task</span>
                                     <br />
-                                    <span style={{ color: '#e2e8f0' }}>implement frontend design</span>
+                                    <span className="pp-terminal-value">implement frontend design</span>
                                 </div>
                                 <p className="text-xs text-gray-400 mt-2 italic">→ No extra instruction needed — the @mention directly triggers the tool</p>
                             </div>
                         </div>
 
                         {/* What you'll get back */}
-                        <div className="rounded-xl p-4" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                        <div className="rounded-xl p-4 pp-card-light">
                             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">What you'll get back</div>
                             <div className="text-xs text-gray-600 space-y-2 leading-relaxed">
                                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-1 mb-1">🎫 From Jira</div>

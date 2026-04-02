@@ -1,3 +1,6 @@
+@import './styles/utilities.css';
+@import './styles/animations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,7 +8,63 @@
 /* SDLC Orchestration Design System */
 
 @layer base {
-  :root {
+  /* ============================================================
+     Theme: Deluxe (Red — #D61120)
+     Set VITE_THEME=deluxe in .env
+     ============================================================ */
+  :root[data-theme="deluxe"] {
+    --background: 350 100% 97.5%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 355 84% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 0 0% 23%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 0 0% 23%;
+
+    --accent: 350 100% 97.5%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 355 84% 45%;
+
+    --radius: 0.5rem;
+
+    /* SDLC Specific Colors */
+    --sidebar-bg: 0 0% 100%;
+    --sidebar-border: 220 13% 91%;
+    --stats-red: 355 84% 45%;
+    --chat-bg: 0 0% 100%;
+    --progress-red: 355 84% 45%;
+    --heading-primary: 0 0% 23%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* ============================================================
+     Theme: SiriusAI (Blue — #1B3C71)
+     Set VITE_THEME=siriusai in .env
+     ============================================================ */
+  :root[data-theme="siriusai"] {
     --background: 220 100% 97.5%;
     --foreground: 222.2 84% 4.9%;
 
@@ -45,27 +104,24 @@
     --heading-primary: 0 0% 23%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
 
-    /* SDLC Specific Colors */
-    --sidebar-bg: 0 0% 100%;
-    --sidebar-border: 220 13% 91%;
-    --stats-red: 220 61% 27%;
-    --chat-bg: 0 0% 100%;
-    --progress-red: 220 61% 27%;
+  /* Fallback — default to deluxe if no data-theme set */
+  :root:not([data-theme]) {
+    --background: 350 100% 97.5%;
+    --primary: 355 84% 45%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 355 84% 45%;
+    --accent: 350 100% 97.5%;
+    --stats-red: 355 84% 45%;
+    --progress-red: 355 84% 45%;
+    --radius: 0.5rem;
   }
 
   .dark {

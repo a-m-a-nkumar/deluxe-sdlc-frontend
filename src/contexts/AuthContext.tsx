@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const userInfo = getUserInfo();
           if (userInfo) {
             setUser(userInfo);
-            // Get access token
             const token = await getAccessToken();
             setAccessToken(token);
           }
@@ -104,5 +103,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-

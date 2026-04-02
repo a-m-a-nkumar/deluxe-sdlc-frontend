@@ -95,7 +95,24 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
               className="w-[65px]"
             />
           )}
-          {(!collapsed || isMobile) && (
+          {THEME === "siriusai" && (collapsed && !isMobile) && (
+            <img
+              src="/Logo - S Only (2).png"
+              alt="SiriusAI"
+              className="h-[32px] w-auto"
+            />
+          )}
+          {THEME === "siriusai" && (!collapsed || isMobile) && (
+            <img
+              src="/Logo - SiriusAI (2).png"
+              alt="SiriusAI"
+              className="h-[32px] w-auto"
+            />
+          )}
+          {(!collapsed || isMobile) && THEME === "deluxe" && (
+            <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
+          )}
+          {(!collapsed || isMobile) && THEME === "siriusai" && (
             <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
           )}
         </Link>

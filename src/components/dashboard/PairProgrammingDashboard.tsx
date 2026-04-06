@@ -63,6 +63,8 @@ const InfoBox = ({ children }: { children: React.ReactNode }) => (
 
 export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardProps) => {
     const { selectedProject } = useAppState();
+    const [frontendReqs, setFrontendReqs] = useState("");
+    const [backendReqs, setBackendReqs] = useState("");
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
     const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
@@ -71,6 +73,11 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     const githubRepo = THEME === 'siriusai'
         ? "https://github.com/arushsingh17/mcp.git"
         : "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
+
+    const techStackEnv = {
+        ...(frontendReqs && { FRONTEND_REQUIREMENTS: frontendReqs }),
+        ...(backendReqs && { BACKEND_REQUIREMENTS: backendReqs }),
+    };
 
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(
@@ -82,6 +89,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         PROJECT_ID: projectId,
                         API_URL: apiUrl,
                         API_KEY: apiKey,
+                        ...techStackEnv,
                     },
                 },
             },
@@ -100,6 +108,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         PROJECT_ID: projectId,
                         API_URL: apiUrl,
                         API_KEY: apiKey,
+                        ...techStackEnv,
                     },
                 },
             },
@@ -118,6 +127,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         PROJECT_ID: projectId,
                         API_URL: apiUrl,
                         API_KEY: apiKey,
+                        ...techStackEnv,
                     },
                 },
             },
@@ -278,6 +288,36 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         </table>
                     </div>
 
+                    {/* Tech Stack Inputs */}
+                    <div className="rounded-xl p-4 mb-5 pp-info-box">
+                        <p className="text-sm font-semibold text-gray-700 mb-1">Tech Stack (optional)</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                            In addition to the context retrieved from your Jira and Confluence docs, you can specify your project's tech stack here. These values are included alongside the documentation context when generating the enhanced prompt — useful when stack details are missing or outdated in your docs. If filled, they are added to the copied config as <code className="font-mono bg-blue-50 px-1 rounded">FRONTEND_REQUIREMENTS</code> and <code className="font-mono bg-blue-50 px-1 rounded">BACKEND_REQUIREMENTS</code>.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">Frontend Requirements</label>
+                                <input
+                                    type="text"
+                                    value={frontendReqs}
+                                    onChange={(e) => setFrontendReqs(e.target.value)}
+                                    placeholder="e.g. React 18, TypeScript, TailwindCSS"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">Backend Requirements</label>
+                                <input
+                                    type="text"
+                                    value={backendReqs}
+                                    onChange={(e) => setBackendReqs(e.target.value)}
+                                    placeholder="e.g. Python FastAPI, PostgreSQL, Redis"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Config for .venv */}
                     <div className="mb-6">
                         <div className="flex items-center gap-2 mb-2">
@@ -357,6 +397,20 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                         value: apiKey,
                                         desc: "Your API key for authenticating requests to the backend.",
                                         highlight: true,
+                                    },
+                                    {
+                                        key: "FRONTEND_REQUIREMENTS",
+                                        required: false,
+                                        value: frontendReqs || "—",
+                                        desc: "Your project's frontend tech stack (e.g. React 18, TypeScript, TailwindCSS). Used by the prompt enhancer to supplement documentation context. Takes priority over any conflicting stack info found in docs.",
+                                        highlight: !!frontendReqs,
+                                    },
+                                    {
+                                        key: "BACKEND_REQUIREMENTS",
+                                        required: false,
+                                        value: backendReqs || "—",
+                                        desc: "Your project's backend tech stack (e.g. Python FastAPI, PostgreSQL, Redis). Used by the prompt enhancer to supplement documentation context. Takes priority over any conflicting stack info found in docs.",
+                                        highlight: !!backendReqs,
                                     },
                                 ].map((row, i) => (
                                     <tr key={row.key} className={i % 2 === 0 ? 'pp-table-row-even' : 'pp-table-row-odd'}>

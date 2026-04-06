@@ -507,11 +507,6 @@ export const JiraDashboard = () => {
                       <span className="hidden sm:inline">View in Jira</span>
                       <span className="sm:hidden">View</span>
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-sm">
-                      <Code className="w-4 h-4" />
-                      <span className="hidden sm:inline font-normal">Generate Code</span>
-                      <span className="sm:hidden">Generate</span>
-                    </Button>
                   </div>
                 </div>
 

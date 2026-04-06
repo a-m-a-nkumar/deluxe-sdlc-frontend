@@ -48,6 +48,7 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string;
+  groups: string[];
 }
 
 /**
@@ -138,10 +139,12 @@ export function getUserInfo(): UserInfo | null {
     }
 
     const account = accounts[0];
+    const claims = account.idTokenClaims as Record<string, unknown> | undefined;
     return {
       id: account.homeAccountId || account.localAccountId || "",
       email: account.username || "",
       name: account.name || account.username || "",
+      groups: (claims?.groups as string[]) || [],
     };
   } catch (error) {
     console.error("Error getting user info:", error);

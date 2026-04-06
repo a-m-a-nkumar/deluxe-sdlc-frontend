@@ -460,7 +460,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                           <FormControl>
                             <Input
                               {...field}
-                              placeholder="Enter Project Name"
+                              placeholder="Enter Project Name *"
                               className="bg-white border-border h-10"
                             />
                           </FormControl>

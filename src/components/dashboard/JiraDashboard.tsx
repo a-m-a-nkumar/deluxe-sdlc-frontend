@@ -11,6 +11,7 @@ import { integrationsApi } from "@/services/integrationsApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { colors } from '@/config/theme';
 
 interface DisplayIssue {
   id: string;
@@ -253,7 +254,7 @@ export const JiraDashboard = () => {
     }
   }, [filteredIssues, selectedIssue]);
   const getPriorityIcon = (priority: string) => {
-    return priority === "high" ? <ArrowUp className="w-3 h-3 text-red-500" /> : <ArrowUp className="w-3 h-3 text-orange-500 rotate-45" />;
+    return priority === "high" ? <ArrowUp className="w-3 h-3" style={{ color: colors.brand }} /> : <ArrowUp className="w-3 h-3 text-yellow-500 rotate-45" />;
   };
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -267,7 +268,7 @@ export const JiraDashboard = () => {
   const getTypeBadge = (type: string) => {
     const typeConfig = {
       "Story": "bg-white text-green-700",
-      "Bug": "bg-white text-red-700",
+      "Bug": "bg-white text-blue-700",
       "Task": "bg-white text-blue-700",
       "Epic": "bg-white text-purple-700"
     };
@@ -506,6 +507,11 @@ export const JiraDashboard = () => {
                       <ExternalLink className="w-4 h-4" />
                       <span className="hidden sm:inline">View in Jira</span>
                       <span className="sm:hidden">View</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2 text-sm">
+                      <Code className="w-4 h-4" />
+                      <span className="hidden sm:inline font-normal">Generate Code</span>
+                      <span className="sm:hidden">Generate</span>
                     </Button>
                   </div>
                 </div>

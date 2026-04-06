@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTypingEffect } from "@/hooks/useTypingEffect";
+import { colors } from '@/config/theme';
 
 interface ChatMessageProps {
   message: {
@@ -266,8 +267,8 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
     <div className={`flex ${message.isBot ? 'justify-start' : 'justify-end'} mb-4`}>
       <div className={`flex ${message.isBot ? 'flex-row' : 'flex-row-reverse'} items-start gap-2 max-w-[80%]`}>
         {message.isBot && (
-          <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: '#FBE7E9' }}>
-            <AvatarFallback style={{ backgroundColor: '#FBE7E9', color: '#D61120' }} className="text-xs font-semibold">
+          <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: colors.brandLight }}>
+            <AvatarFallback style={{ backgroundColor: colors.brandLight, color: colors.brand }} className="text-xs font-semibold">
               BA
             </AvatarFallback>
           </Avatar>

@@ -41,9 +41,9 @@
 
 /* Step badge (numbered circle) */
 .pp-step-badge {
-  background: linear-gradient(135deg, #E60C23 0%, #c7001b 100%);
+  background: hsl(var(--primary));
   color: #fff;
-  box-shadow: 0 2px 8px rgba(230, 12, 35, 0.3);
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
 }
 
 /* Info box */
@@ -55,23 +55,23 @@
 
 /* Header icon badge */
 .pp-header-icon {
-  background: linear-gradient(135deg, #E60C23 0%, #c7001b 100%);
+  background: hsl(var(--primary));
 }
 
 /* Project context banner (project selected) */
 .pp-project-banner {
-  background: linear-gradient(135deg, rgba(230, 12, 35, 0.04) 0%, rgba(230, 12, 35, 0.08) 100%);
-  border: 1px solid rgba(230, 12, 35, 0.15);
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.04) 0%, hsl(var(--primary) / 0.08) 100%);
+  border: 1px solid hsl(var(--primary) / 0.15);
 }
 
 /* Project banner icon */
 .pp-project-icon {
-  background: rgba(230, 12, 35, 0.1);
+  background: hsl(var(--primary) / 0.1);
 }
 
 /* Project banner icon color */
 .pp-project-icon-color {
-  color: #E60C23;
+  color: hsl(var(--primary));
 }
 
 /* Project banner success badge */
@@ -165,8 +165,8 @@
 
 /* Natural language badge */
 .pp-badge-natural {
-  background: rgba(230, 12, 35, 0.08);
-  color: #E60C23;
+  background: hsl(var(--primary) / 0.08);
+  color: hsl(var(--primary));
 }
 
 /* Mention badge */
@@ -177,5 +177,5 @@
 
 /* ENV variable key (table) */
 .pp-env-key {
-  color: #E60C23;
+  color: hsl(var(--primary));
 }

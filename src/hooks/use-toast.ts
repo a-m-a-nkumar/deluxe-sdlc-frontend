@@ -135,21 +135,6 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">;
 
 function toast({ ...props }: Toast) {
-  // Auto-detect variant from title if not explicitly set
-  if (!props.variant) {
-    const title = typeof props.title === "string" ? props.title.toLowerCase() : "";
-    if (title.includes("error") || title.includes("failed") || title.includes("denied") || title.includes("required")) {
-      props.variant = "destructive";
-    } else if (
-      title.includes("success") || title.includes("created") || title.includes("updated") ||
-      title.includes("saved") || title.includes("pushed") || title.includes("copied") ||
-      title.includes("uploaded") || title.includes("deleted") || title.includes("received") ||
-      title.includes("linked") || title.includes("connected")
-    ) {
-      props.variant = "success";
-    }
-  }
-
   const id = genId();
 
   const update = (props: ToasterToast) =>

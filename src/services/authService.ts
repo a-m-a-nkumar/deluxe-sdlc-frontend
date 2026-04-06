@@ -22,7 +22,7 @@ const msalConfig = {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored
     storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
   },
-};
+};  
 
 // Create MSAL instance
 const msalInstance = new PublicClientApplication(msalConfig);
@@ -48,7 +48,6 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string;
-  groups: string[];
 }
 
 /**
@@ -139,12 +138,10 @@ export function getUserInfo(): UserInfo | null {
     }
 
     const account = accounts[0];
-    const claims = account.idTokenClaims as Record<string, unknown> | undefined;
     return {
       id: account.homeAccountId || account.localAccountId || "",
       email: account.username || "",
       name: account.name || account.username || "",
-      groups: (claims?.groups as string[]) || [],
     };
   } catch (error) {
     console.error("Error getting user info:", error);

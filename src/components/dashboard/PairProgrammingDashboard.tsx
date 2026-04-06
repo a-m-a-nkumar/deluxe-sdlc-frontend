@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, C
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/contexts/AppStateContext";
 import { API_CONFIG } from "@/config/api";
+import { THEME } from "@/config/theme";
 
 interface PairProgrammingDashboardProps {
     onBack?: () => void;
@@ -64,10 +65,12 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     const { selectedProject } = useAppState();
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
-    const apiUrl = "https://sdlc-dev.deluxe.com";
+    const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
     const apiKey = "dev-key-aman";
 
-    const githubRepo = "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
+    const githubRepo = THEME === 'siriusai'
+        ? "https://github.com/arushsingh17/mcp.git"
+        : "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
 
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(

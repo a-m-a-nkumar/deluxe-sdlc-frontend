@@ -1,15 +1,17 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { colors } from '@/config/theme';
 
 export const ConfluenceDashboard = () => {
   const { accessToken } = useAuth();
@@ -222,6 +224,28 @@ export const ConfluenceDashboard = () => {
                     <span className="sm:hidden">Generate</span>
                   </Button>
 
+                  {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
+                          disabled={!selectedPageId}
+                        >
+                          <FlaskConical className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate Test Scenarios</span>
+                          <span className="sm:hidden">Test</span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!selectedPageId && (
+                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
+                    )}
+                  </Tooltip>
+                  {/* END TEST_SCENARIO_FEATURE */}
+
                 </div>
               </div>
 
@@ -236,7 +260,7 @@ export const ConfluenceDashboard = () => {
                     <>
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-sm bg-red-600 text-white">
+                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: colors.brand }}>
                             {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -245,11 +269,11 @@ export const ConfluenceDashboard = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 flex-shrink-0 text-red-600" />
+                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: colors.brand }} />
                           <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
                         </div>
                         <Badge
-                          className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'hover:bg-red-600' : ''}`}
+                          className={`${getStatusBadge(pageDetails.status)} self-start`}
                           style={{
                             backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
                             borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,

@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppStateProvider } from "./contexts/AppStateContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { ModuleProtectedRoute } from "./components/auth/ModuleProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BRDAssistant from "./pages/BRDAssistant";
@@ -14,8 +13,10 @@ import AnalystAgent from "./pages/AnalystAgent";
 import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
+import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
+import TestingPage from "./pages/TestingPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -43,62 +44,76 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                {/* Business group modules */}
                 <Route
                   path="/brd-assistant"
                   element={
-                    <ModuleProtectedRoute moduleId="brd">
+                    <ProtectedRoute>
                       <BRDAssistant />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/analyst-agent"
                   element={
-                    <ModuleProtectedRoute moduleId="brd">
+                    <ProtectedRoute>
                       <AnalystAgent />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/confluence"
                   element={
-                    <ModuleProtectedRoute moduleId="confluence">
+                    <ProtectedRoute>
                       <ConfluencePage />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/jira"
                   element={
-                    <ModuleProtectedRoute moduleId="jira">
+                    <ProtectedRoute>
                       <JiraPage />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/jira-generation/:confluencePageId"
                   element={
-                    <ModuleProtectedRoute moduleId="jira">
+                    <ProtectedRoute>
                       <JiraGenerationPage />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
-                {/* Tech group modules */}
                 <Route
                   path="/design-assistant"
                   element={
-                    <ModuleProtectedRoute moduleId="design">
+                    <ProtectedRoute>
                       <DesignAssistant />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/pair-programming"
                   element={
-                    <ModuleProtectedRoute moduleId="pair-programming">
+                    <ProtectedRoute>
                       <PairProgramming />
-                    </ModuleProtectedRoute>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/test-generation/:confluencePageId"
+                  element={
+                    <ProtectedRoute>
+                      <TestScenarioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/testing"
+                  element={
+                    <ProtectedRoute>
+                      <TestingPage />
+                    </ProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

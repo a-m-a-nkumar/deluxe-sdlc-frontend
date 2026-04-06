@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { THEME } from "@/config/theme";
+const THEME = "deluxe";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiGet } from "@/services/api";
 
@@ -58,13 +58,6 @@ const navigationItems = [
     description: "MCP setup & IDE integration",
     id: "pair-programming",
     path: "/pair-programming",
-  },
-  {
-    icon: FlaskConical,
-    label: "Testing",
-    description: "Test scenarios & Katalon pipeline",
-    id: "testing",
-    path: "/testing",
   },
 ];
 

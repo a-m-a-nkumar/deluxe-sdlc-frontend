@@ -14,10 +14,8 @@ import AnalystAgent from "./pages/AnalystAgent";
 import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
-import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
-import TestingPage from "./pages/TestingPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -100,22 +98,6 @@ const App = () => {
                   element={
                     <ModuleProtectedRoute moduleId="pair-programming">
                       <PairProgramming />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/test-generation/:confluencePageId"
-                  element={
-                    <ModuleProtectedRoute moduleId="testing">
-                      <TestScenarioPage />
-                    </ModuleProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/testing"
-                  element={
-                    <ModuleProtectedRoute moduleId="testing">
-                      <TestingPage />
                     </ModuleProtectedRoute>
                   }
                 />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   BookOpen,
@@ -85,22 +85,53 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportHtml, setSupportHtml] = useState("");
   const [supportLoading, setSupportLoading] = useState(false);
+  const [pendingScroll, setPendingScroll] = useState<string | null>(null);
 
   // Filter navigation items based on user's group memberships
   const visibleItems = navigationItems.filter((item) => hasModuleAccess(item.id));
 
+  // Scroll to section after HTML renders in the DOM
+  useEffect(() => {
+    if (!pendingScroll || supportLoading || !supportHtml) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(pendingScroll);
+      const container = document.getElementById("support-guide-scroll");
+      if (el && container) {
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        container.scrollTo({ top: container.scrollTop + (elRect.top - containerRect.top) - 20, behavior: "smooth" });
+      }
+      setPendingScroll(null);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [pendingScroll, supportLoading, supportHtml]);
+
+  // Map module IDs to heading slugs in the user guide
+  const MODULE_SECTION_MAP: Record<string, string> = {
+    brd: "brd-generation-module",
+    confluence: "confluence-tab-view-generated-brds",
+    jira: "planning-module",
+    design: "planning-module",
+    "pair-programming": "pair-programming-module",
+    testing: "pair-programming-module",
+  };
+
   const handleSupportClick = async () => {
+    const sectionId = currentView ? MODULE_SECTION_MAP[currentView] : null;
     setSupportOpen(true);
-    if (supportHtml) return; // already loaded
-    setSupportLoading(true);
-    try {
-      const resp = await apiGet("/api/support/user-guide");
-      const data = await resp.json();
-      setSupportHtml(data.html || "");
-    } catch {
-      setSupportHtml("<p style='color:red'>Failed to load user guide. Please try again later.</p>");
-    } finally {
-      setSupportLoading(false);
+    setPendingScroll(sectionId);
+
+    if (!supportHtml) {
+      setSupportLoading(true);
+      try {
+        const resp = await apiGet("/api/support/user-guide");
+        const data = await resp.json();
+        setSupportHtml(data.html || "");
+      } catch {
+        setSupportHtml("<p style='color:red'>Failed to load user guide. Please try again later.</p>");
+      } finally {
+        setSupportLoading(false);
+      }
     }
   };
   return (
@@ -267,7 +298,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           <DialogHeader>
             <DialogTitle>SDLC Orchestrator User Guide</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto pr-2">
+          <div id="support-guide-scroll" className="flex-1 overflow-y-auto pr-2">
             {supportLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin mr-2" />

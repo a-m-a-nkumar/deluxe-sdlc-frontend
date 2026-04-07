@@ -63,6 +63,8 @@ const InfoBox = ({ children }: { children: React.ReactNode }) => (
 
 export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardProps) => {
     const { selectedProject } = useAppState();
+    const [frontendReqs, setFrontendReqs] = useState("");
+    const [backendReqs, setBackendReqs] = useState("");
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
     const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
@@ -72,18 +74,24 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
         ? "https://github.com/arushsingh17/mcp.git"
         : "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
 
-    const serverEnv = { PROJECT_ID: projectId, API_URL: apiUrl, API_KEY: apiKey };
+    const techStackEnv = {
+        ...(frontendReqs && { FRONTEND_REQUIREMENTS: frontendReqs }),
+        ...(backendReqs && { BACKEND_REQUIREMENTS: backendReqs }),
+    };
+
+    const serverEnv = {
+        PROJECT_ID: projectId,
+        API_URL: apiUrl,
+        API_KEY: apiKey,
+        ...techStackEnv,
+    };
 
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(
         {
             servers: {
                 "enhance-prompt": {
-                    command: ".venv/Scripts/prompt-enhancer-mcp.exe",
-                    env: serverEnv,
-                },
-                "test-workflow": {
-                    command: ".venv/Scripts/test-workflow-mcp.exe",
+                    command: "<PATH_TO_YOUR_VENV>/Scripts/prompt-enhancer-mcp.exe",
                     env: serverEnv,
                 },
             },
@@ -97,11 +105,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
         {
             servers: {
                 "enhance-prompt": {
-                    command: ".venv/bin/prompt-enhancer-mcp",
-                    env: serverEnv,
-                },
-                "test-workflow": {
-                    command: ".venv/bin/test-workflow-mcp",
+                    command: "<PATH_TO_YOUR_VENV>/bin/prompt-enhancer-mcp",
                     env: serverEnv,
                 },
             },
@@ -116,10 +120,6 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
             servers: {
                 "enhance-prompt": {
                     command: "prompt-enhancer-mcp",
-                    env: serverEnv,
-                },
-                "test-workflow": {
-                    command: "test-workflow-mcp",
                     env: serverEnv,
                 },
             },
@@ -199,49 +199,107 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     </div>
                 </section>
 
-                {/* Section 2: Installation */}
+                {/* Section 2: Pre-requisites */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
                         <div className="h-px flex-1 pp-divider-left" />
-                        <h2 className="text-base font-semibold text-gray-700 px-2">Installation</h2>
+                        <h2 className="text-base font-semibold text-gray-700 px-2">Pre-requisites</h2>
+                        <div className="h-px flex-1 pp-divider-right" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2">
+                        {[
+                            { icon: "🐍", label: "Python 3.10+" },
+                            { icon: "🔧", label: "Git installed" },
+                            { icon: "💻", label: "VS Code Copilot / Claude Code / Cursor" },
+                        ].map((item) => (
+                            <div key={item.label} className="rounded-lg p-3 text-center pp-feature-card">
+                                <div className="text-xl mb-1">{item.icon}</div>
+                                <div className="text-xs font-medium text-gray-700">{item.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Section 3: Setup Steps */}
+                <section>
+                    <div className="flex items-center gap-2 mb-5">
+                        <div className="h-px flex-1 pp-divider-left" />
+                        <h2 className="text-base font-semibold text-gray-700 px-2">Setup Steps</h2>
                         <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
                     <div className="space-y-6">
-                        {/* Step 1 - Single unified install */}
+                        {/* Step 1: Open project */}
                         <div className="flex gap-4">
                             <StepBadge number={1} />
                             <div className="flex-1">
-                                <h3 className="font-semibold text-gray-800 mb-1">Install the package</h3>
-                                <p className="text-sm text-gray-500 mb-1">
-                                    The install command is the same whether you're using a virtual environment or a global install.
-                                </p>
-                                <CodeBlock
-                                    language="bash"
-                                    code={`pip install git+${githubRepo}`}
-                                />
-                                <InfoBox>
-                                    After installing, the <code className="bg-blue-50 px-1 rounded font-mono text-xs">prompt-enhancer-mcp</code> command will be available. The only difference between a <strong>.venv</strong> and <strong>global</strong> install is <strong>how you reference the command path in the MCP config</strong> — see the config section below.
-                                </InfoBox>
+                                <h3 className="font-semibold text-gray-800 mb-1">Open your project in VS Code</h3>
+                                <p className="text-sm text-gray-500">Open the project folder where you want to use the MCP-powered AI assistant.</p>
                             </div>
                         </div>
 
-                        {/* Step 2: Verify */}
+                        {/* Step 2: Install MCP package — two paths */}
                         <div className="flex gap-4">
                             <StepBadge number={2} />
                             <div className="flex-1">
-                                <h3 className="font-semibold text-gray-800 mb-1">Verify installation</h3>
-                                <p className="text-sm text-gray-500 mb-1">Run the following to confirm the command is available</p>
-                                <CodeBlock
-                                    language="bash"
-                                    code={`prompt-enhancer-mcp --help`}
-                                />
+                                <div className="rounded-xl p-4 border-2 border-blue-200 bg-blue-50/30">
+                                    <h3 className="font-bold text-gray-900 mb-1 text-base">Install the MCP package</h3>
+                                    <p className="text-sm text-gray-600 mb-3">Choose one of the two options below:</p>
+
+                                    {/* Option A: global */}
+                                    <div className="mb-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install (recommended)</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mb-1">No virtual environment needed — installs the command directly into your system PATH:</p>
+                                        <CodeBlock language="bash" code={`pip install git+${githubRepo}`} />
+                                    </div>
+
+                                    {/* Option B: venv */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Option B — Virtual Environment</span>
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 mb-0">1. Create the virtual environment <span className="bg-yellow-100 text-yellow-800 font-semibold px-1.5 py-0.5 rounded text-xs">(skip if you already have one)</span>:</p>
+                                        <CodeBlock language="bash" code={`python -m venv .venv`} />
+
+                                        <p className="text-xs text-gray-500 mb-0">2. Activate it:</p>
+                                        <p className="text-xs font-semibold text-gray-400 mt-2 mb-0">🪟 Windows</p>
+                                        <CodeBlock language="bash" code={`.venv\\Scripts\\activate`} />
+                                        <p className="text-xs font-semibold text-gray-400 mt-1 mb-0">🍎 macOS / Linux</p>
+                                        <CodeBlock language="bash" code={`source .venv/bin/activate`} />
+
+                                        <p className="text-xs text-gray-500 mb-0">3. Install the package:</p>
+                                        <CodeBlock language="bash" code={`pip install git+${githubRepo}`} />
+                                    </div>
+
+                                    <p className="text-xs text-gray-500 mt-1">Verify installation:</p>
+                                    <CodeBlock
+                                        language="bash"
+                                        code={`prompt-enhancer-mcp --help`}
+                                    />
+                                </div>
                             </div>
                         </div>
+
+                        {/* Step 3: Create MCP config */}
+                        <div className="flex gap-4">
+                            <StepBadge number={3} />
+                            <div className="flex-1">
+                                <div className="rounded-xl p-4 border-2 border-blue-200 bg-blue-50/30">
+                                    <h3 className="font-bold text-gray-900 mb-1 text-base">Create the MCP config file</h3>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                        Create <code className="bg-blue-50 px-1 rounded font-mono text-xs">.vscode/mcp.json</code> in your project root (or the appropriate config path for your IDE — see table below) and paste the config from the <strong>MCP Configuration</strong> section.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </section>
 
-                {/* Section 3: MCP Config */}
+                {/* Section 4: MCP Config */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
                         <div className="h-px flex-1 pp-divider-left" />
@@ -264,10 +322,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             </thead>
                             <tbody>
                                 {[
-                                    { tool: "Cursor", path: "~/.cursor/mcp.json  (or .cursor/mcp.json in project root)" },
-                                    { tool: "Claude Desktop", path: "~/Library/Application Support/Claude/claude_desktop_config.json  (macOS)\n%APPDATA%\\Claude\\claude_desktop_config.json  (Windows)" },
-                                    { tool: "VS Code (Cline)", path: ".vscode/cline_mcp_settings.json" },
-                                    { tool: "Windsurf", path: "~/.codeium/windsurf/mcp_config.json" },
+                                    { tool: "VS Code + GitHub Copilot", path: ".vscode/mcp.json" },
                                 ].map((row, i) => (
                                     <tr key={row.tool} className={i % 2 === 0 ? 'pp-table-row-even' : 'pp-table-row-odd'}>
                                         <td className="px-4 py-3 font-medium text-gray-700 border-b pp-table-cell-border whitespace-nowrap">{row.tool}</td>
@@ -280,12 +335,54 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         </table>
                     </div>
 
-                    {/* Config for .venv */}
+                    {/* Tech Stack Inputs */}
+                    <div className="rounded-xl p-4 mb-5 pp-info-box">
+                        <p className="text-sm font-semibold text-gray-700 mb-1">Tech Stack (optional)</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                            In addition to the context retrieved from your Jira and Confluence docs, you can specify your project's tech stack here. These values are included alongside the documentation context when generating the enhanced prompt — useful when stack details are missing or outdated in your docs. If filled, they are added to the copied config as <code className="font-mono bg-blue-50 px-1 rounded">FRONTEND_REQUIREMENTS</code> and <code className="font-mono bg-blue-50 px-1 rounded">BACKEND_REQUIREMENTS</code>.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">Frontend Requirements</label>
+                                <input
+                                    type="text"
+                                    value={frontendReqs}
+                                    onChange={(e) => setFrontendReqs(e.target.value)}
+                                    placeholder="e.g. React 18, TypeScript, TailwindCSS"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-600 mb-1">Backend Requirements</label>
+                                <input
+                                    type="text"
+                                    value={backendReqs}
+                                    onChange={(e) => setBackendReqs(e.target.value)}
+                                    placeholder="e.g. Python FastAPI, PostgreSQL, Redis"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Config for global */}
                     <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Globe className="w-4 h-4 text-gray-500" />
+                            <h3 className="font-semibold text-gray-700">
+                                Option A: Installed Globally (pip) <span className="text-xs font-normal text-blue-600 ml-1">(recommended)</span>
+                            </h3>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-1">Use this when you installed the package globally — the command is available in your system PATH.</p>
+                        <CodeBlock language="json" code={globalConfigJson} />
+                    </div>
+
+                    {/* Config for .venv */}
+                    <div>
                         <div className="flex items-center gap-2 mb-2">
                             <Terminal className="w-4 h-4 text-gray-500" />
                             <h3 className="font-semibold text-gray-700">
-                                Option A: Installed in <code className="font-mono text-sm bg-gray-100 px-1.5 rounded">.venv</code>
+                                Option B: Installed in <code className="font-mono text-sm bg-gray-100 px-1.5 rounded">.venv</code>
                             </h3>
                         </div>
                         <p className="text-sm text-gray-500 mb-1">Use this when you installed inside a virtual environment. The path to the executable differs by OS.</p>
@@ -303,19 +400,6 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <InfoBox>
                             On <strong>Windows</strong>, pip creates the executable at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv\Scripts\prompt-enhancer-mcp.exe</code>. On <strong>macOS/Linux</strong>, it's at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv/bin/prompt-enhancer-mcp</code> (no .exe). Use an absolute path if your IDE doesn't resolve relative paths from the project root.
                         </InfoBox>
-                    </div>
-
-                    {/* Config for global */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <Globe className="w-4 h-4 text-gray-500" />
-                            <h3 className="font-semibold text-gray-700">
-                                Option B: Installed Globally (pip)
-                            </h3>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-1">Use this when you installed the package globally — the command is available in your system PATH.</p>
-
-                        <CodeBlock language="json" code={globalConfigJson} />
                     </div>
                 </section>
 
@@ -360,6 +444,20 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                         desc: "Your API key for authenticating requests to the backend.",
                                         highlight: true,
                                     },
+                                    {
+                                        key: "FRONTEND_REQUIREMENTS",
+                                        required: false,
+                                        value: frontendReqs || "—",
+                                        desc: "Your project's frontend tech stack (e.g. React 18, TypeScript, TailwindCSS). Used by the prompt enhancer to supplement documentation context. Takes priority over any conflicting stack info found in docs.",
+                                        highlight: !!frontendReqs,
+                                    },
+                                    {
+                                        key: "BACKEND_REQUIREMENTS",
+                                        required: false,
+                                        value: backendReqs || "—",
+                                        desc: "Your project's backend tech stack (e.g. Python FastAPI, PostgreSQL, Redis). Used by the prompt enhancer to supplement documentation context. Takes priority over any conflicting stack info found in docs.",
+                                        highlight: !!backendReqs,
+                                    },
                                 ].map((row, i) => (
                                     <tr key={row.key} className={i % 2 === 0 ? 'pp-table-row-even' : 'pp-table-row-odd'}>
                                         <td className="px-4 py-3 border-b pp-table-cell-border font-mono font-semibold text-xs pp-env-key">{row.key}</td>
@@ -384,6 +482,18 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     </div>
                 </section>
 
+                {/* Start using MCP */}
+                <section>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="h-px flex-1 pp-divider-left" />
+                        <h2 className="text-base font-semibold text-gray-700 px-2">Start using MCP</h2>
+                        <div className="h-px flex-1 pp-divider-right" />
+                    </div>
+                    <p className="text-sm text-gray-500">
+                        Open your AI chat in VS Code Copilot and type <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs font-semibold">enhance</code> followed by your task. The MCP server will enrich your prompt with project context automatically.
+                    </p>
+                </section>
+
                 {/* Section 5: Quick Test */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
@@ -406,37 +516,37 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                     <span className="text-xs text-gray-500">— just type your task</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mb-2">
-                                    Just prefix your task with <code className="bg-gray-100 px-1 rounded font-mono">enhance</code> — that's it. The AI automatically calls <code className="bg-gray-100 px-1 rounded font-mono">enhance_task</code> and returns the enriched prompt.
+                                    Prefix your message with <code className="bg-gray-100 px-1 rounded font-mono">enhance</code> to guarantee Copilot picks up the MCP server before doing anything. Without this, Copilot may skip the tool and answer from its own knowledge.
                                 </p>
                                 <div className="rounded-lg p-3 text-xs font-mono leading-relaxed pp-terminal-block">
                                     <span className="pp-terminal-comment"># What you type in your AI chat:</span>
                                     <br /><br />
-                                    <span className="pp-terminal-keyword">enhance</span>
-                                    <span className="pp-terminal-value"> implement frontend design</span>
+                                    <span className="pp-terminal-keyword">using mcp enhance_task -</span>
+                                    <span className="pp-terminal-value"> implement login functionality</span>
                                     <br /><br />
-                                    <span className="pp-terminal-keyword">enhance</span>
-                                    <span className="pp-terminal-value"> add JWT login flow</span>
+                                    <span className="pp-terminal-keyword">using mcp enhance_task -</span>
+                                    <span className="pp-terminal-value"> add payment screen</span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-2 italic">→ The AI calls the tool, fetches your project context, and shows you the enriched prompt</p>
+                                <p className="text-xs text-gray-400 mt-2 italic">→ Copilot calls <code className="bg-gray-800 px-1 rounded">enhance_task</code>, fetches your project context, and shows you the enriched prompt before proceeding</p>
                             </div>
 
-                            {/* Implicit */}
+                            {/* Explicit / command */}
                             <div className="rounded-xl p-4 pp-card-light">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full pp-badge-mention">@mention</span>
-                                    <span className="text-xs text-gray-500">— pin the server directly</span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full pp-badge-mention">/ command</span>
+                                    <span className="text-xs text-gray-500">— explicit selection</span>
                                 </div>
                                 <p className="text-xs text-gray-500 mb-2">
-                                    Pin the tool using <code className="bg-gray-100 px-1 rounded font-mono">@mcp:enhance-prompt</code> in your message — the IDE routes it to the correct tool automatically.
+                                    Type <code className="bg-gray-100 px-1 rounded font-mono">/</code> in the Copilot chat — a picker appears. Select <code className="bg-gray-100 px-1 rounded font-mono">mcp.enhance-prompt.enhance_task</code> from the list, then type your task.
                                 </p>
                                 <div className="rounded-lg p-3 text-xs font-mono leading-relaxed pp-terminal-block">
-                                    <span className="pp-terminal-comment"># What you type in your AI chat:</span>
+                                    <span className="pp-terminal-comment"># Type / to open the command picker, then:</span>
                                     <br /><br />
-                                    <span className="pp-terminal-mention">@mcp:enhance-prompt:enhance_task</span>
+                                    <span className="pp-terminal-mention">mcp.enhance-prompt.enhance_task</span>
                                     <br />
-                                    <span className="pp-terminal-value">implement frontend design</span>
+                                    <span className="pp-terminal-value">implement login functionality</span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-2 italic">→ No extra instruction needed — the @mention directly triggers the tool</p>
+                                <p className="text-xs text-gray-400 mt-2 italic">→ Directly selects the tool — no ambiguity, Copilot always calls enhance_task</p>
                             </div>
                         </div>
 

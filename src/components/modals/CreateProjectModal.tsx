@@ -103,10 +103,22 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
       onOpenChange(false);
       onProjectCreated?.(newProject);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const msg = error?.message || "";
+      const isDuplicate = msg.toLowerCase().includes("already exists");
+      // Extract the detail from the JSON error body if present
+      let description = "Failed to create project. Please try again.";
+      if (isDuplicate) {
+        try {
+          const jsonPart = msg.substring(msg.indexOf("{"));
+          description = JSON.parse(jsonPart).detail;
+        } catch {
+          description = "A project with this name already exists. Please choose a different name.";
+        }
+      }
       toast({
-        title: "Error",
-        description: "Failed to create project. Please try again.",
+        title: isDuplicate ? "Duplicate Project Name" : "Error",
+        description,
         variant: "destructive",
       });
       console.error("Error creating project:", error);

@@ -160,11 +160,23 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
 
       setPendingUploadResponse(response);
       onUploadSuccess?.(response);
-    } catch (error) {
+    } catch (error: any) {
       // Keep files in the list and maintain download/delete options on failure
+      const msg = error?.message || "";
+      let description = "Failed to upload files. Please try again.";
+      // Extract backend error message (e.g. empty transcript)
+      try {
+        const jsonPart = msg.substring(msg.indexOf("{"));
+        const parsed = JSON.parse(jsonPart);
+        if (parsed.error) description = parsed.error;
+      } catch {
+        if (msg.toLowerCase().includes("empty") || msg.toLowerCase().includes("too short")) {
+          description = "The uploaded transcript appears to be empty or too short. Please upload a file with meaningful content.";
+        }
+      }
       toast({
-        title: "Upload failed",
-        description: "Failed to upload files. Please try again.",
+        title: "BRD Generation Failed",
+        description,
         variant: "destructive",
       });
     } finally {

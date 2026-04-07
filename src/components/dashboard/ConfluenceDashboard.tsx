@@ -52,9 +52,18 @@ export const ConfluenceDashboard = () => {
 
   const loadPages = async () => {
     if (!accessToken) return;
+    if (!selectedProject?.confluence_space_key) {
+      setPages([]);
+      setIsLoadingPages(false);
+      toast({
+        title: "No project selected",
+        description: "Select a project to view Confluence pages.",
+      });
+      return;
+    }
     try {
       setIsLoadingPages(true);
-      const spaceKey = selectedProject?.confluence_space_key || 'SO';
+      const spaceKey = selectedProject.confluence_space_key;
       const fetchedPages = await fetchConfluencePages(accessToken, spaceKey);
       setPages(fetchedPages);
       // Only auto-select first page if there's no activeConfluencePageId waiting to be set

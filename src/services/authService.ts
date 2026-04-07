@@ -114,17 +114,10 @@ export async function getAccessToken(): Promise<string | null> {
       }
     }
 
-    // Try interactive login if silent fails
-    try {
-      await ensureMsalInitialized();
-      const response = await msalInstance.acquireTokenPopup({
-        scopes: ["User.Read"],
-      });
-      return response.idToken;
-    } catch (popupError) {
-      console.error("Error acquiring token via popup:", popupError);
-      return null;
-    }
+    // Silent acquisition failed — return null instead of popup
+    // (acquireTokenPopup called outside a user gesture gets blocked by browsers, especially Mac Chrome)
+    console.warn("[AUTH] Silent token acquisition failed. User may need to re-login.");
+    return null;
   }
 }
 

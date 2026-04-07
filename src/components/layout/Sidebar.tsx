@@ -90,36 +90,44 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   // Filter navigation items based on user's group memberships
   const visibleItems = navigationItems.filter((item) => hasModuleAccess(item.id));
 
-  // Scroll to section after HTML renders in the DOM
+  // Map current page to heading text to search for in the user guide
+  const MODULE_HEADING_MAP: Record<string, string> = {
+    overview: "Orchestrator Home Page",
+    brd: "BRD Generation Module",
+    analyst: "BRD Generation by conversing with AI",
+    confluence: "Planning Module",
+    jira: "Planning Module",
+    design: "Planning Module",
+    "pair-programming": "Pair Programming Module",
+    testing: "Pair Programming Module",
+  };
+
+  // Scroll to the matching heading after HTML renders
   useEffect(() => {
     if (!pendingScroll || supportLoading || !supportHtml) return;
     const timer = setTimeout(() => {
-      const el = document.getElementById(pendingScroll);
       const container = document.getElementById("support-guide-scroll");
-      if (el && container) {
-        const containerRect = container.getBoundingClientRect();
-        const elRect = el.getBoundingClientRect();
-        container.scrollTo({ top: container.scrollTop + (elRect.top - containerRect.top) - 20, behavior: "smooth" });
+      if (!container) return;
+      // Find the heading by text content match
+      const headings = container.querySelectorAll("h1, h2, h3, h4");
+      for (const heading of headings) {
+        const text = heading.textContent?.trim() || "";
+        if (text.toLowerCase().includes(pendingScroll.toLowerCase())) {
+          const containerRect = container.getBoundingClientRect();
+          const elRect = heading.getBoundingClientRect();
+          container.scrollTo({ top: container.scrollTop + (elRect.top - containerRect.top) - 20, behavior: "smooth" });
+          break;
+        }
       }
       setPendingScroll(null);
-    }, 100);
+    }, 200);
     return () => clearTimeout(timer);
   }, [pendingScroll, supportLoading, supportHtml]);
 
-  // Map module IDs to heading slugs in the user guide
-  const MODULE_SECTION_MAP: Record<string, string> = {
-    brd: "brd-generation-module",
-    confluence: "confluence-tab-view-generated-brds",
-    jira: "planning-module",
-    design: "planning-module",
-    "pair-programming": "pair-programming-module",
-    testing: "pair-programming-module",
-  };
-
   const handleSupportClick = async () => {
-    const sectionId = currentView ? MODULE_SECTION_MAP[currentView] : null;
+    const heading = currentView ? MODULE_HEADING_MAP[currentView] : null;
     setSupportOpen(true);
-    setPendingScroll(sectionId);
+    setPendingScroll(heading);
 
     if (!supportHtml) {
       setSupportLoading(true);
@@ -134,6 +142,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
       }
     }
   };
+
   return (
     <div className={`${isMobile ? 'w-60' : (collapsed ? 'w-16' : 'w-60')} h-full bg-sidebar-bg border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden`}>
       {/* Header */}

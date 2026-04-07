@@ -132,7 +132,8 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
     if (!supportHtml) {
       setSupportLoading(true);
       try {
-        const resp = await apiGet("/api/support/user-guide");
+        const { API_CONFIG } = await import("@/config/api");
+        const resp = await apiGet(`${API_CONFIG.BASE_URL}/api/support/user-guide`);
         const data = await resp.json();
         setSupportHtml(data.html || "");
       } catch {

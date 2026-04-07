@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const USER_GUIDE_URL =
-  "https://deluxe.atlassian.net/wiki/spaces/AE/pages/3451142145/User+Guide+-+SDLC+Orchestrator";
+  "https://deluxe.atlassian.net/wiki/spaces/AE/pages/8295710865/User_Guide+-+SDLC_Orchestrator#How-to-request-the-access-for-modules";
 
 const AccessDenied = () => {
   const { user, logout } = useAuth();

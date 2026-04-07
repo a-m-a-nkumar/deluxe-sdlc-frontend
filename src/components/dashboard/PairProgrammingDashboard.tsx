@@ -66,23 +66,25 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
     const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
-    const apiKey = "dev-key-aman";
+    const apiKey = THEME === 'siriusai' ? "dev-key" : "dev-key-aman";
 
     const githubRepo = THEME === 'siriusai'
         ? "https://github.com/arushsingh17/mcp.git"
         : "https://bitbucket.org/deluxe-development/sdlc_mcp.git";
 
+    const serverEnv = { PROJECT_ID: projectId, API_URL: apiUrl, API_KEY: apiKey };
+
     // Config JSON for .venv install — Windows (Scripts + .exe)
     const venvConfigJson = JSON.stringify(
         {
-            mcpServers: {
+            servers: {
                 "enhance-prompt": {
                     command: ".venv/Scripts/prompt-enhancer-mcp.exe",
-                    env: {
-                        PROJECT_ID: projectId,
-                        API_URL: apiUrl,
-                        API_KEY: apiKey,
-                    },
+                    env: serverEnv,
+                },
+                "test-workflow": {
+                    command: ".venv/Scripts/test-workflow-mcp.exe",
+                    env: serverEnv,
                 },
             },
         },
@@ -93,14 +95,14 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     // Config JSON for Linux/Mac .venv
     const venvConfigJsonLinux = JSON.stringify(
         {
-            mcpServers: {
+            servers: {
                 "enhance-prompt": {
                     command: ".venv/bin/prompt-enhancer-mcp",
-                    env: {
-                        PROJECT_ID: projectId,
-                        API_URL: apiUrl,
-                        API_KEY: apiKey,
-                    },
+                    env: serverEnv,
+                },
+                "test-workflow": {
+                    command: ".venv/bin/test-workflow-mcp",
+                    env: serverEnv,
                 },
             },
         },
@@ -111,14 +113,14 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
     // Config JSON for global install
     const globalConfigJson = JSON.stringify(
         {
-            mcpServers: {
+            servers: {
                 "enhance-prompt": {
                     command: "prompt-enhancer-mcp",
-                    env: {
-                        PROJECT_ID: projectId,
-                        API_URL: apiUrl,
-                        API_KEY: apiKey,
-                    },
+                    env: serverEnv,
+                },
+                "test-workflow": {
+                    command: "test-workflow-mcp",
+                    env: serverEnv,
                 },
             },
         },

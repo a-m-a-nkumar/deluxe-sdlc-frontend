@@ -16,8 +16,12 @@ interface ModuleProtectedRouteProps {
 }
 
 export const ModuleProtectedRoute = ({ children, moduleId }: ModuleProtectedRouteProps) => {
-  const { isAuthenticated, hasModuleAccess } = useAuth();
+  const { isAuthenticated, isLoading, hasModuleAccess } = useAuth();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

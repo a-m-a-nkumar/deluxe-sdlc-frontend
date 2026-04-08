@@ -5,6 +5,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force scrollbar visibility on macOS Safari/Chrome */
+[cmdk-list], [data-radix-scroll-area-viewport], .overflow-y-auto, .overflow-auto {
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+[cmdk-list]::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  width: 6px;
+  -webkit-appearance: none;
+}
+[cmdk-list]::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
 /* SDLC Orchestration Design System */
 
 @layer base {

@@ -242,27 +242,6 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   )}
 
-                  {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button
-                          variant="outline"
-                          className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
-                          onClick={() => selectedPageId && setShowAccessDenied(true)}
-                          disabled={!selectedPageId}
-                        >
-                          <FlaskConical className="w-4 h-4" />
-                          <span className="hidden sm:inline">Generate Test Scenarios</span>
-                          <span className="sm:hidden">Test</span>
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {!selectedPageId && (
-                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
-                    )}
-                  </Tooltip>
-                  {/* END TEST_SCENARIO_FEATURE */}
 
                 </div>
               </div>

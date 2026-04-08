@@ -6,19 +6,46 @@
 @tailwind utilities;
 
 /* Force scrollbar visibility on macOS Safari/Chrome */
-[cmdk-list], [data-radix-scroll-area-viewport], .overflow-y-auto, .overflow-auto {
-  scrollbar-width: thin;
+[cmdk-list],
+[cmdk-list-sizer],
+[data-radix-scroll-area-viewport],
+[role="listbox"],
+.overflow-y-auto,
+.overflow-auto {
+  scrollbar-width: thin !important;
   -webkit-overflow-scrolling: touch;
+  overflow-y: auto !important;
 }
 [cmdk-list]::-webkit-scrollbar,
-[data-radix-scroll-area-viewport]::-webkit-scrollbar {
-  width: 6px;
-  -webkit-appearance: none;
+[cmdk-list-sizer]::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar,
+[role="listbox"]::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar {
+  width: 8px !important;
+  -webkit-appearance: none !important;
+  display: block !important;
+}
+[cmdk-list]::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track,
+[role="listbox"]::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
 }
 [cmdk-list]::-webkit-scrollbar-thumb,
-[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+[cmdk-list-sizer]::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb,
+[role="listbox"]::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  min-height: 30px;
+}
+[cmdk-list]::-webkit-scrollbar-thumb:hover,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover,
+[role="listbox"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* SDLC Orchestration Design System */

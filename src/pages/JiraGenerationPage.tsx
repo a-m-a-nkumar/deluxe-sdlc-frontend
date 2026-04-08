@@ -184,7 +184,7 @@ export const JiraGenerationPage = () => {
                 });
             }
 
-            navigate('/jira');
+            navigate('/jira', { replace: true });
         } catch (error: any) {
             console.error('Error creating Jira items:', error);
             toast({

@@ -102,13 +102,16 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
     testing: "Pair Programming Module",
   };
 
-  // Scroll to the matching heading after HTML renders
+  // Scroll to the matching heading after HTML renders (retry up to 5 times)
   useEffect(() => {
     if (!pendingScroll || supportLoading || !supportHtml) return;
-    const timer = setTimeout(() => {
+    let attempts = 0;
+    const tryScroll = () => {
       const container = document.getElementById("support-guide-scroll");
-      if (!container) return;
-      // Find the heading by text content match
+      if (!container) {
+        if (attempts < 5) { attempts++; setTimeout(tryScroll, 300); }
+        return;
+      }
       const headings = container.querySelectorAll("h1, h2, h3, h4");
       for (const heading of headings) {
         const text = heading.textContent?.trim() || "";
@@ -116,11 +119,15 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           const containerRect = container.getBoundingClientRect();
           const elRect = heading.getBoundingClientRect();
           container.scrollTo({ top: container.scrollTop + (elRect.top - containerRect.top) - 20, behavior: "smooth" });
-          break;
+          setPendingScroll(null);
+          return;
         }
       }
-      setPendingScroll(null);
-    }, 200);
+      // Heading not found yet — HTML might still be rendering
+      if (attempts < 5) { attempts++; setTimeout(tryScroll, 300); }
+      else { setPendingScroll(null); }
+    };
+    const timer = setTimeout(tryScroll, 400);
     return () => clearTimeout(timer);
   }, [pendingScroll, supportLoading, supportHtml]);
 

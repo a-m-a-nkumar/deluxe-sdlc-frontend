@@ -142,7 +142,7 @@ const BRDAssistant = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainLayout currentView="brd" showBackButton onBack={handleBack}>
+      <MainLayout currentView={brdMode === "analyst" ? "analyst" : "brd"} showBackButton onBack={handleBack}>
 
         {/* Card Selection Screen */}
         {brdMode === "pending" && (

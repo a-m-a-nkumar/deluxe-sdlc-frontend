@@ -15,6 +15,7 @@ const BRDAssistant = () => {
   const location = useLocation();
   const {
     selectedProject,
+    isRestoringProject,
     setChatMessages,
     setBrdSections,
     setBrdId,
@@ -44,10 +45,10 @@ const BRDAssistant = () => {
 
   // Notify user if they land on the page with no project selected
   useEffect(() => {
-    if (!selectedProject) {
+    if (!isRestoringProject && !selectedProject) {
       toast.warning("No project selected. Please select a project to start generating a BRD.");
     }
-  }, []);
+  }, [isRestoringProject]);
 
   // Restore or clear BRD data when project changes
   useEffect(() => {

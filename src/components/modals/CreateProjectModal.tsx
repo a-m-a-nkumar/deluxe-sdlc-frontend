@@ -46,7 +46,7 @@ import { integrationsApi, type JiraProject, type ConfluenceSpace } from "@/servi
 import { useAuth } from "@/contexts/AuthContext";
 
 const createProjectSchema = z.object({
-  project_name: z.string().min(1, "Project name is required"),
+  project_name: z.string().min(1, "Project name is required").max(75, "Project name must be 75 characters or less"),
   brd_template: z.string().optional(),
 });
 
@@ -152,9 +152,21 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
       return;
     }
 
+    // Check for duplicate project name (case-insensitive)
+    const trimmedName = data.project_name.trim();
+    const isDuplicate = projects.some(
+      (p) => p.project_name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      form.setError("project_name", {
+        message: "A project with this name already exists. Please choose a unique project name.",
+      });
+      return;
+    }
+
     const projectData: CreateProjectRequest = {
       project_id: crypto.randomUUID(),
-      project_name: data.project_name,
+      project_name: data.project_name.trim(),
       description: data.brd_template || "",
       jira_project_key: selectedJiraProject,
       confluence_space_key: selectedConfluenceSpace,
@@ -271,7 +283,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!createProjectMutation.isPending) onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-[400px] bg-white border border-border p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[440px] w-[calc(100%-2rem)] bg-white border border-border p-0 overflow-hidden">
         {/* Loading overlay while project is being created */}
         {createProjectMutation.isPending && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm rounded-lg">
@@ -318,7 +330,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-hidden min-w-0">
           {activeTab === "my-project" ? (
             <div className="space-y-4">
               <div className="relative">
@@ -458,20 +470,35 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                 </div>
               ) : (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 min-w-0">
                     <FormField
                       control={form.control}
                       name="project_name"
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input
+                            <textarea
                               {...field}
                               placeholder="Enter Project Name *"
-                              className="bg-white border-border h-10"
+                              maxLength={75}
+                              rows={1}
+                              className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden min-h-[40px]"
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = `${target.scrollHeight}px`;
+                              }}
                             />
                           </FormControl>
-                          <FormMessage />
+                          <div className="flex items-center justify-between">
+                            <FormMessage />
+                            <span className={cn(
+                              "text-xs ml-auto",
+                              (field.value?.length || 0) >= 75 ? "text-red-500" : "text-muted-foreground"
+                            )}>
+                              {field.value?.length || 0}/75
+                            </span>
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -483,7 +510,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                         <FormItem>
                           <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTemplates}>
                             <FormControl>
-                              <SelectTrigger className="bg-white border-border h-10">
+                              <SelectTrigger className="bg-white border-border h-10 overflow-hidden">
                                 <SelectValue placeholder={isLoadingTemplates ? "Loading templates..." : "Select BRD Template"} />
                               </SelectTrigger>
                             </FormControl>
@@ -527,16 +554,18 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                                 role="combobox"
                                 aria-expanded={jiraPopoverOpen}
                                 className={cn(
-                                  "w-full justify-between h-10 bg-white font-normal",
+                                  "w-full justify-between h-10 bg-white font-normal overflow-hidden",
                                   !selectedJiraProject || selectedJiraProject === 'none' ? 'border-red-300' : 'border-green-400'
                                 )}
                               >
-                                {selectedJiraProject
-                                  ? (() => {
-                                      const proj = jiraProjects.find(p => p.key === selectedJiraProject);
-                                      return proj ? `${proj.key} - ${proj.name}` : selectedJiraProject;
-                                    })()
-                                  : "Select Jira Project *"}
+                                <span className="truncate">
+                                  {selectedJiraProject
+                                    ? (() => {
+                                        const proj = jiraProjects.find(p => p.key === selectedJiraProject);
+                                        return proj ? `${proj.key} - ${proj.name}` : selectedJiraProject;
+                                      })()
+                                    : "Select Jira Project *"}
+                                </span>
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
@@ -554,10 +583,11 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                                           setSelectedJiraProject(project.key);
                                           setJiraPopoverOpen(false);
                                         }}
+                                        className="overflow-hidden"
                                       >
-                                        <Check className={cn("mr-2 h-4 w-4", selectedJiraProject === project.key ? "opacity-100" : "opacity-0")} />
-                                        <span className="font-medium">{project.key}</span>
-                                        <span className="ml-1 text-muted-foreground">- {project.name}</span>
+                                        <Check className={cn("mr-2 h-4 w-4 shrink-0", selectedJiraProject === project.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium shrink-0">{project.key}</span>
+                                        <span className="ml-1 text-muted-foreground truncate">- {project.name}</span>
                                       </CommandItem>
                                     ))}
                                   </CommandGroup>
@@ -579,16 +609,18 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                                 role="combobox"
                                 aria-expanded={confluencePopoverOpen}
                                 className={cn(
-                                  "w-full justify-between h-10 bg-white font-normal",
+                                  "w-full justify-between h-10 bg-white font-normal overflow-hidden",
                                   !selectedConfluenceSpace || selectedConfluenceSpace === 'none' ? 'border-red-300' : 'border-green-400'
                                 )}
                               >
-                                {selectedConfluenceSpace
-                                  ? (() => {
-                                      const space = confluenceSpaces.find(s => s.key === selectedConfluenceSpace);
-                                      return space ? `${space.key} - ${space.name}` : selectedConfluenceSpace;
-                                    })()
-                                  : "Select Confluence Space *"}
+                                <span className="truncate">
+                                  {selectedConfluenceSpace
+                                    ? (() => {
+                                        const space = confluenceSpaces.find(s => s.key === selectedConfluenceSpace);
+                                        return space ? `${space.key} - ${space.name}` : selectedConfluenceSpace;
+                                      })()
+                                    : "Select Confluence Space *"}
+                                </span>
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
@@ -606,10 +638,11 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                                           setSelectedConfluenceSpace(space.key);
                                           setConfluencePopoverOpen(false);
                                         }}
+                                        className="overflow-hidden"
                                       >
-                                        <Check className={cn("mr-2 h-4 w-4", selectedConfluenceSpace === space.key ? "opacity-100" : "opacity-0")} />
-                                        <span className="font-medium">{space.key}</span>
-                                        <span className="ml-1 text-muted-foreground">- {space.name}</span>
+                                        <Check className={cn("mr-2 h-4 w-4 shrink-0", selectedConfluenceSpace === space.key ? "opacity-100" : "opacity-0")} />
+                                        <span className="font-medium shrink-0">{space.key}</span>
+                                        <span className="ml-1 text-muted-foreground truncate">- {space.name}</span>
                                       </CommandItem>
                                     ))}
                                   </CommandGroup>
@@ -636,7 +669,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                       </div>
                     )}
 
-                    <div className="flex justify-end pt-4">
+                    <div className="pt-4">
                       <Button
                         type="submit"
                         disabled={
@@ -647,7 +680,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                           !selectedConfluenceSpace ||
                           selectedConfluenceSpace === 'none'
                         }
-                        className="w-full sm:w-auto h-10 px-8 text-white font-semibold transition-all hover:opacity-90 bg-[#D61120]"
+                        className="w-full h-10 px-8 text-white font-semibold transition-all hover:opacity-90 bg-[#D61120]"
                       >
                         {createProjectMutation.isPending ? (
                           <div className="flex items-center gap-2">

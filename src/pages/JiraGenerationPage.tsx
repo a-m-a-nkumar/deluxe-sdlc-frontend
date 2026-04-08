@@ -14,7 +14,7 @@ export const JiraGenerationPage = () => {
     const { confluencePageId } = useParams<{ confluencePageId: string }>();
     const navigate = useNavigate();
     const { accessToken } = useAuth();
-    const { selectedProject } = useAppState();
+    const { selectedProject, isRestoringProject } = useAppState();
     const { toast } = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +26,8 @@ export const JiraGenerationPage = () => {
     const [showBoardModal, setShowBoardModal] = useState(false);
 
     useEffect(() => {
+        if (isRestoringProject) return;
+
         if (!confluencePageId || !selectedProject || !accessToken) {
             toast({
                 title: 'Missing information',
@@ -37,7 +39,7 @@ export const JiraGenerationPage = () => {
         }
 
         generateJiraItems();
-    }, [confluencePageId, selectedProject, accessToken]);
+    }, [confluencePageId, selectedProject, accessToken, isRestoringProject]);
 
     const generateJiraItems = async () => {
         if (!confluencePageId || !selectedProject || !accessToken) return;

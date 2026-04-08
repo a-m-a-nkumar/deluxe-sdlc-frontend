@@ -56,7 +56,19 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newFiles: UploadedFile[] = Array.from(files).map((file) => ({
+      const fileArray = Array.from(files);
+      const emptyFiles = fileArray.filter((file) => file.size === 0);
+
+      if (emptyFiles.length > 0) {
+        toast({
+          title: "Empty file detected",
+          description: `"${emptyFiles.map((f) => f.name).join(", ")}" contains no data. Please upload a file with content.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newFiles: UploadedFile[] = fileArray.map((file) => ({
         id: `${Date.now()}-${Math.random()}`,
         name: file.name.includes(".") ? file.name.split(".")[0] : file.name,
         size: formatFileSize(file.size),
@@ -135,6 +147,16 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       toast({
         title: "No project selected",
         description: "Please select a project before generating a BRD.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emptyFiles = filesToUpload.filter((file) => file.size === 0);
+    if (emptyFiles.length > 0) {
+      toast({
+        title: "Empty file detected",
+        description: `"${emptyFiles.map((f) => f.name).join(", ")}" contains no data. Please upload a file with content.`,
         variant: "destructive",
       });
       return;

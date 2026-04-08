@@ -28,7 +28,7 @@ const TestScenarioPage = () => {
   const { confluencePageId } = useParams<{ confluencePageId: string }>();
   const navigate = useNavigate();
   const { accessToken } = useAuth();
-  const { selectedProject } = useAppState();
+  const { selectedProject, isRestoringProject } = useAppState();
   const { toast } = useToast();
 
   const [isGenerating, setIsGenerating] = useState(true);
@@ -45,6 +45,8 @@ const TestScenarioPage = () => {
   }, [isGenerating]);
 
   useEffect(() => {
+    if (isRestoringProject) return;
+
     if (!confluencePageId || !selectedProject || !accessToken) {
       toast({
         title: 'Missing information',
@@ -55,7 +57,7 @@ const TestScenarioPage = () => {
       return;
     }
     generateScenarios();
-  }, [confluencePageId, selectedProject, accessToken]);
+  }, [confluencePageId, selectedProject, accessToken, isRestoringProject]);
 
   const generateScenarios = async () => {
     if (!confluencePageId || !selectedProject || !accessToken) return;

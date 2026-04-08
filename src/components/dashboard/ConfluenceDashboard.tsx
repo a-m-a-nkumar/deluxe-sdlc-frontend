@@ -26,7 +26,8 @@ export const ConfluenceDashboard = () => {
   const {
     activeConfluencePageId,
     setActiveConfluencePageId,
-    selectedProject
+    selectedProject,
+    isRestoringProject
   } = useAppState();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,8 +40,8 @@ export const ConfluenceDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (accessToken) loadPages();
-  }, [accessToken, selectedProject]);
+    if (accessToken && !isRestoringProject) loadPages();
+  }, [accessToken, selectedProject, isRestoringProject]);
 
   // Set active page when activeConfluencePageId is set
   useEffect(() => {

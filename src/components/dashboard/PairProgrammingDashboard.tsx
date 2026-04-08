@@ -401,6 +401,19 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             On <strong>Windows</strong>, pip creates the executable at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv\Scripts\prompt-enhancer-mcp.exe</code>. On <strong>macOS/Linux</strong>, it's at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv/bin/prompt-enhancer-mcp</code> (no .exe). Use an absolute path if your IDE doesn't resolve relative paths from the project root.
                         </InfoBox>
                     </div>
+
+                    {/* Important note after all config options */}
+                    <div className="mt-5 rounded-xl border-2 border-amber-300 bg-amber-50 p-4">
+                        <div className="flex items-start gap-3">
+                            <span className="text-xl">⚠️</span>
+                            <div>
+                                <p className="text-sm font-bold text-amber-900">Important: Reload after pasting the config</p>
+                                <p className="text-sm text-amber-800 mt-1">
+                                    After pasting the config into your <code className="bg-amber-100 px-1 rounded font-mono text-xs">mcp.json</code> file, press <kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+S</kbd> to save, then run <strong>Developer: Reload Window</strong> from the command palette (<kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+Shift+P</kbd> → type "Reload Window") for the MCP server to start.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 {/* Section 4: Environment Variables */}

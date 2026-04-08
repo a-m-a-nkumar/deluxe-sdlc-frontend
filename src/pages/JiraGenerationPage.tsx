@@ -167,13 +167,22 @@ export const JiraGenerationPage = () => {
                 boardId || undefined
             );
 
-            const { summary } = response;
+            const { summary, failed } = response;
             const boardLabel = boardName ? ` on board "${boardName}"` : '';
 
-            toast({
-                title: 'Jira items created',
-                description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira${boardLabel}.`,
-            });
+            if (failed && failed.length > 0) {
+                toast({
+                    title: 'Partially created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} stories, but ${summary.total_failed} item(s) failed${boardLabel}. Check console for details.`,
+                    variant: 'destructive',
+                });
+                console.error('[JIRA] Failed items:', failed);
+            } else {
+                toast({
+                    title: 'Jira items created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira${boardLabel}.`,
+                });
+            }
 
             navigate('/jira');
         } catch (error: any) {

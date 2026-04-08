@@ -21,7 +21,7 @@ const Login = () => {
   const handleAzureLogin = async () => {
     try {
       await login();
-      navigate("/", { replace: true });
+      // No navigate() needed — loginRedirect handles navigation
     } catch (error: unknown) {
       const err = error as { errorCode?: string; message?: string };
       if (

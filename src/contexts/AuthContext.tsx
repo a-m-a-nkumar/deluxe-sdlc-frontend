@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
+import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
 
 // ── Azure AD Group-Based RBAC ──
 const BUSINESS_GROUP_OID = "be88c38e-8a45-4026-ac85-f0f850b8cc03";
@@ -46,10 +46,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { ...userInfo, allowedModules: allowed };
   };
 
-  // Check if user is already logged in on mount
+  // Initialize auth — handle redirect response when Azure sends user back
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        await ensureMsalInitialized();
+
+        // CRITICAL: handle redirect response when Azure redirects back after login
+        const redirectResult = await msalInstance.handleRedirectPromise();
+        if (redirectResult) {
+          const userInfo = getUserInfo();
+          if (userInfo) {
+            setUser(buildUser(userInfo));
+            setAccessToken(redirectResult.idToken);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // Already logged in (token in localStorage from previous session)
         if (checkAzureAuth()) {
           const userInfo = getUserInfo();
           if (userInfo) {

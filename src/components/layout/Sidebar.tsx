@@ -302,21 +302,29 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
         </div>
       </div>
 
-      {/* Support User Guide Dialog */}
+      {/* Support User Guide — Full-screen overlay */}
       <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>SDLC Orchestrator User Guide</DialogTitle>
+        <DialogContent className="fixed inset-4 max-w-none w-auto h-auto translate-x-0 translate-y-0 top-4 left-4 flex flex-col bg-white rounded-xl shadow-2xl">
+          <DialogHeader className="flex-shrink-0 border-b px-8 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold text-gray-900">SDLC Orchestrator User Guide</DialogTitle>
+                <p className="text-xs text-gray-500 mt-0.5">Documentation &amp; setup instructions</p>
+              </div>
+            </div>
           </DialogHeader>
-          <div id="support-guide-scroll" className="flex-1 overflow-y-auto pr-2">
+          <div id="support-guide-scroll" className="flex-1 overflow-y-auto px-8 py-6 bg-white">
             {supportLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                <span>Loading user guide...</span>
+              <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-8 h-8 animate-spin mr-3 text-blue-600" />
+                <span className="text-gray-500 text-lg">Loading user guide...</span>
               </div>
             ) : (
               <div
-                className="prose prose-sm max-w-none"
+                className="support-guide-content"
                 dangerouslySetInnerHTML={{ __html: supportHtml }}
               />
             )}

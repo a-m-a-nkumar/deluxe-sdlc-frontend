@@ -104,7 +104,14 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   };
 
   const triggerFileUpload = () => {
-    // Allow uploads even without project selection for local AgentCore flow
+    if (!selectedProject) {
+      toast({
+        title: "No project selected",
+        description: "Please select or create a project before uploading files.",
+        variant: "destructive",
+      });
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -219,6 +226,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       toast({
         title: "BRD downloaded",
         description: "Your BRD has been downloaded successfully.",
+        variant: "success",
       });
     } catch (error) {
       toast({

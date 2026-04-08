@@ -25,6 +25,13 @@ const BRDAssistant = () => {
     navigate("/");
   };
 
+  // Notify user if they land on the page with no project selected
+  useEffect(() => {
+    if (!selectedProject) {
+      toast.warning("No project selected. Please select a project to start generating a BRD.");
+    }
+  }, []);
+
   // Restore or clear BRD data when project changes
   useEffect(() => {
     if (!selectedProject) return;

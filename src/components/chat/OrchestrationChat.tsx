@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { streamOrchestrationQuery, triggerIncrementalSync, getSyncStatus, type Source } from "@/services/orchestrationApi";
@@ -36,6 +36,15 @@ export const OrchestrationChat = () => {
     const [isSyncing, setIsSyncing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize textarea as content grows
+    useEffect(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    }, [inputValue]);
 
     // Poll sync status when a project is selected
     const pollSyncStatus = useCallback(async () => {
@@ -327,8 +336,9 @@ export const OrchestrationChat = () => {
                     </div>
                 )}
 
-                <div className="flex gap-2">
-                    <Input
+                <div className="flex gap-2 items-end">
+                    <Textarea
+                        ref={textareaRef}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder={
@@ -338,9 +348,15 @@ export const OrchestrationChat = () => {
                                     ? "Ask about your project documentation..."
                                     : "Select a project to start..."
                         }
-                        onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
                         disabled={isLoading || !selectedProject}
-                        className="flex-1 bg-white"
+                        rows={1}
+                        className="flex-1 bg-white min-h-0 resize-none overflow-hidden py-2"
                     />
                     <Button
                         onClick={handleSend}

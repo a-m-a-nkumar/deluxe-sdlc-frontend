@@ -1,10 +1,18 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +34,7 @@ export const ConfluenceDashboard = () => {
   const [pageDetails, setPageDetails] = useState<ConfluencePageDetails | null>(null);
   const [isLoadingPages, setIsLoadingPages] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -238,7 +247,7 @@ export const ConfluenceDashboard = () => {
                         <Button
                           variant="outline"
                           className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
-                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
+                          onClick={() => selectedPageId && setShowAccessDenied(true)}
                           disabled={!selectedPageId}
                         >
                           <FlaskConical className="w-4 h-4" />
@@ -355,6 +364,36 @@ export const ConfluenceDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Access Denied Dialog */}
+      <Dialog open={showAccessDenied} onOpenChange={setShowAccessDenied}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: colors.brandLight }}
+              >
+                <ShieldX className="w-5 h-5" style={{ color: colors.brand }} />
+              </div>
+              <DialogTitle className="text-lg font-semibold">Access Denied</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-gray-600 leading-relaxed pt-1">
+              You do not have permission to access this module. Please contact your
+              administrator to request access through the appropriate Azure AD group.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button
+              onClick={() => setShowAccessDenied(false)}
+              className="text-white"
+              style={{ backgroundColor: colors.brand }}
+            >
+              Return to Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

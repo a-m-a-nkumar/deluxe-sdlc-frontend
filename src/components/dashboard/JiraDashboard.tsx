@@ -23,6 +23,7 @@ interface DisplayIssue {
   points: string;
   created: string;
   updated: string;
+  updatedRaw: string;
   description: string;
   sprint: string;
   labels: string[];
@@ -103,6 +104,7 @@ export const JiraDashboard = () => {
       points: jiraIssue.fields.customfield_10016?.toString() || "0",
       created: jiraIssue.fields.created ? formatDate(jiraIssue.fields.created) : "Unknown",
       updated: jiraIssue.fields.updated ? formatDate(jiraIssue.fields.updated) : "Unknown",
+      updatedRaw: jiraIssue.fields.updated || "",
       description: extractTextFromADF(jiraIssue.fields.description),
       sprint: jiraIssue.fields.sprint?.name || "No sprint",
       labels: jiraIssue.fields.labels || [],
@@ -146,6 +148,8 @@ export const JiraDashboard = () => {
           accessToken
         );
         const mappedIssues = response.issues.map(mapJiraIssueToDisplayIssue);
+        // Sort by last updated (newest first)
+        mappedIssues.sort((a, b) => b.updatedRaw.localeCompare(a.updatedRaw));
         setIssues(mappedIssues);
 
         // Check if there's a newly created issue to highlight

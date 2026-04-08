@@ -74,7 +74,13 @@ export const ConfluenceDashboard = () => {
       setIsLoadingPages(true);
       const spaceKey = selectedProject.confluence_space_key;
       const fetchedPages = await fetchConfluencePages(accessToken, spaceKey);
-      setPages(fetchedPages);
+      // Sort by last modified (newest first) using version.when from Confluence API
+      const sorted = [...fetchedPages].sort((a: any, b: any) => {
+        const dateA = a.version?.when || "";
+        const dateB = b.version?.when || "";
+        return dateB.localeCompare(dateA);
+      });
+      setPages(sorted);
       // Only auto-select first page if there's no activeConfluencePageId waiting to be set
       if (fetchedPages.length > 0 && !selectedPageId && !activeConfluencePageId) {
         setSelectedPageId(fetchedPages[0].id);

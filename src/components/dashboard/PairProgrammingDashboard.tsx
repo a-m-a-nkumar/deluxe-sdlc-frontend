@@ -482,24 +482,33 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     </div>
                 </section>
 
-                {/* Start using MCP */}
-                <section>
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="h-px flex-1 pp-divider-left" />
-                        <h2 className="text-base font-semibold text-gray-700 px-2">Start using MCP</h2>
-                        <div className="h-px flex-1 pp-divider-right" />
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        Open your AI chat in VS Code Copilot and type <code className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-xs font-semibold">enhance</code> followed by your task. The MCP server will enrich your prompt with project context automatically.
-                    </p>
-                </section>
-
-                {/* Section 5: Quick Test */}
+                {/* Section 5: Test the Connection */}
                 <section>
                     <div className="flex items-center gap-2 mb-5">
                         <div className="h-px flex-1 pp-divider-left" />
                         <h2 className="text-base font-semibold text-gray-700 px-2">Test the Connection</h2>
                         <div className="h-px flex-1 pp-divider-right" />
+                    </div>
+
+                    {/* MCP Screenshots */}
+                    <div className="space-y-6 mb-6">
+                        <div className="rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <span className="text-sm font-semibold text-gray-700">MCP Config & VS Code Copilot in Action</span>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <img
+                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
+                                    alt="VS Code with MCP config and Copilot chat showing enhance task"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                                <img
+                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
+                                    alt="VS Code Copilot showing MCP command picker with enhance-prompt"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <p className="text-sm text-gray-600 mb-4">

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChatMessage } from "./ChatMessage";
@@ -72,6 +72,15 @@ export const ChatInterface = ({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea as content grows
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [inputValue]);
 
   // Initialize external messages with initial message if they're empty
   useEffect(() => {
@@ -272,14 +281,21 @@ export const ChatInterface = ({
           )}
         </div>
 
-        <div className="flex gap-2">
-          <Input
+        <div className="flex gap-2 items-end">
+          <Textarea
+            ref={textareaRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={disabled ? "Upload files to enable chat..." : placeholder}
-            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             disabled={isLoading || disabled}
-            className="flex-1 bg-white"
+            rows={1}
+            className="flex-1 bg-white min-h-0 resize-none overflow-hidden py-2"
           />
           <Button
             onClick={handleSend}

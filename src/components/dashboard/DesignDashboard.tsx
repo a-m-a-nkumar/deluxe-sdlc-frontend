@@ -537,7 +537,7 @@ export const DesignDashboard = () => {
   const step4Done = !!generatedDocument;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0" style={{ backgroundColor: "#F7F9FC" }}>
+    <div className="flex flex-col overflow-hidden" style={{ height: "calc(100vh - 4rem)", backgroundColor: "#F7F9FC" }}>
 
       {/* ── Page Header ── */}
       <div className="px-6 sm:px-8 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
@@ -904,7 +904,7 @@ export const DesignDashboard = () => {
 
         {/* ══ LEFT PANEL: Page Selector (Step 1) ══ */}
         <div
-          className="border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0"
+          className={`border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0 ${!leftCollapsed ? "px-[1.6rem] py-4" : ""}`}
           style={{ width: leftCollapsed ? "40px" : "340px" }}
         >
           {/* Collapsed strip — just shows expand button */}
@@ -1011,7 +1011,7 @@ export const DesignDashboard = () => {
                 </div>
 
                 {/* Scrollable page list */}
-                <div className="relative">
+                <div className="relative flex-1 min-h-0 flex flex-col">
                   {isProcessing && (
                     <div className="absolute inset-0 z-10 rounded-lg bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 border border-gray-200">
                       <div className="w-5 h-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
@@ -1022,7 +1022,7 @@ export const DesignDashboard = () => {
                       </span>
                     </div>
                   )}
-                  <div className={`overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-1 ${isProcessing ? "pointer-events-none select-none opacity-50" : ""}`} style={{ maxHeight: "calc(100vh - 380px)" }}>
+                  <div className={`flex-1 min-h-0 overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-1 ${isProcessing ? "pointer-events-none select-none opacity-50" : ""}`}>
                     {filteredPages.map((page) => (
                       <button
                         key={page.id}
@@ -1071,7 +1071,7 @@ export const DesignDashboard = () => {
         </div>
 
         {/* ══ RIGHT PANEL: adaptive per step ══ */}
-        <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
 
           {/* ── Saved diagram banner ── */}
           {savedDiagramBanner && !step3Done && (

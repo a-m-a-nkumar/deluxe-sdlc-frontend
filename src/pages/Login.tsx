@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { Building2 } from "lucide-react";
 
 const Login = () => {
   const { isAuthenticated, login, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -20,9 +22,21 @@ const Login = () => {
     try {
       await login();
       navigate("/", { replace: true });
-    } catch (error) {
-      console.error("Login failed:", error);
-      // Error will be shown by MSAL popup
+    } catch (error: unknown) {
+      const err = error as { errorCode?: string; message?: string };
+      if (
+        err?.errorCode === "user_cancelled" ||
+        err?.message?.includes("user_cancelled") ||
+        err?.message?.includes("User cancelled")
+      ) {
+        toast({
+          title: "Sign-in cancelled",
+          description: "Please sign in with Microsoft to continue.",
+          variant: "destructive",
+        });
+      } else {
+        console.error("Login failed:", error);
+      }
     }
   };
 

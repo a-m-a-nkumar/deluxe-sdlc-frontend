@@ -195,6 +195,11 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
   useEffect(() => {
     if (open) {
+      // Reset form and selections each time the modal opens
+      form.reset();
+      setSelectedJiraProject("");
+      setSelectedConfluenceSpace("");
+
       setIsLoadingTemplates(true);
       getBRDTemplates()
         .then(setBrdTemplates)
@@ -263,16 +268,6 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   const filteredProjects = projects.filter(p =>
     p.project_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  useEffect(() => {
-    if (open) {
-      setIsLoadingTemplates(true);
-      getBRDTemplates()
-        .then(setBrdTemplates)
-        .catch(console.error)
-        .finally(() => setIsLoadingTemplates(false));
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!createProjectMutation.isPending) onOpenChange(v); }}>

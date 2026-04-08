@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { colors } from '@/config/theme';
 
 export const ConfluenceDashboard = () => {
-  const { accessToken } = useAuth();
+  const { accessToken, isBusinessUser } = useAuth();
   const {
     activeConfluencePageId,
     setActiveConfluencePageId,
@@ -229,6 +229,7 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">View in Confluence</span>
                     <span className="sm:hidden">View</span>
                   </Button>
+                  {isBusinessUser && (
                   <Button
                     variant="outline"
                     className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
@@ -239,6 +240,7 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">Generate Jira Items</span>
                     <span className="sm:hidden">Generate</span>
                   </Button>
+                  )}
 
                   {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
                   <Tooltip>

@@ -32,6 +32,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   hasModuleAccess: (moduleId: string) => boolean;
+  isBusinessUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -135,6 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isLoading,
         hasModuleAccess,
+        isBusinessUser: !!user?.groups.includes(BUSINESS_GROUP_OID),
       }}
     >
       {children}

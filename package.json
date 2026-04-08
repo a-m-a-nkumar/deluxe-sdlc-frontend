@@ -92,5 +92,11 @@
     "jest-junit": "^16.0.0",
     "ts-jest": "^29.3.4",
     "@types/jest": "^29.5.14"
+  },
+  "overrides": {
+    "side-channel-list": "1.0.0",
+    "side-channel-map": "1.0.0",
+    "side-channel-weakmap": "1.0.0",
+    "side-channel": "1.0.6"
   }
 }

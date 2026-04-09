@@ -346,8 +346,16 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
               Upload Files
             </CardTitle>
             <p className="text-sm mt-1 text-muted-label">
-              {uploadedFiles.length} files ready to submit
+              {uploadedFiles.length} file{uploadedFiles.length !== 1 ? "s" : ""} ready to submit
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">Accepted Formats</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-100">PDF</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">DOCX</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 border border-gray-200">TXT</span>
+              </div>
+            </div>
           </div>
           <div className="flex-shrink-0">
             <input

@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2, LayoutGrid } from 'lucide-react';
 import { integrationsApi, type JiraBoard } from '@/services/integrationsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { colors } from '@/config/theme';
 
 interface BoardSelectionModalProps {
     open: boolean;
@@ -87,7 +86,7 @@ export const BoardSelectionModal = ({
             <DialogContent className="sm:max-w-[420px] bg-white">
                 <div>
                     <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-                        <LayoutGrid className="w-5 h-5" style={{ color: colors.brand }} />
+                        <LayoutGrid className="w-5 h-5 text-primary" />
                         Select Jira Board
                     </DialogTitle>
                     <DialogDescription className="mt-1 text-sm text-muted-foreground">
@@ -99,7 +98,7 @@ export const BoardSelectionModal = ({
                 <div className="py-4">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-8">
-                            <Loader2 className="h-8 w-8 animate-spin" style={{ color: colors.brand }} />
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <span className="ml-3 text-sm text-muted-foreground">Fetching boards...</span>
                         </div>
                     ) : error ? (
@@ -137,8 +136,7 @@ export const BoardSelectionModal = ({
                     {boards.length === 0 && !isLoading && !error ? (
                         <Button
                             onClick={() => onConfirm(0, '')}
-                            style={{ backgroundColor: colors.brand }}
-                            className="text-white hover:opacity-90"
+                            className="bg-primary text-white hover:opacity-90"
                         >
                             Continue Without Board
                         </Button>
@@ -146,8 +144,7 @@ export const BoardSelectionModal = ({
                         <Button
                             onClick={handleConfirm}
                             disabled={!selectedBoardId || isLoading}
-                            style={{ backgroundColor: colors.brand }}
-                            className="text-white hover:opacity-90"
+                            className="bg-primary text-white hover:opacity-90"
                         >
                             Create in Jira
                         </Button>

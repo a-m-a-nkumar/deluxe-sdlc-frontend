@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { THEME, colors } from "@/config/theme";
+import { THEME } from "@/config/theme";
 
 const appName = THEME === "siriusai" ? "SiriusAI" : "SDLC Orchestrator";
 
@@ -47,17 +47,10 @@ const NotFound = () => {
 
           {/* Decorative ring + icon */}
           <div className="relative mx-auto w-32 h-32">
-            <div
-              className="absolute inset-0 rounded-full opacity-20"
-              style={{ backgroundColor: colors.brand }}
-            />
-            <div
-              className="absolute inset-3 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: colors.brandLight }}
-            >
+            <div className="absolute inset-0 rounded-full bg-primary opacity-20" />
+            <div className="absolute inset-3 rounded-full flex items-center justify-center bg-primary-light">
               <SearchX
-                className="w-12 h-12"
-                style={{ color: colors.brand }}
+                className="w-12 h-12 text-primary"
                 strokeWidth={1.5}
               />
             </div>
@@ -65,10 +58,7 @@ const NotFound = () => {
 
           {/* 404 heading */}
           <div className="space-y-1">
-            <p
-              className="text-8xl font-extrabold leading-none tracking-tight select-none"
-              style={{ color: colors.brand }}
-            >
+            <p className="text-8xl font-extrabold leading-none tracking-tight select-none text-primary">
               404
             </p>
             <h1 className="text-2xl font-bold text-gray-900 mt-2">
@@ -90,8 +80,7 @@ const NotFound = () => {
           <div className="flex justify-center pt-2">
             <Button
               onClick={() => navigate("/")}
-              className="gap-2 px-6 text-white font-medium hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: colors.brand }}
+              className="gap-2 px-6 bg-primary text-white font-medium hover:opacity-90 transition-opacity"
             >
               <Home className="w-4 h-4" />
               Back to Dashboard

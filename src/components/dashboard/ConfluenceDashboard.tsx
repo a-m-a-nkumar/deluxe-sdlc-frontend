@@ -19,7 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { colors } from '@/config/theme';
 
 export const ConfluenceDashboard = () => {
   const { accessToken, isBusinessUser } = useAuth();
@@ -264,7 +263,7 @@ export const ConfluenceDashboard = () => {
                     <>
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: colors.brand }}>
+                          <AvatarFallback className="text-sm text-white bg-primary">
                             {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -273,16 +272,11 @@ export const ConfluenceDashboard = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: colors.brand }} />
+                          <Calendar className="w-4 h-4 flex-shrink-0 text-primary" />
                           <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
                         </div>
                         <Badge
-                          className={`${getStatusBadge(pageDetails.status)} self-start`}
-                          style={{
-                            backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                            borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                            color: pageDetails.status === 'Current' ? '#fff' : undefined
-                          }}
+                          className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'bg-blue-700 border-blue-700 text-white' : ''}`}
                         >
                           {pageDetails.status}
                         </Badge>
@@ -358,11 +352,8 @@ export const ConfluenceDashboard = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: colors.brandLight }}
-              >
-                <ShieldX className="w-5 h-5" style={{ color: colors.brand }} />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-light">
+                <ShieldX className="w-5 h-5 text-primary" />
               </div>
               <DialogTitle className="text-lg font-semibold">Access Denied</DialogTitle>
             </div>
@@ -374,8 +365,7 @@ export const ConfluenceDashboard = () => {
           <DialogFooter className="mt-2">
             <Button
               onClick={() => setShowAccessDenied(false)}
-              className="text-white"
-              style={{ backgroundColor: colors.brand }}
+              className="bg-primary text-white"
             >
               Return to Dashboard
             </Button>

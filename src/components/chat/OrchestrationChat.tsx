@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { streamOrchestrationQuery, triggerIncrementalSync, getSyncStatus, type Source } from "@/services/orchestrationApi";
 import { toast } from "sonner";
 import { useAppState } from "@/contexts/AppStateContext";
-import { colors } from '@/config/theme';
 
 interface Message {
     id: string;
@@ -262,8 +261,8 @@ export const OrchestrationChat = () => {
                             >
                                 <div className={`flex ${message.isBot ? "flex-row" : "flex-row-reverse"} items-start gap-2 max-w-[80%]`}>
                                     {message.isBot ? (
-                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: colors.brandLight }}>
-                                            <AvatarFallback style={{ backgroundColor: colors.brandLight, color: colors.brand }} className="text-xs font-semibold">
+                                        <Avatar className="w-8 h-8 mt-5 flex-shrink-0 bg-primary-light">
+                                            <AvatarFallback className="text-xs font-semibold bg-primary-light text-primary">
                                                 AI
                                             </AvatarFallback>
                                         </Avatar>
@@ -279,17 +278,13 @@ export const OrchestrationChat = () => {
                                             {message.isBot ? "RAG Assistant" : "You"} &nbsp; {message.timestamp}
                                         </div>
                                         <div
-                                            className={`px-4 py-3 rounded-2xl ${message.isBot ? "rounded-bl-md" : "rounded-br-md"}`}
-                                            style={message.isBot
-                                                ? { backgroundColor: '#F0F0F0', color: '#1a1a1a' }
-                                                : { backgroundColor: '#1a1a2e', color: '#ffffff' }
-                                            }
+                                            className={`px-4 py-3 rounded-2xl ${message.isBot ? "rounded-bl-md bg-[#F0F0F0] text-[#1a1a1a]" : "rounded-br-md bg-[#1a1a2e] text-white"}`}
                                         >
                                             {message.isLoading ? (
                                                 <span className="inline-flex gap-1 align-middle items-center h-4">
                                                     <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" />
-                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce anim-delay-200" />
+                                                    <span className="inline-block w-2 h-2 bg-current rounded-full animate-bounce anim-delay-400" />
                                                 </span>
                                             ) : (
                                                 <>
@@ -306,8 +301,7 @@ export const OrchestrationChat = () => {
                                                                         href={source.url}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="block text-xs hover:underline"
-                                                                        style={{ color: message.isBot ? '#2563eb' : '#93c5fd' }}
+                                                                        className={`block text-xs hover:underline ${message.isBot ? 'text-blue-600' : 'text-blue-300'}`}
                                                                     >
                                                                         [{source.type}] {source.title} (
                                                                         {(source.similarity * 100).toFixed(0)}% match)

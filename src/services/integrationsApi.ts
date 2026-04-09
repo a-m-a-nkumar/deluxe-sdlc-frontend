@@ -29,6 +29,12 @@ export interface JiraProject {
     type: string;
 }
 
+export interface JiraBoard {
+    id: number;
+    name: string;
+    type: string; // 'scrum' | 'kanban' | 'simple'
+}
+
 export interface ConfluenceSpace {
     key: string;
     name: string;
@@ -130,6 +136,21 @@ export const integrationsApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    /**
+     * Get Jira boards for a specific project key
+     */
+    getJiraBoards: async (projectKey: string, token: string): Promise<JiraBoard[]> => {
+        if (!token) {
+            console.warn('No access token provided for Jira boards request');
+            throw new Error('Authentication required');
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/api/integrations/jira/boards/${projectKey}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data.boards;
     },
 
     /**

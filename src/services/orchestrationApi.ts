@@ -1,5 +1,5 @@
 import { API_CONFIG } from "@/config/api";
-import { apiStreamFetch, apiPost, apiGet } from "./api";
+import { getEffectiveToken } from "./authService";
 
 export interface OrchestrationQueryRequest {
     project_id: string;
@@ -33,12 +33,14 @@ export async function* streamOrchestrationQuery(
     const API_URL = `${API_CONFIG.BASE_URL}/api/orchestration/query`;
 
     try {
-        const response = await apiStreamFetch(API_URL, {
+        const token = await getEffectiveToken();
+
+        const response = await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({
                 project_id: request.project_id,
                 query: request.query,
-                max_chunks: request.max_chunks || 10,
+                max_chunks: request.max_chunks || 5,
                 source_filter: request.source_filter || null,
                 include_context: request.include_context !== false,
             }),
@@ -102,8 +104,17 @@ export async function triggerIncrementalSync(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/sync`;
 
     try {
-        const response = await apiPost(API_URL, {
-            sync_type: 'incremental',
+        const token = await getEffectiveToken();
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sync_type: 'incremental',
+            }),
         });
 
         if (!response.ok) {
@@ -129,6 +140,8 @@ export async function triggerIncrementalSync(projectId: string): Promise<{
  * Get sync status for a project
  */
 export async function getSyncStatus(projectId: string): Promise<{
+    is_syncing: boolean;
+    sync_message: string;
     confluence_pages: number;
     jira_issues: number;
     total_embeddings: number;
@@ -136,7 +149,14 @@ export async function getSyncStatus(projectId: string): Promise<{
     const API_URL = `${API_CONFIG.BASE_URL}/api/sync/projects/${projectId}/status`;
 
     try {
-        const response = await apiGet(API_URL);
+        const token = await getEffectiveToken();
+
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
 
         if (!response.ok) {
             return null;

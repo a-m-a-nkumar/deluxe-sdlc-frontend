@@ -94,7 +94,8 @@ export const jiraGenerationApi = {
         projectId: string,
         jiraProjectKey: string,
         epics: Epic[],
-        token: string
+        token: string,
+        boardId?: number
     ): Promise<CreateJiraItemsResponse> => {
         if (!token) {
             throw new Error('Authentication required');
@@ -105,7 +106,8 @@ export const jiraGenerationApi = {
             {
                 project_id: projectId,
                 jira_project_key: jiraProjectKey,
-                epics: epics
+                epics: epics,
+                board_id: boardId || null
             },
             {
                 headers: { Authorization: `Bearer ${token}` }

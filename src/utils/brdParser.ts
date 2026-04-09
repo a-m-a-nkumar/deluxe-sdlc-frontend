@@ -42,7 +42,7 @@ export const parseBRDSections = (content: string): BRDSection[] => {
             } else {
                 // No number: "## Purpose"
                 title = line.replace(/^##\s*/, '').trim();
-                sectionNumber = null;
+                sectionNumber = null; // will be assigned after filtering
             }
 
             currentSection = {
@@ -69,21 +69,30 @@ export const parseBRDSections = (content: string): BRDSection[] => {
         rawSections.push(currentSection);
     }
 
-    // Phase 2: Filter to match backend numbering
+    // Filter out non-user-visible sections to match backend numbering:
+    // 1. Skip the first section if it has no number prefix (document title)
+    // 2. Skip subsections like "# In Scope" / "# Out of Scope" (handled by backend's Scope merge)
     const sections: BRDSection[] = [];
     for (let i = 0; i < rawSections.length; i++) {
         const sec = rawSections[i];
 
-        // Skip document title (first section without explicit number)
-        if (i === 0 && sec.sectionNumber === null) continue;
+        // Skip first section if it doesn't have an explicit number (it's a document title)
+        if (i === 0 && sec.sectionNumber === null) {
+            continue;
+        }
 
         // Skip ALL subsections (titles starting with #)
-        if (sec.title.startsWith('#')) continue;
+        // These are sub-headers within a parent section (e.g. "# User Story 1",
+        // "# In Scope", "# Out of Scope", "# Acronyms and Abbreviations", "# Appendix")
+        if (sec.title.startsWith('#')) {
+            continue;
+        }
 
-        // Assign number using filtered count (matches backend)
+        // Assign inferred number for non-numbered sections that pass the filter
         if (sec.sectionNumber === null) {
             sec.sectionNumber = sections.length + 1;
         }
+
         sections.push(sec);
     }
 

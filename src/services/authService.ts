@@ -1,4 +1,4 @@
-import { PublicClientApplication, AccountInfo, AuthenticationResult } from "@azure/msal-browser";
+import { PublicClientApplication, AccountInfo, AuthenticationResult, RedirectRequest } from "@azure/msal-browser";
 
 // Azure AD Configuration
 const AZURE_CLIENT_ID = import.meta.env.VITE_AZURE_CLIENT_ID || "";
@@ -8,39 +8,31 @@ if (!AZURE_CLIENT_ID || !AZURE_TENANT_ID) {
   console.warn("[AUTH] VITE_AZURE_CLIENT_ID or VITE_AZURE_TENANT_ID not set in environment variables");
 }
 
-// MSAL Configuration (no NextAuth — this app uses MSAL only).
-// In Azure Portal → App registration → Authentication → add SPA redirect URI:
-//   https://deluxe.siriusai.com  (must match window.location.origin in production)
-// Do NOT use /api/auth/callback/azure-ad — that is for NextAuth (Next.js), not this app.
 const msalConfig = {
   auth: {
     clientId: AZURE_CLIENT_ID,
     authority: `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
     redirectUri: window.location.origin,
+    navigateToLoginRequestUrl: true,
   },
   cache: {
-    cacheLocation: "localStorage", // This configures where your cache will be stored
-    storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
+    cacheLocation: "localStorage" as const,
+    storeAuthStateInCookie: true,
   },
 };
 
-// Create MSAL instance
 const msalInstance = new PublicClientApplication(msalConfig);
 
-// Initialize MSAL (will be called on first use)
 let msalInitialized = false;
 
-async function ensureMsalInitialized() {
+export async function ensureMsalInitialized() {
   if (!msalInitialized) {
     await msalInstance.initialize();
     msalInitialized = true;
   }
 }
 
-// Login request configuration
-// Use User.Read for user info (this gives us an access token for Microsoft Graph)
-// For our API, we'll accept Microsoft Graph tokens (we verify issuer, not audience)
-const loginRequest = {
+const loginRequest: RedirectRequest = {
   scopes: ["User.Read"],
 };
 
@@ -56,16 +48,18 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string;
+  groups: string[];
 }
 
 /**
- * Login with Azure AD
+ * Login with Azure AD — redirect flow only (no popup, works on all browsers/OS)
  */
 export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
   try {
     await ensureMsalInitialized();
-    const response = await msalInstance.loginPopup(loginRequest);
-    return response;
+    // handleRedirectPromise() is called once in AuthContext on page load — not here
+    await msalInstance.loginRedirect(loginRequest);
+    return null; // Page will redirect — control won't return here
   } catch (error) {
     console.error("Azure AD login error:", error);
     throw error;
@@ -73,11 +67,13 @@ export async function loginWithAzureAD(): Promise<AuthenticationResult | null> {
 }
 
 /**
- * Get access token for API calls.
- * @param forceRefresh - If true, bypasses MSAL cache and fetches a fresh token from Azure AD.
- *                       Use this when retrying after a 401 response.
+ * Get access token (ID token) for API calls
  */
-export async function getAccessToken(forceRefresh: boolean = false): Promise<string | null> {
+export async function getEffectiveToken(): Promise<string | null> {
+  return getAccessToken();
+}
+
+export async function getAccessToken(): Promise<string | null> {
   try {
     await ensureMsalInitialized();
     const accounts = msalInstance.getAllAccounts();
@@ -86,50 +82,18 @@ export async function getAccessToken(forceRefresh: boolean = false): Promise<str
     }
 
     const account = accounts[0];
-
-    const tokenRequest = {
+    const response = await msalInstance.acquireTokenSilent({
       scopes: ["User.Read"],
       account: account,
-      forceRefresh: forceRefresh,
-    };
-
-    const response = await msalInstance.acquireTokenSilent(tokenRequest);
-    // Use ID Token instead of Access Token because we are the same app
-    // and Access Token for User.Read is for Graph API (audience 00000003...) which we can't verify
+    });
     return response.idToken;
   } catch (error) {
     console.error("Error acquiring token:", error);
-    // If error is about scope, clear cache and try again
-    if (error instanceof Error && error.message.includes("scope")) {
-      console.log("[AUTH] Scope error detected, clearing cache and retrying...");
-      try {
-        msalInstance.clearCache();
-        await ensureMsalInitialized();
-        const accounts = msalInstance.getAllAccounts();
-        if (accounts.length > 0) {
-          const account = accounts[0];
-          const response = await msalInstance.acquireTokenSilent({
-            scopes: ["User.Read"],
-            account: account,
-          });
-          return response.idToken;
-        }
-      } catch (retryError) {
-        console.error("Error after cache clear:", retryError);
-      }
-    }
-
-    // Try interactive login if silent fails
     try {
-      await ensureMsalInitialized();
-      const response = await msalInstance.acquireTokenPopup({
-        scopes: ["User.Read"],
-      });
-      return response.idToken;
-    } catch (popupError) {
-      console.error("Error acquiring token via popup:", popupError);
-      // Both silent and interactive failed — auth is unrecoverable
-      if (_onAuthFailure) _onAuthFailure();
+      await msalInstance.acquireTokenRedirect({ scopes: ["User.Read"] });
+      return null;
+    } catch (redirectError) {
+      console.error("Error acquiring token via redirect:", redirectError);
       return null;
     }
   }
@@ -146,10 +110,12 @@ export function getUserInfo(): UserInfo | null {
     }
 
     const account = accounts[0];
+    const claims = account.idTokenClaims as Record<string, unknown> | undefined;
     return {
       id: account.homeAccountId || account.localAccountId || "",
       email: account.username || "",
       name: account.name || account.username || "",
+      groups: (claims?.groups as string[]) || [],
     };
   } catch (error) {
     console.error("Error getting user info:", error);
@@ -171,20 +137,19 @@ export function getCurrentAccount(): AccountInfo | null {
 }
 
 /**
- * Logout from Azure AD
+ * Logout — redirect flow (no popup)
  */
 export async function logout(): Promise<void> {
   try {
     await ensureMsalInitialized();
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
-      await msalInstance.logoutPopup({
+      await msalInstance.logoutRedirect({
         account: accounts[0],
       });
     }
   } catch (error) {
     console.error("Error during logout:", error);
-    // Clear local state even if logout fails
   }
 }
 
@@ -202,4 +167,3 @@ export function isAuthenticated(): boolean {
 }
 
 export default msalInstance;
-

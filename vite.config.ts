@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
         rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       '/confluence-api': {
-        target: process.env.VITE_PROXY_CONFLUENCE_TARGET || 'https://siriusai-team-test.atlassian.net',
+        target: process.env.VITE_PROXY_CONFLUENCE_TARGET || 'https://deluxe.atlassian.net',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/confluence-api/, '')

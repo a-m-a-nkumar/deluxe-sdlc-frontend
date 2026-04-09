@@ -1,0 +1,8 @@
+site_name: sdlc_nextjs_frontend
+site_description: React host micro-frontend application.
+
+nav:
+  - Introduction: index.md
+
+plugins:
+  - techdocs-core

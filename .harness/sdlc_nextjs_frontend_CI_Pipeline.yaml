@@ -1,0 +1,109 @@
+pipeline:
+  name: sdlc_vite_react_frontend_CI_Pipeline
+  identifier: sdlc_nextjs_frontend_CI_Pipeline
+  projectIdentifier: SDLCOR
+  orgIdentifier: Tools
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.BitbucketCloudHarnessCI0Connector
+        repoName: sdlc_nextjs_frontend
+        build: <+input>
+        cloneDirectory: /cache-react/<+stage.variables.APP_NAME>
+  stages:
+    - stage:
+        name: Build react host
+        identifier: Build_React
+        template:
+          templateRef: account.Build_React
+          versionLabel: 1.0.3
+          templateInputs:
+            type: CI
+            spec:
+              execution:
+                steps:
+                  - parallel:
+                      - stepGroup:
+                          identifier: Package_and_Push_Artifacts
+                          steps:
+                            - step:
+                                identifier: Push_Artifact
+                                type: ArtifactoryUpload
+                                spec:
+                                  connectorRef: account.artifactoryconnector
+                      - stepGroup:
+                          identifier: Docker_Build_Image_Wiz_Scan_and_Push_Artifacts
+                          steps:
+                            - step:
+                                identifier: Build_And_Push_Docker_Image
+                                type: BuildAndPushDockerRegistry
+                                spec:
+                                  connectorRef: dlxsdlcoralowerdockerlocal
+            variables:
+              - name: SONARQUBE_PROJECT_KEY
+                type: String
+                value: SDLCOR-sdlc_nextjs_frontend
+              - name: COVERAGE_FAILURE_PERCENTAGE
+                type: String
+                value: <+input>.default(80)
+              - name: APP_NAME
+                type: String
+                value: sdlc_nextjs_frontend
+              - name: JFROG_ARTIFACTORY_TARGET
+                type: String
+                value: dlx-sdlcora-lower-docker-local
+              - name: ImageName
+                type: String
+                value: sdlc_nextjs_frontend
+              - name: Image_tag
+                type: String
+                value: <+pipeline.variables.ImageTag>
+              - name: Artifact_type
+                type: String
+                value: Docker
+              - name: SKIP_CHECKMARX
+                type: String
+                value: <+input>.default(Yes).allowedValues(Yes,No)
+              - name: CheckmarxProjectName
+                type: String
+                value: <+input>
+              - name: IsRepoImageScan
+                type: String
+                value: <+input>.default(False).allowedValues(True,False)
+              - name: IsBuildImageScan
+                type: String
+                value: <+input>.default(True).allowedValues(True,False)
+              - name: Node_Version
+                type: String
+                value: <+input>.default(20)
+              - name: docker_repository_endpoint
+                type: String
+                value: dlx-sdlcora-lower-docker-local
+              - name: jest_unit_test_config
+                type: String
+                value: ""
+              - name: jest_bdd_test_config
+                type: String
+                value: ""
+  variables:
+    - name: JFROG_ARTIFACTORY_TARGET
+      type: String
+      description: Mention your JFROG Atifactory Target url
+      required: false
+      value: dlx-sdlcora-lower-docker-local
+    - name: ImageName
+      type: String
+      description: ""
+      required: false
+      value: reacthost
+    - name: ImageTag
+      type: String
+      description: Image Tag for the Image to be published
+      required: false
+      value: <+codebase.branch.replaceAll("/","-")>.700
+    - name: ZipName
+      type: String
+      description: ""
+      required: false
+      value: <+steps.Zip_Artifacts.output.outputVariables.zipName>

@@ -1,0 +1,62 @@
+/* ============================================================
+   Shared utility classes — reusable across all components
+   ============================================================ */
+
+/* --- Scrollbar --- */
+.scrollbar-thin-muted {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+.scrollbar-thin-muted::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin-muted::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin-muted::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 3px;
+}
+
+/* --- Text colors --- */
+.text-muted-label {
+  color: #727272;
+}
+
+.text-icon-gray {
+  color: #858585;
+}
+
+.text-sub-label {
+  color: #747474;
+}
+
+.text-small-label {
+  color: #6C6C6C;
+}
+
+.text-body-dark {
+  color: #3B3B3B;
+}
+
+.text-primary-red {
+  color: hsl(var(--primary));
+}
+
+/* --- Backgrounds --- */
+.bg-primary-soft {
+  background-color: hsl(var(--primary) / 0.06);
+}
+
+.bg-btn-gray {
+  background-color: #E7E7E7;
+}
+
+/* --- Status badge --- */
+.badge-success {
+  color: #008236;
+  background-color: #DBFCE7;
+}

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppStateProvider } from "./contexts/AppStateContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ModuleProtectedRoute } from "./components/auth/ModuleProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BRDAssistant from "./pages/BRDAssistant";
@@ -20,6 +21,11 @@ import TestingPage from "./pages/TestingPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
+// Sub-path prefix: reads VITE_BASE_PATH env var (e.g. "/sdlc/"), strips trailing slash for React Router
+const basePath: string = import.meta.env.VITE_BASE_PATH
+  ? String(import.meta.env.VITE_BASE_PATH).replace(/\/$/, '')
+  : '/';
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -28,7 +34,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter basename={basePath}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route
@@ -39,60 +45,78 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+                {/* Business group modules */}
                 <Route
                   path="/brd-assistant"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="brd">
                       <BRDAssistant />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route
                   path="/analyst-agent"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="brd">
                       <AnalystAgent />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route
                   path="/confluence"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="confluence">
                       <ConfluencePage />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route
                   path="/jira"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="jira">
                       <JiraPage />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route
                   path="/jira-generation/:confluencePageId"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="jira">
                       <JiraGenerationPage />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
+                {/* Tech group modules */}
                 <Route
                   path="/design-assistant"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="design">
                       <DesignAssistant />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route
                   path="/pair-programming"
                   element={
-                    <ProtectedRoute>
+                    <ModuleProtectedRoute moduleId="pair-programming">
                       <PairProgramming />
-                    </ProtectedRoute>
+                    </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/test-generation/:confluencePageId"
+                  element={
+                    <ModuleProtectedRoute moduleId="testing">
+                      <TestScenarioPage />
+                    </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/testing"
+                  element={
+                    <ModuleProtectedRoute moduleId="testing">
+                      <TestingPage />
+                    </ModuleProtectedRoute>
                   }
                 />
                 <Route

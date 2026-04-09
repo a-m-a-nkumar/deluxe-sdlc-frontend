@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ChevronDown, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { BoardSelectionModal } from '@/components/modals/BoardSelectionModal';
 
 export const JiraGenerationPage = () => {
     const { confluencePageId } = useParams<{ confluencePageId: string }>();
     const navigate = useNavigate();
     const { accessToken } = useAuth();
-    const { selectedProject } = useAppState();
+    const { selectedProject, isRestoringProject } = useAppState();
     const { toast } = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -22,8 +23,11 @@ export const JiraGenerationPage = () => {
     const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
     const [totalEpics, setTotalEpics] = useState(0);
     const [totalStories, setTotalStories] = useState(0);
+    const [showBoardModal, setShowBoardModal] = useState(false);
 
     useEffect(() => {
+        if (isRestoringProject) return;
+
         if (!confluencePageId || !selectedProject || !accessToken) {
             toast({
                 title: 'Missing information',
@@ -35,7 +39,7 @@ export const JiraGenerationPage = () => {
         }
 
         generateJiraItems();
-    }, [confluencePageId, selectedProject, accessToken]);
+    }, [confluencePageId, selectedProject, accessToken, isRestoringProject]);
 
     const generateJiraItems = async () => {
         if (!confluencePageId || !selectedProject || !accessToken) return;
@@ -125,7 +129,7 @@ export const JiraGenerationPage = () => {
         return count;
     };
 
-    const handleCreateInJira = async () => {
+    const handleCreateInJiraClicked = () => {
         if (!selectedProject || !accessToken) return;
 
         const selectedCount = getSelectedCount();
@@ -141,30 +145,48 @@ export const JiraGenerationPage = () => {
         if (!selectedProject.jira_project_key) {
             toast({
                 title: 'Jira project not configured',
-                description: 'Please configure a Jira project key in project settings.',
+                description: 'Please select a Jira project when creating or editing your project in the Project Workspace.',
                 variant: 'destructive',
             });
             return;
         }
 
+        setShowBoardModal(true);
+    };
+
+    const handleBoardConfirmed = async (boardId: number, boardName: string) => {
+        if (!selectedProject || !accessToken) return;
+
+        setShowBoardModal(false);
         setIsCreating(true);
+
         try {
             const response = await jiraGenerationApi.createInJira(
                 selectedProject.project_id,
                 selectedProject.jira_project_key,
                 epics,
-                accessToken
+                accessToken,
+                boardId || undefined
             );
 
-            const { summary } = response;
+            const { summary, failed } = response;
+            const boardLabel = boardName ? ` on board "${boardName}"` : '';
 
-            toast({
-                title: 'Jira items created',
-                description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira.`,
-            });
+            if (failed && failed.length > 0) {
+                toast({
+                    title: 'Partially created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} stories, but ${summary.total_failed} item(s) failed${boardLabel}. Check console for details.`,
+                    variant: 'destructive',
+                });
+                console.error('[JIRA] Failed items:', failed);
+            } else {
+                toast({
+                    title: 'Jira items created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira${boardLabel}.`,
+                });
+            }
 
-            // Navigate back or to Jira dashboard
-            navigate('/jira');
+            navigate('/jira', { replace: true });
         } catch (error: any) {
             console.error('Error creating Jira items:', error);
             toast({
@@ -220,7 +242,7 @@ export const JiraGenerationPage = () => {
                             Cancel
                         </Button>
                         <Button
-                            onClick={handleCreateInJira}
+                            onClick={handleCreateInJiraClicked}
                             disabled={isCreating || selectedCount === 0}
                         >
                             {isCreating ? (
@@ -353,6 +375,16 @@ export const JiraGenerationPage = () => {
                         </p>
                     </CardContent>
                 </Card>
+            )}
+
+            {selectedProject?.jira_project_key && (
+                <BoardSelectionModal
+                    open={showBoardModal}
+                    onOpenChange={setShowBoardModal}
+                    jiraProjectKey={selectedProject.jira_project_key}
+                    selectedCount={getSelectedCount()}
+                    onConfirm={handleBoardConfirmed}
+                />
             )}
         </div>
     );

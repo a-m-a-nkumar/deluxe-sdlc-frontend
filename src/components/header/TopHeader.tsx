@@ -65,8 +65,15 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
   const isAtlassianLinked = atlassianStatus?.linked || false;
 
   const handleLogout = () => {
-    // Clear cache on logout
+    // Clear cache and app state on logout
     queryClient.clear();
+    setSelectedProject(null);
+    // Clear localStorage session data from previous account
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith("chatbot_session_id") || key.startsWith("analyst_")) {
+        localStorage.removeItem(key);
+      }
+    });
     logout();
     navigate("/login");
     toast({
@@ -105,9 +112,13 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
     }
   };
 
-  // Callback to refresh data after mutations
-  const handleProjectCreated = () => {
+  // Callback to refresh data and auto-select newly created project
+  const handleProjectCreated = (newProject?: import("@/services/projectApi").Project) => {
     queryClient.invalidateQueries({ queryKey: ["projects"] });
+    if (newProject) {
+      setSelectedProject(newProject);
+      navigate("/");
+    }
   };
 
   const handleLinkSuccess = () => {
@@ -129,7 +140,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
         onProjectCreated={handleProjectCreated}
         onProjectSelected={handleProjectSelect}
       />
-      <div className="h-16 border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between" style={{ backgroundColor: '#fff' }}>
+      <div className="h-16 border-b border-border px-4 sm:px-6 lg:px-8 flex items-center justify-between bg-white">
         <div className="flex items-center gap-4">
           {isMobile && (
             <Button
@@ -142,27 +153,27 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
             </Button>
           )}
 
-          <Select defaultValue="model">
-            <SelectTrigger className="w-24 sm:w-32" style={{ backgroundColor: '#fff' }}>
-              <SelectValue placeholder="Model" />
+          <Select value="claude-sonnet-4.5">
+            <SelectTrigger className="w-36 sm:w-44 bg-white">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="model">Model</SelectItem>
-              <SelectItem value="gpt-4">GPT-4</SelectItem>
-              <SelectItem value="claude">Claude</SelectItem>
+              <SelectItem value="claude-sonnet-4.5">Claude Sonnet 4.5</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Button
-            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:opacity-90"
-            style={{ backgroundColor: '#EDF4FF', color: '#1B3C71' }}
+            variant="outline"
+            className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:bg-accent"
+            style={{ backgroundColor: '#fff' }}
             onClick={() => setIsCreateModalOpen(true)}
           >
             <FolderKanban size={16} />
             <span className="hidden sm:inline">{selectedProject?.project_name || "Project Workspace"}</span>
             <span className="sm:hidden">{selectedProject?.project_name || "Workspace"}</span>
+            <ChevronDown size={14} className="text-muted-foreground" />
           </Button>
 
           {user && (
@@ -170,7 +181,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback style={{ backgroundColor: '#6b7280' }} className="text-white">
                       {getInitials(user.email)}
                     </AvatarFallback>
                   </Avatar>

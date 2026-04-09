@@ -56,7 +56,19 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const newFiles: UploadedFile[] = Array.from(files).map((file) => ({
+      const fileArray = Array.from(files);
+      const emptyFiles = fileArray.filter((file) => file.size === 0);
+
+      if (emptyFiles.length > 0) {
+        toast({
+          title: "Empty file detected",
+          description: `"${emptyFiles.map((f) => f.name).join(", ")}" contains no data. Please upload a file with content.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newFiles: UploadedFile[] = fileArray.map((file) => ({
         id: `${Date.now()}-${Math.random()}`,
         name: file.name.includes(".") ? file.name.split(".")[0] : file.name,
         size: formatFileSize(file.size),
@@ -104,7 +116,14 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
   };
 
   const triggerFileUpload = () => {
-    // Allow uploads even without project selection for local AgentCore flow
+    if (!selectedProject) {
+      toast({
+        title: "No project selected",
+        description: "Please select or create a project before uploading files.",
+        variant: "destructive",
+      });
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -128,6 +147,16 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       toast({
         title: "No project selected",
         description: "Please select a project before generating a BRD.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const emptyFiles = filesToUpload.filter((file) => file.size === 0);
+    if (emptyFiles.length > 0) {
+      toast({
+        title: "Empty file detected",
+        description: `"${emptyFiles.map((f) => f.name).join(", ")}" contains no data. Please upload a file with content.`,
         variant: "destructive",
       });
       return;
@@ -160,11 +189,23 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
 
       setPendingUploadResponse(response);
       onUploadSuccess?.(response);
-    } catch (error) {
+    } catch (error: any) {
       // Keep files in the list and maintain download/delete options on failure
+      const msg = error?.message || "";
+      let description = "Failed to upload files. Please try again.";
+      // Extract backend error message (e.g. empty transcript)
+      try {
+        const jsonPart = msg.substring(msg.indexOf("{"));
+        const parsed = JSON.parse(jsonPart);
+        if (parsed.error) description = parsed.error;
+      } catch {
+        if (msg.toLowerCase().includes("empty") || msg.toLowerCase().includes("too short")) {
+          description = "The uploaded transcript appears to be empty or too short. Please upload a file with meaningful content.";
+        }
+      }
       toast({
-        title: "Upload failed",
-        description: "Failed to upload files. Please try again.",
+        title: "BRD Generation Failed",
+        description,
         variant: "destructive",
       });
     } finally {
@@ -207,6 +248,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
       toast({
         title: "BRD downloaded",
         description: "Your BRD has been downloaded successfully.",
+        variant: "success",
       });
     } catch (error) {
       toast({
@@ -303,7 +345,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
             <CardTitle className="text-base font-bold text-[hsl(var(--heading-primary))] break-words">
               Uploaded Files
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1" style={{ color: "#727272" }}>
+            <p className="text-sm mt-1 text-muted-label">
               {uploadedFiles.length} files ready to submit
             </p>
           </div>
@@ -312,7 +354,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
               ref={fileInputRef}
               type="file"
               multiple
-              accept="*/*"
+              accept=".txt,.docx,.pdf"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -352,7 +394,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
           {/* Current files being prepared */}
           {uploadedFiles.length === 0 && uploadedFileBatches.length === 0 ? (
             <div className="flex items-center justify-center h-24 sm:h-32 text-muted-foreground text-center">
-              <p className="text-sm" style={{ color: "#727272" }}>
+              <p className="text-sm text-muted-label">
                 No file selected.
               </p>
             </div>
@@ -448,7 +490,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
                   </>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground px-2" style={{ color: "#727272" }}>
+              <p className="text-xs px-2 text-muted-label">
                 Generate a BRD first, then upload it to your linked Confluence space
               </p>
             </div>

@@ -67,6 +67,8 @@
 
     --primary: 355 84% 45%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 355 100% 95%;    /* #FBE7E9 — brand light tint */
+    --primary-selected: 355 100% 97%; /* #FDEDEF — selected item bg */
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 0 0% 23%;
@@ -119,6 +121,8 @@
 
     --primary: 220 61% 27%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 220 33% 93%;    /* #E8EDF4 — brand light tint */
+    --primary-selected: 220 33% 93%; /* #E8EDF4 — selected item bg */
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 0 0% 23%;
@@ -160,6 +164,8 @@
     --background: 350 100% 97.5%;
     --primary: 355 84% 45%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 355 100% 95%;
+    --primary-selected: 355 100% 97%;
     --ring: 355 84% 45%;
     --accent: 350 100% 97.5%;
     --stats-red: 355 84% 45%;

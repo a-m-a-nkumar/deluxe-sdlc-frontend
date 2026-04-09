@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppState } from "@/contexts/AppStateContext";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage } from "@/services/confluenceApi";
 import { generateArchitecturePrompt, generateArchitecturePromptStream, generateDrawioXML, generateArchitectureDocument, generateArchitectureDocumentStream, pushDocumentToConfluence, saveDiagramToConfluence, loadDiagramFromConfluence, listSavedDiagrams, DiagramPageInfo } from "@/services/designApi";
-import { colors } from '@/config/theme';
+import { cn } from "@/lib/utils";
 
 export const DesignDashboard = () => {
   const { accessToken } = useAuth();
@@ -537,16 +537,16 @@ export const DesignDashboard = () => {
   const step4Done = !!generatedDocument;
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: "calc(100vh - 4rem)", backgroundColor: "#F7F9FC" }}>
+    <div className="flex flex-col overflow-hidden h-[calc(100vh-4rem)] bg-[#F7F9FC]">
 
       {/* ── Page Header ── */}
       <div className="px-6 sm:px-8 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-0.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.brand }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary">
               <Wand2 className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-xl font-semibold" style={{ color: "#1a1a1a" }}>Design Assistant</h1>
+            <h1 className="text-xl font-semibold text-[#1a1a1a]">Design Assistant</h1>
           </div>
           <p className="text-sm text-gray-500 ml-11">Generate architecture diagrams and documents from Confluence pages</p>
         </div>
@@ -584,23 +584,24 @@ export const DesignDashboard = () => {
             <div key={s.n} className="flex items-center gap-1 flex-1">
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all"
-                  style={{
-                    backgroundColor: s.done ? "#16a34a" : i === arr.findIndex(x => !x.done) ? colors.brand : "#e5e7eb",
-                    color: s.done || i === arr.findIndex(x => !x.done) ? "#fff" : "#9ca3af",
-                  }}
+                  className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all",
+                    s.done ? "bg-green-600 text-white" : i === arr.findIndex(x => !x.done) ? "bg-primary text-white" : "bg-gray-200 text-gray-400"
+                  )}
                 >
                   {s.done ? <ChevronDown className="w-3.5 h-3.5 rotate-[-90deg]" /> : s.n}
                 </div>
                 <span
-                  className="text-xs font-medium hidden sm:block whitespace-nowrap"
-                  style={{ color: s.done ? "#16a34a" : i === arr.findIndex(x => !x.done) ? colors.brand : "#9ca3af" }}
+                  className={cn(
+                    "text-xs font-medium hidden sm:block whitespace-nowrap",
+                    s.done ? "text-green-600" : i === arr.findIndex(x => !x.done) ? "text-primary" : "text-gray-400"
+                  )}
                 >
                   {s.label}
                 </span>
               </div>
               {i < arr.length - 1 && (
-                <div className="flex-1 h-0.5 mx-2 rounded-full" style={{ backgroundColor: s.done ? "#16a34a" : "#e5e7eb" }} />
+                <div className={cn("flex-1 h-0.5 mx-2 rounded-full", s.done ? "bg-green-600" : "bg-gray-200")} />
               )}
             </div>
           ))}
@@ -615,10 +616,10 @@ export const DesignDashboard = () => {
           <div className="xl:col-span-2 border-r border-gray-200 bg-white flex flex-col p-5 h-full overflow-hidden">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.brand }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-primary">
                   <Pencil className="w-3 h-3 text-white" />
                 </div>
-                <span className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Saved Diagrams</span>
+                <span className="text-sm font-semibold text-[#1a1a1a]">Saved Diagrams</span>
               </div>
               <button
                 onClick={loadEditDiagrams}
@@ -651,7 +652,7 @@ export const DesignDashboard = () => {
             )}
 
             {/* Diagram list */}
-            <div className="overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-1" style={{ maxHeight: "calc(100vh - 300px)" }}>
+            <div className="overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-1 max-h-[calc(100vh-300px)]">
               {isLoadingEditDiagrams ? (
                 <div className="flex items-center justify-center py-12 text-gray-400 text-sm gap-2">
                   <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -706,8 +707,8 @@ export const DesignDashboard = () => {
                   </>
                 ) : (
                   <>
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: "rgba(27,60,113,0.06)" }}>
-                      <Pencil className="w-7 h-7" style={{ color: colors.brand }} />
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2 bg-primary/[6%]">
+                      <Pencil className="w-7 h-7 text-primary" />
                     </div>
                     <p className="text-base font-medium text-gray-600">Select a diagram to edit</p>
                     <p className="text-sm text-gray-400 max-w-xs">Click any saved diagram on the left to load it into the editor.</p>
@@ -722,11 +723,11 @@ export const DesignDashboard = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: colors.brand }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-primary">
                       <Pencil className="w-3.5 h-3.5 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold truncate max-w-xs" style={{ color: "#1a1a1a" }}>{editingPageTitle}</p>
+                      <p className="text-sm font-semibold truncate max-w-xs text-[#1a1a1a]">{editingPageTitle}</p>
                       <p className="text-xs text-gray-400">Edit directly in draw.io, then save or generate a document</p>
                     </div>
                   </div>
@@ -739,8 +740,10 @@ export const DesignDashboard = () => {
 
                 {/* draw.io iframe — fills remaining space */}
                 <div
-                  className={isFullscreen ? "fixed inset-0 z-50 bg-white flex flex-col" : "flex-1 relative border border-gray-200 rounded-xl overflow-hidden"}
-                  style={isFullscreen ? undefined : { minHeight: "420px" }}
+                  className={cn(
+                    isFullscreen ? "fixed inset-0 z-50 bg-white flex flex-col" : "flex-1 relative border border-gray-200 rounded-xl overflow-hidden",
+                    !isFullscreen && "min-h-[420px]"
+                  )}
                 >
                   {/* Loading overlay — shown while fetching a new diagram from Confluence */}
                   {isLoadingEditXML && (
@@ -783,9 +786,8 @@ export const DesignDashboard = () => {
                       : <><FileText className="w-3.5 h-3.5" />Save Changes</>}
                   </Button>
                   <Button
-                    size="sm" className="text-xs gap-1.5 text-white"
+                    size="sm" className="text-xs gap-1.5 text-white bg-violet-500"
                     onClick={handleGenerateDocument} disabled={isGeneratingDocument}
-                    style={{ backgroundColor: "#8B5CF6" }}
                   >
                     {isGeneratingDocument
                       ? <><div className="w-3.5 h-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />Generating...</>
@@ -808,7 +810,7 @@ export const DesignDashboard = () => {
                 {/* Collapsed diagram accordion */}
                 <details className="group rounded-xl border border-gray-200 bg-white overflow-hidden">
                   <summary className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 list-none select-none">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 bg-green-600">
                       <Pencil className="w-3 h-3 text-white" />
                     </div>
                     <span className="text-sm font-medium text-gray-600 flex-1 truncate">{editingPageTitle}</span>
@@ -838,8 +840,7 @@ export const DesignDashboard = () => {
                       <iframe
                         ref={iframeRef}
                         src="https://embed.diagrams.net/?embed=1&spin=1&proto=json&saveAndExit=0&noSaveBtn=0"
-                        className={isFullscreen ? "flex-1 w-full border-0" : "w-full border-0"}
-                        style={isFullscreen ? undefined : { height: "300px" }}
+                        className={cn(isFullscreen ? "flex-1 w-full border-0" : "w-full border-0", !isFullscreen && "h-[300px]")}
                         title="Architecture Diagram Editor"
                       />
                     </div>
@@ -848,9 +849,9 @@ export const DesignDashboard = () => {
 
                 {/* Document header */}
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>4</div>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 bg-green-600">4</div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Architecture Document</p>
+                    <p className="text-sm font-semibold text-[#1a1a1a]">Architecture Document</p>
                     <p className="text-xs text-gray-400">Download as Markdown or push to Confluence</p>
                   </div>
                 </div>
@@ -859,8 +860,7 @@ export const DesignDashboard = () => {
                 <Textarea
                   value={generatedDocument}
                   onChange={(e) => setGeneratedDocument(e.target.value)}
-                  className="flex-1 text-sm font-mono resize-none"
-                  style={{ minHeight: "260px" }}
+                  className="flex-1 text-sm font-mono resize-none min-h-[260px]"
                 />
 
                 {/* Export actions */}
@@ -873,7 +873,7 @@ export const DesignDashboard = () => {
                     <Button variant="outline" className="flex-1" onClick={handleDownloadDocument}>
                       <Download className="w-4 h-4 mr-2" />Download .md
                     </Button>
-                    <Button className="flex-1 text-white" onClick={handlePushToConfluence} disabled={isPushingToConfluence || !confluenceSpaceKey} style={{ backgroundColor: colors.brand }}>
+                    <Button className="flex-1 text-white bg-primary" onClick={handlePushToConfluence} disabled={isPushingToConfluence || !confluenceSpaceKey}>
                       {isPushingToConfluence
                         ? <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Pushing...</>
                         : <><FileText className="w-4 h-4 mr-2" />Push to Confluence</>}
@@ -904,8 +904,10 @@ export const DesignDashboard = () => {
 
         {/* ══ LEFT PANEL: Page Selector (Step 1) ══ */}
         <div
-          className={`border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0 ${!leftCollapsed ? "px-[1.6rem] py-4" : ""}`}
-          style={{ width: leftCollapsed ? "40px" : "340px" }}
+          className={cn(
+            "border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0",
+            leftCollapsed ? "w-10" : "w-[340px] px-[1.6rem] py-4"
+          )}
         >
           {/* Collapsed strip — just shows expand button */}
           {leftCollapsed && (
@@ -931,11 +933,10 @@ export const DesignDashboard = () => {
           {/* Panel header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                style={{ backgroundColor: step1Done ? "#16a34a" : colors.brand }}>
+              <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0", step1Done ? "bg-green-600" : "bg-primary")}>
                 1
               </div>
-              <span className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Select Confluence Pages</span>
+              <span className="text-sm font-semibold text-[#1a1a1a]">Select Confluence Pages</span>
             </div>
             <div className="flex items-center gap-1">
               {confluenceSpaceKey && (
@@ -1050,10 +1051,9 @@ export const DesignDashboard = () => {
           {/* Generate Prompt CTA */}
           <div className="mt-4 pt-4 border-t border-gray-100 flex-shrink-0">
             <Button
-              className="w-full font-medium"
+              className="w-full font-medium bg-primary text-white"
               onClick={handleGeneratePrompt}
               disabled={selectedPageIds.size === 0 || isGeneratingPrompt}
-              style={{ backgroundColor: colors.brand }}
             >
               {isGeneratingPrompt ? (
                 <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Generating prompt...</>
@@ -1087,8 +1087,7 @@ export const DesignDashboard = () => {
                 </a>
                 <Button
                   size="sm"
-                  className="text-xs text-white h-7 px-3"
-                  style={{ backgroundColor: colors.brand }}
+                  className="text-xs text-white h-7 px-3 bg-primary"
                   disabled={isLoadingDiagram}
                   onClick={() => {
                     setGeneratedXML(savedDiagramBanner.xml);
@@ -1107,8 +1106,8 @@ export const DesignDashboard = () => {
           {/* ── Empty state ── */}
           {!step2Done && (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 py-24 px-8 gap-3">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: "rgba(27,60,113,0.06)" }}>
-                <Wand2 className="w-7 h-7" style={{ color: colors.brand }} />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2 bg-primary/[6%]">
+                <Wand2 className="w-7 h-7 text-primary" />
               </div>
               <p className="text-base font-medium text-gray-600">Select pages and generate a prompt</p>
               <p className="text-sm text-gray-400 max-w-xs">Choose one or more Confluence pages on the left, then click <span className="font-medium text-gray-500">Generate Architecture Prompt</span> to begin.</p>
@@ -1126,9 +1125,9 @@ export const DesignDashboard = () => {
 
                 {/* Header */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: colors.brand }}>2</div>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 bg-primary">2</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Architecture Prompt</p>
+                    <p className="text-sm font-semibold text-[#1a1a1a]">Architecture Prompt</p>
                     <p className="text-xs text-gray-400">{isGeneratingPrompt ? "AI is writing…" : "Edit directly below, then generate the diagram"}</p>
                   </div>
                   {isGeneratingPrompt && (
@@ -1161,8 +1160,7 @@ export const DesignDashboard = () => {
                 <Textarea
                   value={generatedPrompt}
                   onChange={(e) => setGeneratedPrompt(e.target.value)}
-                  className="flex-1 text-xs font-mono resize-none leading-relaxed"
-                  style={{ minHeight: "300px" }}
+                  className="flex-1 text-xs font-mono resize-none leading-relaxed min-h-[300px]"
                   placeholder="Generating architecture prompt…"
                 />
 
@@ -1175,10 +1173,9 @@ export const DesignDashboard = () => {
                     <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Clear
                   </Button>
                   <Button
-                    className="flex-1 font-medium text-white text-sm"
+                    className="flex-1 font-medium text-white text-sm bg-primary"
                     onClick={handleGenerateXML}
                     disabled={!generatedPrompt.trim() || isGeneratingXML || isGeneratingPrompt}
-                    style={{ backgroundColor: colors.brand }}
                   >
                     {isGeneratingXML
                       ? <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Generating...</>
@@ -1195,7 +1192,7 @@ export const DesignDashboard = () => {
               {/* Collapsed prompt accordion */}
               <details className="group rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <summary className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 list-none select-none">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>2</div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-green-600">2</div>
                   <span className="text-sm font-medium text-gray-600 flex-1">Architecture Prompt</span>
                   <span className="text-xs text-gray-400 mr-2">click to view / edit</span>
                   <ChevronDown className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180 flex-shrink-0" />
@@ -1204,15 +1201,13 @@ export const DesignDashboard = () => {
                   <Textarea
                     value={generatedPrompt}
                     onChange={(e) => setGeneratedPrompt(e.target.value)}
-                    className="w-full text-sm font-mono resize-none"
-                    style={{ minHeight: "160px" }}
+                    className="w-full text-sm font-mono resize-none min-h-[160px]"
                   />
                   <Button
-                    className="mt-2 w-full font-medium text-white"
+                    className="mt-2 w-full font-medium text-white bg-primary"
                     size="sm"
                     onClick={handleGenerateXML}
                     disabled={!generatedPrompt.trim() || isGeneratingXML || isGeneratingDocument || isGeneratingPrompt}
-                    style={{ backgroundColor: colors.brand }}
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-2" />Regenerate Diagram
                   </Button>
@@ -1221,19 +1216,19 @@ export const DesignDashboard = () => {
 
               {/* Diagram header */}
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>3</div>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 bg-green-600">3</div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Architecture Diagram</p>
+                  <p className="text-sm font-semibold text-[#1a1a1a]">Architecture Diagram</p>
                   <p className="text-xs text-gray-400">Edit directly in the embedded draw.io editor</p>
                 </div>
               </div>
 
               {/* Diagram iframe — fills remaining space */}
               <div
-                className={isFullscreen
-                  ? "fixed inset-0 z-50 bg-white flex flex-col"
-                  : "flex-1 border border-gray-200 rounded-xl overflow-hidden"}
-                style={isFullscreen ? undefined : { minHeight: "420px" }}
+                className={cn(
+                  isFullscreen ? "fixed inset-0 z-50 bg-white flex flex-col" : "flex-1 border border-gray-200 rounded-xl overflow-hidden",
+                  !isFullscreen && "min-h-[420px]"
+                )}
               >
                 {isFullscreen && (
                   <div className="flex items-center justify-between px-4 py-2 border-b bg-white shrink-0">
@@ -1283,10 +1278,9 @@ export const DesignDashboard = () => {
                 </Button>
                 <Button
                   size="sm"
-                  className="text-xs gap-1.5 text-white"
+                  className="text-xs gap-1.5 text-white bg-violet-500"
                   onClick={handleGenerateDocument}
                   disabled={isGeneratingDocument || isGeneratingXML || isGeneratingPrompt}
-                  style={{ backgroundColor: "#8B5CF6" }}
                 >
                   {isGeneratingDocument
                     ? <><div className="w-3.5 h-3.5 animate-spin rounded-full border-2 border-white border-t-transparent mr-1.5" />Generating...</>
@@ -1311,19 +1305,19 @@ export const DesignDashboard = () => {
               {/* Collapsed prompt */}
               <details className="group rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <summary className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 list-none select-none">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>2</div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-green-600">2</div>
                   <span className="text-sm font-medium text-gray-600 flex-1">Architecture Prompt</span>
                   <ChevronDown className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180 flex-shrink-0" />
                 </summary>
                 <div className="px-4 pb-4 pt-2 border-t border-gray-100">
-                  <Textarea value={generatedPrompt} onChange={(e) => setGeneratedPrompt(e.target.value)} className="w-full text-sm font-mono resize-none" style={{ minHeight: "120px" }} />
+                  <Textarea value={generatedPrompt} onChange={(e) => setGeneratedPrompt(e.target.value)} className="w-full text-sm font-mono resize-none min-h-[120px]" />
                 </div>
               </details>
 
               {/* Collapsed diagram */}
               <details className="group rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <summary className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 list-none select-none">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>3</div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-green-600">3</div>
                   <span className="text-sm font-medium text-gray-600 flex-1">Architecture Diagram</span>
                   <div className="flex items-center gap-2 mr-2">
                     <button onClick={(e) => { e.preventDefault(); setIsFullscreen(true); }} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
@@ -1348,8 +1342,7 @@ export const DesignDashboard = () => {
                     <iframe
                       ref={iframeRef}
                       src="https://embed.diagrams.net/?embed=1&spin=1&proto=json&saveAndExit=0&noSaveBtn=0"
-                      className={isFullscreen ? "flex-1 w-full border-0" : "w-full border-0"}
-                      style={isFullscreen ? undefined : { height: "300px" }}
+                      className={cn(isFullscreen ? "flex-1 w-full border-0" : "w-full border-0", !isFullscreen && "h-[300px]")}
                       title="Architecture Diagram Editor"
                     />
                   </div>
@@ -1358,9 +1351,9 @@ export const DesignDashboard = () => {
 
               {/* Document header */}
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#16a34a" }}>4</div>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 bg-green-600">4</div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Architecture Document</p>
+                  <p className="text-sm font-semibold text-[#1a1a1a]">Architecture Document</p>
                   <p className="text-xs text-gray-400">Download as Markdown or push to Confluence</p>
                 </div>
               </div>
@@ -1369,8 +1362,7 @@ export const DesignDashboard = () => {
               <Textarea
                 value={generatedDocument}
                 onChange={(e) => setGeneratedDocument(e.target.value)}
-                className="flex-1 text-sm font-mono resize-none"
-                style={{ minHeight: "260px" }}
+                className="flex-1 text-sm font-mono resize-none min-h-[260px]"
               />
 
               {/* Page title + export actions */}
@@ -1384,10 +1376,9 @@ export const DesignDashboard = () => {
                     <Download className="w-4 h-4 mr-2" />Download .md
                   </Button>
                   <Button
-                    className="flex-1 text-white"
+                    className="flex-1 text-white bg-primary"
                     onClick={handlePushToConfluence}
                     disabled={isPushingToConfluence || !confluenceSpaceKey}
-                    style={{ backgroundColor: colors.brand }}
                   >
                     {isPushingToConfluence
                       ? <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Pushing...</>

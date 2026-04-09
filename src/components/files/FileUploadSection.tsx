@@ -343,7 +343,7 @@ export const FileUploadSection = ({ onUploadSuccess }: FileUploadSectionProps) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-base font-bold text-[hsl(var(--heading-primary))] break-words">
-              Uploaded Files
+              Upload Files
             </CardTitle>
             <p className="text-sm mt-1 text-muted-label">
               {uploadedFiles.length} files ready to submit

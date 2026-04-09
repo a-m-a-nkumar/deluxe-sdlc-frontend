@@ -92,7 +92,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {
-    overview: "Orchestrator Home Page",
+    overview: "Veluxe Home Page",
     brd: "BRD Generation Module",
     analyst: "BRD Generation by conversing with AI",
     confluence: "Planning Module",
@@ -157,16 +157,8 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
       <div className="py-0 border-b border-sidebar-border h-16 flex items-center justify-between flex-shrink-0 bg-primary-soft">
         <Link
           to="/"
-          className="flex items-center gap-2 px-4 hover:opacity-80 transition-opacity"
+          className={`flex items-center hover:opacity-80 transition-opacity ${collapsed && !isMobile ? 'justify-center w-full' : 'gap-2 px-4'}`}
         >
-
-          {THEME === "deluxe" && (
-            <img
-              src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
-              alt="Deluxe"
-              className="w-[65px]"
-            />
-          )}
           {THEME === "siriusai" && (collapsed && !isMobile) && (
             <img
               src="/Logo - S Only (2).png"
@@ -181,11 +173,20 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
               className="h-[32px] w-auto"
             />
           )}
-          {(!collapsed || isMobile) && THEME === "deluxe" && (
-            <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
+          {THEME === "deluxe" && (collapsed && !isMobile) && (
+            <span className="text-[1.35rem] font-semibold tracking-[0.06em] text-gray-900 select-none">
+              vl<span className="text-primary">x</span>
+            </span>
           )}
-          {(!collapsed || isMobile) && THEME === "siriusai" && (
-            <div className="text-sm text-muted-foreground hidden sm:block">SDLC Orchestration</div>
+          {THEME === "deluxe" && (!collapsed || isMobile) && (
+            <div className="flex flex-col">
+              <span className="text-[1.35rem] font-semibold tracking-tight text-gray-900 leading-none">
+                Velu<span className="text-primary">x</span>e
+              </span>
+              <span className="text-[0.65rem] font-semibold tracking-wider text-gray-500 mt-0.5">
+                Drive Engineering Excellence @dlx
+              </span>
+            </div>
           )}
         </Link>
 
@@ -318,7 +319,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                 <HelpCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-gray-900">SDLC Orchestrator User Guide</DialogTitle>
+                <DialogTitle className="text-lg font-bold text-gray-900">Veluxe User Guide</DialogTitle>
                 <p className="text-xs text-gray-500 mt-0.5">Documentation &amp; setup instructions</p>
               </div>
             </div>

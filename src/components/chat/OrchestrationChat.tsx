@@ -22,7 +22,7 @@ export const OrchestrationChat = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
-            content: "Hello! 👋 I'm your SDLC Orchestration Assistant powered by your project's Confluence and Jira documentation.\n\nI can help you with:\n- Understanding your project documentation\n- Finding information from Confluence pages\n- Searching through Jira issues\n- Answering questions about your workflows\n\nWhat would you like to know?",
+            content: "Hello! 👋 I'm your Veluxe Assistant powered by your project's Confluence and Jira documentation.\n\nI can help you with:\n- Understanding your project documentation\n- Finding information from Confluence pages\n- Searching through Jira issues\n- Answering questions about your workflows\n\nWhat would you like to know?",
             isBot: true,
             timestamp: new Date().toLocaleTimeString([], {
                 hour: "2-digit",

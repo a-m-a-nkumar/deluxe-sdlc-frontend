@@ -4,7 +4,7 @@ import { Home, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { THEME } from "@/config/theme";
 
-const appName = THEME === "siriusai" ? "SiriusAI" : "SDLC Orchestrator";
+const appName = THEME === "siriusai" ? "SiriusAI" : "Veluxe";
 
 const Logo = () => {
   if (THEME === "siriusai") {

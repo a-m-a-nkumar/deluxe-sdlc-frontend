@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "./PairProgrammingDashboard.css";
-import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, Code2 } from "lucide-react";
+import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, Code2, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/contexts/AppStateContext";
 import { API_CONFIG } from "@/config/api";
 import { THEME } from "@/config/theme";
+import { triggerIncrementalSync, getSyncStatus } from "@/services/orchestrationApi";
+import { toast } from "sonner";
 
 interface PairProgrammingDashboardProps {
     onBack?: () => void;
@@ -62,9 +64,72 @@ const InfoBox = ({ children }: { children: React.ReactNode }) => (
 );
 
 export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardProps) => {
-    const { selectedProject } = useAppState();
+    const { selectedProject, isSyncInProgress, setIsSyncInProgress, syncMessage, setSyncMessage } = useAppState();
     const [frontendReqs, setFrontendReqs] = useState("");
     const [backendReqs, setBackendReqs] = useState("");
+    const [isSyncing, setIsSyncing] = useState(false);
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Poll sync status
+    const pollSyncStatus = useCallback(async () => {
+        if (!selectedProject?.project_id) return;
+        try {
+            const status = await getSyncStatus(selectedProject.project_id);
+            if (status) {
+                setIsSyncInProgress(status.is_syncing);
+                setSyncMessage(status.sync_message || "");
+            }
+        } catch {
+            // Silently ignore polling errors
+        }
+    }, [selectedProject?.project_id, setIsSyncInProgress, setSyncMessage]);
+
+    useEffect(() => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+
+        if (selectedProject?.project_id) {
+            pollSyncStatus();
+            pollIntervalRef.current = setInterval(() => {
+                if (isSyncInProgress || isSyncing) {
+                    pollSyncStatus();
+                }
+            }, 5000);
+        } else {
+            setIsSyncInProgress(false);
+            setSyncMessage("");
+        }
+
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+    }, [selectedProject?.project_id, pollSyncStatus, isSyncInProgress, isSyncing, setIsSyncInProgress, setSyncMessage]);
+
+    const handleSync = async () => {
+        if (!selectedProject?.project_id) {
+            toast.error("No project selected");
+            return;
+        }
+
+        setIsSyncing(true);
+        try {
+            const result = await triggerIncrementalSync(selectedProject.project_id);
+            if (result.success) {
+                toast.success("Sync started! Only changed documents will be updated.");
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error) {
+            toast.error("Failed to start sync");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
     const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
@@ -172,6 +237,40 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                     <p className="text-sm text-yellow-800">
                         <strong>No project selected.</strong> Select a project from the top bar to auto-fill your Project ID in the config snippets below.
                     </p>
+                </div>
+            )}
+
+            {/* Sync Knowledge Base */}
+            {selectedProject && (
+                <div className="rounded-xl border border-yellow-300 p-4 mb-6 bg-yellow-50">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-yellow-800 flex items-center gap-1.5">
+                                <Info className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+                                Sync Knowledge Base Before You Start
+                            </p>
+                            <p className="text-xs text-yellow-700 mt-1 ml-5.5" style={{ marginLeft: "1.375rem" }}>
+                                <strong>Important:</strong> The MCP server queries your vector database to provide accurate context. Syncing updates your Confluence pages and Jira issues into the vector DB.
+                                If your docs have changed recently, hit <strong>Sync Docs</strong> to ensure your AI coding assistant has the latest information.
+                            </p>
+                        </div>
+                        <Button
+                            onClick={handleSync}
+                            disabled={isSyncing || isSyncInProgress}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 ml-4 flex-shrink-0"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${(isSyncing || isSyncInProgress) ? "animate-spin" : ""}`} />
+                            {isSyncing ? "Syncing..." : "Sync Docs"}
+                        </Button>
+                    </div>
+                    {isSyncInProgress && (
+                        <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+                            <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                            <span className="truncate">{syncMessage || "Syncing your knowledge base..."}</span>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -503,27 +602,6 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
-                    {/* MCP Screenshots */}
-                    <div className="space-y-6 mb-6">
-                        <div className="rounded-xl border border-gray-200 overflow-hidden">
-                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                                <span className="text-sm font-semibold text-gray-700">MCP Config & VS Code Copilot in Action</span>
-                            </div>
-                            <div className="p-4 space-y-4">
-                                <img
-                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
-                                    alt="VS Code with MCP config and Copilot chat showing enhance task"
-                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
-                                />
-                                <img
-                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
-                                    alt="VS Code Copilot showing MCP command picker with enhance-prompt"
-                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
                     <p className="text-sm text-gray-600 mb-4">
                         Once configured, try the MCP tool in your IDE by typing a coding task. The server will enrich it with context gathered from your project's knowledge base — the <strong>redesigned prompt is displayed directly back to you</strong> in your IDE.
                     </p>
@@ -571,6 +649,27 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                 <p className="text-xs text-gray-400 mt-2 italic">→ Directly selects the tool — no ambiguity, Copilot always calls enhance_task</p>
                             </div>
                         </div>
+
+                    {/* MCP Screenshots */}
+                    <div className="space-y-6 mb-6">
+                        <div className="rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <span className="text-sm font-semibold text-gray-700">MCP Config & VS Code Copilot in Action</span>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <img
+                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
+                                    alt="VS Code Copilot showing MCP command picker with enhance-prompt"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                                <img
+                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
+                                    alt="VS Code with MCP config and Copilot chat showing enhance task"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
                         {/* What you'll get back */}
                         <div className="rounded-xl p-4 pp-card-light">

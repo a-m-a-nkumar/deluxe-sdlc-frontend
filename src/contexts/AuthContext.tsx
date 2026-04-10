@@ -1,9 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
 
-// ── Azure AD Group-Based RBAC ──
+// ── Environment-aware RBAC ──
+// SiriusAI: no RBAC — everyone gets all modules
+// Deluxe:   Azure AD group-based access control
+const IS_SIRIUSAI = import.meta.env.VITE_THEME === "siriusai";
+
 const BUSINESS_GROUP_OID = "be88c38e-8a45-4026-ac85-f0f850b8cc03";
 const TECH_GROUP_OID = "670e52fc-59cc-4a13-b89c-c91367c7060c";
+
+const ALL_MODULES = ["brd", "confluence", "jira", "design", "pair-programming", "testing"];
 
 const GROUP_MODULE_MAP: Record<string, string[]> = {
   [BUSINESS_GROUP_OID]: ["brd", "confluence", "jira"],
@@ -11,6 +17,7 @@ const GROUP_MODULE_MAP: Record<string, string[]> = {
 };
 
 function computeAllowedModules(groups: string[]): string[] {
+  if (IS_SIRIUSAI) return ALL_MODULES;
   const modules = new Set<string>();
   groups.forEach((g) => (GROUP_MODULE_MAP[g] || []).forEach((m) => modules.add(m)));
   return Array.from(modules);
@@ -120,6 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const hasModuleAccess = useCallback(
     (moduleId: string): boolean => {
+      if (IS_SIRIUSAI) return true;
       if (!user) return false;
       return user.allowedModules.includes(moduleId);
     },
@@ -136,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isLoading,
         hasModuleAccess,
-        isBusinessUser: !!user?.groups.includes(BUSINESS_GROUP_OID),
+        isBusinessUser: IS_SIRIUSAI ? true : !!user?.groups.includes(BUSINESS_GROUP_OID),
       }}
     >
       {children}

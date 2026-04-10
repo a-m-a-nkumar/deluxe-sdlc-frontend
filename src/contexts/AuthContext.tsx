@@ -1,5 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
+import { toast } from "sonner";
+
+// Inactivity timeout — auto-logout after 5 minutes of no activity
+const INACTIVITY_TIMEOUT_MS = 300_000;
 
 // ── Azure AD Group-Based RBAC ──
 const BUSINESS_GROUP_OID = "be88c38e-8a45-4026-ac85-f0f850b8cc03";
@@ -125,6 +129,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     },
     [user]
   );
+
+  // ── Inactivity auto-logout ──
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const resetTimer = () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        // Clear MSAL accounts locally without triggering Azure redirect
+        const accounts = msalInstance.getAllAccounts();
+        accounts.forEach((a) => msalInstance.setActiveAccount(null));
+        localStorage.clear();
+
+        setUser(null);
+        setAccessToken(null);
+        toast("Your session has ended", {
+          description: "You were signed out after being inactive. Please log in again to continue.",
+          duration: Infinity,
+          icon: "🔒",
+        });
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events: (keyof WindowEventMap)[] = ["mousemove", "keydown", "scroll", "mousedown", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider

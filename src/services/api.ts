@@ -1,4 +1,4 @@
-import { getEffectiveToken } from "./authService";
+import { getEffectiveToken, refreshToken } from "./authService";
 import { API_CONFIG } from "@/config/api";
 
 /**
@@ -30,11 +30,12 @@ export async function apiRequest(
     headers,
   });
 
-  // If unauthorized, try to refresh token and retry once
+  // If unauthorized, force-refresh the token and retry once
   if (response.status === 401 && token) {
-    // Token might be expired, try to get a fresh one
-    const newToken = await getEffectiveToken();
+    console.warn("[API] 401 received — forcing token refresh");
+    const newToken = await refreshToken();
     if (newToken && newToken !== token) {
+      console.log("[API] Token refreshed, retrying request");
       headers.set("Authorization", `Bearer ${newToken}`);
       return fetch(url, {
         ...options,

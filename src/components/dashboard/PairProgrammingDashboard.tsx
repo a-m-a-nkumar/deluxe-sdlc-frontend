@@ -552,7 +552,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             <div>
                                 <p className="text-sm font-bold text-amber-900">Important: Reload after pasting the config</p>
                                 <p className="text-sm text-amber-800 mt-1">
-                                    After pasting the config into your <code className="bg-amber-100 px-1 rounded font-mono text-xs">mcp.json</code> file, press <kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+S</kbd> to save, then run <strong>Developer: Reload Window</strong> from the command palette (<kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+Shift+P</kbd> → type "Reload Window") for the MCP server to start.
+                                    After pasting the config into your <code className="bg-amber-100 px-1 rounded font-mono text-xs">mcp.json</code> file, press <kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">{os === "mac" ? "⌘+S" : "Ctrl+S"}</kbd> to save, then run <strong>Developer: Reload Window</strong> from the command palette (<kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">{os === "mac" ? "⌘+Shift+P" : "Ctrl+Shift+P"}</kbd> → type "Reload Window") for the MCP server to start.
                                 </p>
                             </div>
                         </div>

@@ -62,7 +62,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
     refetchOnWindowFocus: false,
   });
 
-  const isAtlassianLinked = atlassianStatus?.linked || false;
+  const isAtlassianLinked = (atlassianStatus?.linked && !atlassianStatus?.token_expired) || false;
 
   const handleLogout = () => {
     // Clear cache and app state on logout

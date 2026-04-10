@@ -182,7 +182,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
     try {
       // Check if Atlassian is linked
       const status = await integrationsApi.getAtlassianStatus(accessToken);
-      setIsAtlassianLinked(status.linked);
+      setIsAtlassianLinked(status.linked && !status.token_expired);
 
       if (status.linked) {
         // Fetch Jira projects and Confluence spaces in parallel

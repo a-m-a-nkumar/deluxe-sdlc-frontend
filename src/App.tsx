@@ -18,6 +18,7 @@ import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
 import TestingPage from "./pages/TestingPage";
+import HarnessPage from "./pages/HarnessPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -117,6 +118,30 @@ const App = () => {
                     <ModuleProtectedRoute moduleId="testing">
                       <TestingPage />
                     </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/test-generation/:confluencePageId"
+                  element={
+                    <ProtectedRoute>
+                      <TestScenarioPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/testing"
+                  element={
+                    <ProtectedRoute>
+                      <TestingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/harness"
+                  element={
+                    <ProtectedRoute>
+                      <HarnessPage />
+                    </ProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

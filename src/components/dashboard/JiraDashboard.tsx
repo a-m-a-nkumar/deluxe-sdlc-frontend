@@ -257,7 +257,7 @@ export const JiraDashboard = () => {
     }
   }, [filteredIssues, selectedIssue]);
   const getPriorityIcon = (priority: string) => {
-    return priority === "high" ? <ArrowUp className="w-3 h-3 text-red-500" /> : <ArrowUp className="w-3 h-3 text-orange-500 rotate-45" />;
+    return priority === "high" ? <ArrowUp className="w-3 h-3" style={{ color: '#1B3C71' }} /> : <ArrowUp className="w-3 h-3 text-yellow-500 rotate-45" />;
   };
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -271,7 +271,7 @@ export const JiraDashboard = () => {
   const getTypeBadge = (type: string) => {
     const typeConfig = {
       "Story": "bg-white text-green-700",
-      "Bug": "bg-white text-red-700",
+      "Bug": "bg-white text-blue-700",
       "Task": "bg-white text-blue-700",
       "Epic": "bg-white text-purple-700"
     };

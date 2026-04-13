@@ -19,7 +19,7 @@ const msalConfig = {
     cacheLocation: "localStorage" as const,
     storeAuthStateInCookie: true,
   },
-};
+};  
 
 const msalInstance = new PublicClientApplication(msalConfig);
 

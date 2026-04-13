@@ -9,6 +9,7 @@ import {
   X,
   Code2,
   FlaskConical,
+  Workflow,
   Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -65,6 +66,13 @@ const navigationItems = [
     description: "Test scenarios & Katalon pipeline",
     id: "testing",
     path: "/testing",
+  },
+  {
+    icon: Workflow,
+    label: "DevOps",
+    description: "Pipelines, deployments & logs",
+    id: "harness",
+    path: "/harness",
   },
 ];
 

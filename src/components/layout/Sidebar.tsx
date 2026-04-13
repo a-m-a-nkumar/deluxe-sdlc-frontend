@@ -10,7 +10,8 @@ import {
   ChevronLeft,
   X,
   Code2,
-  FlaskConical
+  FlaskConical,
+  Workflow,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,13 @@ const navigationItems = [
     description: "Test scenarios & Katalon pipeline",
     id: "testing",
     path: "/testing",
+  },
+  {
+    icon: Workflow,
+    label: "DevOps",
+    description: "Pipelines, deployments & logs",
+    id: "harness",
+    path: "/harness",
   },
 ];
 

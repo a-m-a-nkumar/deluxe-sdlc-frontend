@@ -240,7 +240,11 @@ export const DesignDashboard = () => {
     if (!confluenceSpaceKey || !selectedProject) return;
     loadDiagramFromConfluence(selectedProject.id, confluenceSpaceKey)
       .then((result) => {
-        if (result) setSavedDiagramBanner({ xml: result.xml, page_url: result.page_url });
+        if (result) {
+          // Auto-load silently — no banner shown
+          setGeneratedXML(result.xml);
+          setDiagramPageUrl(result.page_url);
+        }
       })
       .catch(() => {}); // silent — no saved diagram is fine
   }, [confluenceSpaceKey, selectedProject?.id]);
@@ -903,40 +907,31 @@ export const DesignDashboard = () => {
 
         {/* ══ LEFT PANEL: Page Selector (Step 1) ══ */}
         <div
-          className="border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0"
-          style={{ width: leftCollapsed ? "40px" : "340px" }}
+          className="relative border-r border-gray-200 bg-white flex flex-col h-full overflow-hidden transition-all duration-200 flex-shrink-0"
+          style={{ width: leftCollapsed ? "0px" : "340px" }}
         >
-          {/* Collapsed strip — just shows expand button */}
-          {leftCollapsed && (
-            <div className="flex flex-col items-center pt-4 gap-3 h-full">
-              <button
-                onClick={() => setLeftCollapsed(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-                title="Expand panel"
-              >
-                <ChevronDown className="w-4 h-4 -rotate-90" />
-              </button>
-              {step1Done && (
-                <span className="text-[10px] font-bold text-green-600 rotate-90 whitespace-nowrap mt-2">
-                  {selectedPageIds.size} selected
-                </span>
-              )}
-            </div>
-          )}
+          {/* Collapse toggle — floats on the right border edge, always visible */}
+          <button
+            onClick={() => setLeftCollapsed(v => !v)}
+            title={leftCollapsed ? "Expand pages" : "Collapse pages"}
+            className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-400 hover:text-gray-700 hover:border-gray-300 hover:shadow transition-all"
+          >
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${leftCollapsed ? "-rotate-90" : "rotate-90"}`} />
+          </button>
 
           {/* Expanded content */}
-          {!leftCollapsed && <>
+          {!leftCollapsed && (
+          <div className="flex flex-col h-full overflow-hidden px-4 pt-4 pb-4">
 
-          {/* Panel header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                style={{ backgroundColor: step1Done ? "#16a34a" : "#1B3C71" }}>
-                1
+            {/* Panel header */}
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: step1Done ? "#16a34a" : "#1B3C71" }}>
+                  1
+                </div>
+                <span className="text-sm font-semibold text-gray-800">Select Confluence Pages</span>
               </div>
-              <span className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Select Confluence Pages</span>
-            </div>
-            <div className="flex items-center gap-1">
               {confluenceSpaceKey && (
                 <button
                   onClick={() => loadPages(confluenceSpaceKey)}
@@ -949,168 +944,160 @@ export const DesignDashboard = () => {
                     : <RefreshCw className="w-4 h-4" />}
                 </button>
               )}
-              <button
-                onClick={() => setLeftCollapsed(true)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-                title="Collapse panel"
-              >
-                <ChevronDown className="w-4 h-4 rotate-90" />
-              </button>
             </div>
-          </div>
 
-          {/* Space badge */}
-          {confluenceSpaceKey ? (
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
-                {confluenceSpaceKey}
-              </span>
-              <span className="text-xs text-gray-400">— {selectedProject?.project_name}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 mb-3 text-xs text-amber-600">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>{selectedProject ? `No Confluence space for "${selectedProject.project_name}"` : "Select a project first"}</span>
-            </div>
-          )}
-
-          {/* Search */}
-          {pages.length > 0 && (
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search pages..."
-              className="h-8 text-sm mb-3"
-            />
-          )}
-
-          {/* Page list */}
-          <div className="flex-1 min-h-0 flex flex-col">
-            {pages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center text-gray-400 text-sm py-12 gap-2">
-                <FileText className="w-8 h-8 text-gray-200" />
-                <span>
-                  {!selectedProject ? "Select a project to load pages"
-                    : !confluenceSpaceKey ? "No Confluence space configured"
-                    : isLoadingPages ? "Loading pages..."
-                    : "No pages found"}
+            {/* Space badge */}
+            {confluenceSpaceKey ? (
+              <div className="flex items-center gap-1.5 mb-3 flex-shrink-0">
+                <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                  {confluenceSpaceKey}
                 </span>
+                <span className="text-xs text-gray-400 truncate">{selectedProject?.project_name}</span>
               </div>
             ) : (
-              <>
-                {/* Select all bar — pinned, never scrolls */}
-                <div className="flex items-center justify-between mb-2 text-xs text-gray-400 flex-shrink-0">
-                  <button onClick={toggleAll} disabled={isProcessing} className={`flex items-center gap-1 transition-colors ${isProcessing ? "opacity-40 cursor-not-allowed" : "hover:text-gray-600"}`}>
-                    {selectedPageIds.size === filteredPages.length && filteredPages.length > 0
-                      ? <CheckSquare className="w-3.5 h-3.5" />
-                      : <Square className="w-3.5 h-3.5" />}
-                    {selectedPageIds.size === filteredPages.length && filteredPages.length > 0 ? "Deselect all" : "Select all"}
-                  </button>
-                  <span>{selectedPageIds.size} of {filteredPages.length} selected</span>
-                </div>
-
-                {/* Scrollable page list */}
-                <div className="relative">
-                  {isProcessing && (
-                    <div className="absolute inset-0 z-10 rounded-lg bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 border border-gray-200">
-                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                      <span className="text-xs text-gray-500 font-medium text-center px-3">
-                        {isGeneratingPrompt ? "Generating prompt…" : isGeneratingXML ? "Generating diagram…" : isGeneratingDocument ? "Generating document…" : isSavingDiagram ? "Saving diagram…" : "Pushing to Confluence…"}
-                        <br />
-                        <span className="text-gray-400">Page selection locked</span>
-                      </span>
-                    </div>
-                  )}
-                  <div className={`overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-1 ${isProcessing ? "pointer-events-none select-none opacity-50" : ""}`} style={{ maxHeight: "calc(100vh - 380px)" }}>
-                    {filteredPages.map((page) => (
-                      <button
-                        key={page.id}
-                        onClick={() => togglePage(page.id)}
-                        disabled={isProcessing}
-                        className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-colors ${
-                          selectedPageIds.has(page.id)
-                            ? "bg-blue-50 border border-blue-200"
-                            : "bg-white border border-transparent hover:bg-gray-50"
-                        } ${isProcessing ? "cursor-not-allowed" : ""}`}
-                      >
-                        {selectedPageIds.has(page.id)
-                          ? <CheckSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                          : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
-                        <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        <span className="truncate text-gray-700">{page.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Generate Prompt CTA */}
-          <div className="mt-4 pt-4 border-t border-gray-100 flex-shrink-0">
-            <Button
-              className="w-full font-medium"
-              onClick={handleGeneratePrompt}
-              disabled={selectedPageIds.size === 0 || isGeneratingPrompt}
-              style={{ backgroundColor: "#1B3C71" }}
-            >
-              {isGeneratingPrompt ? (
-                <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Generating prompt...</>
-              ) : (
-                <><Wand2 className="w-4 h-4 mr-2" />Generate Architecture Prompt</>
-              )}
-            </Button>
-            {selectedPageIds.size > 0 && !isGeneratingPrompt && (
-              <p className="text-xs text-gray-400 text-center mt-1.5">
-                {selectedPageIds.size} page{selectedPageIds.size > 1 ? "s" : ""} selected
+              <p className="text-xs text-gray-400 mb-3 flex-shrink-0">
+                {selectedProject ? `No Confluence space configured` : "Select a project from the top bar to begin"}
               </p>
             )}
+
+            {/* Search */}
+            {pages.length > 0 && (
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search pages..."
+                className="h-8 text-xs mb-2 flex-shrink-0"
+              />
+            )}
+
+            {/* Page list — takes remaining height */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              {pages.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 py-8">
+                  {!selectedProject ? (
+                    <>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(27,60,113,0.07)" }}>
+                        <FileText className="w-5 h-5" style={{ color: "#1B3C71" }} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 mb-0.5">No project selected</p>
+                        <p className="text-xs text-gray-400">Pick a project from the top bar</p>
+                      </div>
+                    </>
+                  ) : isLoadingPages ? (
+                    <>
+                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+                      <p className="text-xs text-gray-400">Loading pages…</p>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-7 h-7 text-gray-200" />
+                      <p className="text-xs text-gray-400">
+                        {!confluenceSpaceKey ? "No Confluence space configured" : "No pages found in this space"}
+                      </p>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Select all bar */}
+                  <div className="flex items-center justify-between mb-2 text-xs text-gray-400 flex-shrink-0">
+                    <button onClick={toggleAll} disabled={isProcessing} className={`flex items-center gap-1.5 transition-colors ${isProcessing ? "opacity-40 cursor-not-allowed" : "hover:text-gray-600"}`}>
+                      {selectedPageIds.size === filteredPages.length && filteredPages.length > 0
+                        ? <CheckSquare className="w-3.5 h-3.5 text-blue-500" />
+                        : <Square className="w-3.5 h-3.5" />}
+                      {selectedPageIds.size === filteredPages.length && filteredPages.length > 0 ? "Deselect all" : "Select all"}
+                    </button>
+                    <span className="text-gray-400">{selectedPageIds.size} / {filteredPages.length}</span>
+                  </div>
+
+                  {/* Scrollable page list */}
+                  <div className="relative flex-1 min-h-0">
+                    {isProcessing && (
+                      <div className="absolute inset-0 z-10 rounded-lg bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                        <div className="w-5 h-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                        <span className="text-xs text-gray-500 font-medium text-center px-3">
+                          {isGeneratingPrompt ? "Generating prompt…" : isGeneratingXML ? "Generating diagram…" : isGeneratingDocument ? "Generating document…" : isSavingDiagram ? "Saving diagram…" : "Pushing to Confluence…"}
+                          <br />
+                          <span className="text-gray-400">Page selection locked</span>
+                        </span>
+                      </div>
+                    )}
+                    <div className={`h-full overflow-y-auto rounded-lg border border-gray-100 bg-gray-50 p-1.5 space-y-0.5 ${isProcessing ? "pointer-events-none select-none opacity-50" : ""}`}>
+                      {filteredPages.map((page) => (
+                        <button
+                          key={page.id}
+                          onClick={() => togglePage(page.id)}
+                          disabled={isProcessing}
+                          className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
+                            selectedPageIds.has(page.id)
+                              ? "bg-blue-50 border border-blue-200"
+                              : "bg-white border border-transparent hover:border-gray-200 hover:bg-gray-50"
+                          } ${isProcessing ? "cursor-not-allowed" : ""}`}
+                        >
+                          {selectedPageIds.has(page.id)
+                            ? <CheckSquare className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+                          <span className="truncate text-xs text-gray-700">{page.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Generate Prompt CTA */}
+            {confluenceSpaceKey && (
+              <div className="mt-3 pt-3 border-t border-gray-100 flex-shrink-0">
+                <Button
+                  className="w-full font-medium text-sm"
+                  onClick={handleGeneratePrompt}
+                  disabled={selectedPageIds.size === 0 || isGeneratingPrompt}
+                  style={{ backgroundColor: "#1B3C71" }}
+                >
+                  {isGeneratingPrompt ? (
+                    <><div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />Generating prompt...</>
+                  ) : (
+                    <><Wand2 className="w-4 h-4 mr-2" />Generate Architecture Prompt</>
+                  )}
+                </Button>
+                {selectedPageIds.size > 0 && !isGeneratingPrompt && (
+                  <p className="text-xs text-gray-400 text-center mt-1.5">
+                    {selectedPageIds.size} page{selectedPageIds.size > 1 ? "s" : ""} selected
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-          </>}
+          )}
         </div>
 
         {/* ══ RIGHT PANEL: adaptive per step ══ */}
-        <div className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
 
-          {/* ── Saved diagram banner ── */}
-          {savedDiagramBanner && !step3Done && (
-            <div className="mx-5 mt-5 flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-              <div className="flex items-center gap-2 text-sm text-blue-700">
-                <Download className="w-4 h-4 flex-shrink-0" />
-                <span>A saved diagram was found for this project.</span>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <a href={savedDiagramBanner.page_url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-blue-500 hover:underline flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />View
-                </a>
-                <Button
-                  size="sm"
-                  className="text-xs text-white h-7 px-3"
-                  style={{ backgroundColor: "#1B3C71" }}
-                  disabled={isLoadingDiagram}
-                  onClick={() => {
-                    setGeneratedXML(savedDiagramBanner.xml);
-                    setDiagramPageUrl(savedDiagramBanner.page_url);
-                    setSavedDiagramBanner(null);
-                    toast({ title: "Diagram loaded", description: "Your saved diagram has been loaded into the editor." });
-                  }}
-                >
-                  Load Diagram
-                </Button>
-                <button onClick={() => setSavedDiagramBanner(null)} className="text-blue-400 hover:text-blue-600 text-lg leading-none">&times;</button>
-              </div>
-            </div>
-          )}
+          {/* Saved diagram auto-loaded silently — banner removed */}
 
           {/* ── Empty state ── */}
           {!step2Done && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 py-24 px-8 gap-3">
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-8 gap-3">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: "rgba(27,60,113,0.06)" }}>
                 <Wand2 className="w-7 h-7" style={{ color: "#1B3C71" }} />
               </div>
-              <p className="text-base font-medium text-gray-600">Select pages and generate a prompt</p>
-              <p className="text-sm text-gray-400 max-w-xs">Choose one or more Confluence pages on the left, then click <span className="font-medium text-gray-500">Generate Architecture Prompt</span> to begin.</p>
+              <p className="text-base font-medium text-gray-600">
+                {!selectedProject ? "No project selected" : "Select pages and generate a prompt"}
+              </p>
+              <p className="text-sm text-gray-400 max-w-xs">
+                {!selectedProject
+                  ? "Select a project from the top bar to load Confluence pages."
+                  : isLoadingPages
+                    ? "Loading your Confluence pages…"
+                    : pages.length === 0
+                      ? "No pages found in this Confluence space."
+                      : <>Choose one or more pages on the left, then click <span className="font-medium text-gray-500">Generate Architecture Prompt</span>.</>
+                }
+              </p>
+              {isLoadingPages && <div className="w-5 h-5 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />}
             </div>
           )}
 

@@ -182,7 +182,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
     try {
       // Check if Atlassian is linked
       const status = await integrationsApi.getAtlassianStatus(accessToken);
-      setIsAtlassianLinked(status.linked);
+      setIsAtlassianLinked(status.linked && !status.token_expired);
 
       if (status.linked) {
         // Fetch Jira projects and Confluence spaces in parallel
@@ -297,7 +297,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
         <div className="p-4 border-b bg-muted/30">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-            <FolderKanban className="w-5 h-5" style={{ color: '#1B3C71' }} />
+            <FolderKanban className="w-5 h-5 text-red-600" />
             Project Workspace
           </DialogTitle>
           <DialogDescription>
@@ -313,7 +313,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               ? "text-white rounded-tl-lg"
               : "text-muted-foreground hover:text-foreground"
               } `}
-            style={activeTab === "my-project" ? { backgroundColor: '#1B3C71', color: '#fff' } : { color: '#858585' }}
+            style={activeTab === "my-project" ? { backgroundColor: '#D61120', color: '#fff' } : { color: '#858585' }}
           >
             My Project
           </button>
@@ -324,7 +324,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               ? "text-white rounded-tr-lg"
               : "text-muted-foreground hover:text-foreground"
               } `}
-            style={activeTab === "new-project" ? { backgroundColor: '#1B3C71', color: '#fff' } : { color: '#858585' }}
+            style={activeTab === "new-project" ? { backgroundColor: '#D61120', color: '#fff' } : { color: '#858585' }}
           >
             New Project
           </button>
@@ -382,7 +382,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-8 w-8 hover:bg-blue-50" style={{ color: '#1B3C71' }}
+                              className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                               onClick={() => setEditingProject(null)}
                               disabled={isUpdating}
                             >
@@ -436,7 +436,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 text-muted-foreground hover:bg-blue-50" style={{ '--hover-color': '#1B3C71' } as React.CSSProperties}
+                                className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setProjectToDelete(project.project_id);
@@ -458,9 +458,9 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
               {loadingIntegrations ? (
                 <div className="bg-muted/30 border border-border rounded-lg p-6 flex flex-col items-center justify-center space-y-4 animate-pulse">
                   <div className="relative">
-                    <Loader2 className="h-10 w-10 animate-spin" style={{ color: '#1B3C71' }} />
+                    <Loader2 className="h-10 w-10 animate-spin text-red-600" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-4 w-4 bg-white rounded-full border-2" style={{ borderColor: '#1B3C71' }} />
+                      <div className="h-4 w-4 bg-white rounded-full border-2 border-red-600" />
                     </div>
                   </div>
                   <div className="text-center">
@@ -540,7 +540,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                     {/* Atlassian Integration Section - REQUIRED */}
                     {isAtlassianLinked ? (
                       <div className="space-y-3 pt-2">
-                        <div className="flex items-center gap-2 text-xs font-semibold pb-1" style={{ color: '#1B3C71' }}>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-red-600 pb-1">
                           <Info className="w-3 h-3" />
                           LINK TO ATLASSIAN (REQUIRED)
                         </div>
@@ -596,7 +596,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             </PopoverContent>
                           </Popover>
                           {(!selectedJiraProject || selectedJiraProject === 'none') && (
-                            <p className="text-xs mt-1" style={{ color: '#1B3C71' }}>Jira project is required</p>
+                            <p className="text-xs text-red-500 mt-1">Jira project is required</p>
                           )}
                         </FormItem>
 
@@ -651,14 +651,14 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             </PopoverContent>
                           </Popover>
                           {(!selectedConfluenceSpace || selectedConfluenceSpace === 'none') && (
-                            <p className="text-xs mt-1" style={{ color: '#1B3C71' }}>Confluence space is required</p>
+                            <p className="text-xs text-red-500 mt-1">Confluence space is required</p>
                           )}
                         </FormItem>
                       </div>
                     ) : (
-                      <div className="rounded-lg p-4 mt-2" style={{ backgroundColor: '#EEF2F9', border: '1px solid #B8C9E4' }}>
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-2">
                         <div className="flex items-start gap-2">
-                          <Info className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#1B3C71' }} />
+                          <Info className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                           <div>
                             <p className="text-sm font-medium text-red-800">Atlassian account required</p>
                             <p className="text-xs text-red-600 mt-1">
@@ -715,7 +715,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                 handleDeleteProject();
               }}
               disabled={isDeleting}
-              className="text-white" style={{ backgroundColor: '#1B3C71' }}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Delete Project

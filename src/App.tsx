@@ -18,6 +18,7 @@ import TestScenarioPage from "./pages/TestScenarioPage";
 import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
 import TestingPage from "./pages/TestingPage";
+import HarnessPage from "./pages/HarnessPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -132,6 +133,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <TestingPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/harness"
+                  element={
+                    <ProtectedRoute>
+                      <HarnessPage />
                     </ProtectedRoute>
                   }
                 />

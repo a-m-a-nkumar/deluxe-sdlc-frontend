@@ -6,7 +6,6 @@ import { testGenerationApi } from '@/services/testGenerationApi';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, ExternalLink, ArrowLeft } from 'lucide-react';
-import { colors } from '@/config/theme';
 
 /** Remove any trailing incomplete section — a ### or #### heading with no Expected Outcome after it. */
 const stripIncompleteScenario = (content: string): string => {
@@ -167,17 +166,7 @@ const TestScenarioPage = () => {
           <Button
             onClick={handlePushToConfluence}
             disabled={isGenerating || isPushing || !content}
-            style={{ backgroundColor: colors.brand, color: '#fff' }}
-            onMouseEnter={(e) => {
-              if (!isGenerating && !isPushing && content) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#EDF4FF';
-                (e.currentTarget as HTMLButtonElement).style.color = colors.brand;
-              }
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = colors.brand;
-              (e.currentTarget as HTMLButtonElement).style.color = '#fff';
-            }}
+            className="bg-primary text-white hover:bg-primary-light hover:text-primary disabled:opacity-50"
           >
             {isPushing
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -190,7 +179,7 @@ const TestScenarioPage = () => {
             <Button
               variant="outline"
               onClick={() => window.open(pushedPageUrl, '_blank')}
-              style={{ borderColor: colors.brand, color: colors.brand }}
+              className="border-primary text-primary"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">View in Confluence</span>
@@ -215,7 +204,7 @@ const TestScenarioPage = () => {
         ) : (
           <textarea
             className="w-full font-mono text-sm text-gray-800 border border-[#DEDCDC] rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed"
-            style={{ minHeight: 'calc(100vh - 160px)' }}
+            className="min-h-[calc(100vh-160px)]"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Test scenarios will appear here..."

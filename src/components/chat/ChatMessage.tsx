@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTypingEffect } from "@/hooks/useTypingEffect";
-import { colors } from '@/config/theme';
 
 interface ChatMessageProps {
   message: {
@@ -267,8 +266,8 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
     <div className={`flex ${message.isBot ? 'justify-start' : 'justify-end'} mb-4`}>
       <div className={`flex ${message.isBot ? 'flex-row' : 'flex-row-reverse'} items-start gap-2 max-w-[80%]`}>
         {message.isBot && (
-          <Avatar className="w-8 h-8 mt-5 flex-shrink-0" style={{ backgroundColor: colors.brandLight }}>
-            <AvatarFallback style={{ backgroundColor: colors.brandLight, color: colors.brand }} className="text-xs font-semibold">
+          <Avatar className="w-8 h-8 mt-5 flex-shrink-0 bg-primary-light">
+            <AvatarFallback className="text-xs font-semibold bg-primary-light text-primary">
               BA
             </AvatarFallback>
           </Avatar>
@@ -288,18 +287,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
           }`}>
             {message.isBot ? 'BRD Assistant' : 'You'} &nbsp; {message.timestamp}
           </div>
-          <div className={`
-            px-4 py-3 rounded-2xl max-w-full
-            ${message.isBot
-              ? 'rounded-bl-md'
-              : 'rounded-br-md'
-            }
-          `}
-          style={message.isBot
-            ? { backgroundColor: '#F0F0F0', color: '#1a1a1a' }
-            : { backgroundColor: '#1a1a2e', color: '#ffffff' }
-          }
-          >
+          <div className={`px-4 py-3 rounded-2xl max-w-full ${message.isBot ? 'rounded-bl-md bg-[#F0F0F0] text-[#1a1a1a]' : 'rounded-br-md bg-[#1a1a2e] text-white'}`}>
             <div className={`text-sm break-words whitespace-pre-wrap ${message.isBot ? '' : '[&_*]:text-white'}`}>
               {message.isLoading ? (
                 <span className="inline-flex gap-1 align-middle items-center h-4">

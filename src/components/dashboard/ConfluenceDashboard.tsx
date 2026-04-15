@@ -1,4 +1,4 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical, ShieldX } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical, ShieldX, Folder, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,62 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { colors } from '@/config/theme';
+
+// Build a tree from flat pages using ancestors
+interface TreeNode {
+  id: string;
+  title: string;
+  children: TreeNode[];
+  page?: any;
+}
+
+function buildPageTree(pages: any[]): TreeNode[] {
+  const nodeMap = new Map<string, TreeNode>();
+  const childIds = new Set<string>();
+
+  // Create a node for every page
+  for (const page of pages) {
+    nodeMap.set(page.id, { id: page.id, title: page.title, children: [], page });
+  }
+
+  // For each page, find its direct parent from ancestors and link them
+  for (const page of pages) {
+    const ancestors = page.ancestors || [];
+    if (ancestors.length <= 1) continue; // skip space root only
+
+    // Direct parent = last ancestor (excluding space root at index 0)
+    const directParent = ancestors[ancestors.length - 1];
+
+    // Create parent node if it doesn't exist (parent page not in fetched list)
+    if (!nodeMap.has(directParent.id)) {
+      nodeMap.set(directParent.id, { id: directParent.id, title: directParent.title, children: [] });
+    }
+
+    const parentNode = nodeMap.get(directParent.id)!;
+    const childNode = nodeMap.get(page.id)!;
+    if (!parentNode.children.find(c => c.id === childNode.id)) {
+      parentNode.children.push(childNode);
+    }
+    childIds.add(page.id);
+  }
+
+  // Roots = nodes that are NOT a child of another node
+  const roots: TreeNode[] = [];
+  for (const [id, node] of nodeMap) {
+    if (!childIds.has(id)) roots.push(node);
+  }
+
+  // Debug — remove after fixing
+  console.log("[TREE]", { totalPages: pages.length, nodes: nodeMap.size, roots: roots.length, childIds: childIds.size });
+  for (const [id, node] of nodeMap) {
+    if (node.children.length > 0) console.log("[FOLDER]", node.title, "->", node.children.map(c => c.title));
+  }
+  for (const page of pages) {
+    console.log("[PAGE]", page.title, "ancestors:", (page.ancestors || []).map((a: any) => a.title));
+  }
+
+  return roots;
+}
 
 export const ConfluenceDashboard = () => {
   const { accessToken, isBusinessUser } = useAuth();
@@ -36,6 +91,7 @@ export const ConfluenceDashboard = () => {
   const [isLoadingPages, setIsLoadingPages] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [showAccessDenied, setShowAccessDenied] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -73,6 +129,9 @@ export const ConfluenceDashboard = () => {
     }
     try {
       setIsLoadingPages(true);
+      setSelectedPageId(null);
+      setPageDetails(null);
+      setExpandedFolders(new Set());
       const spaceKey = selectedProject.confluence_space_key;
       const fetchedPages = await fetchConfluencePages(accessToken, spaceKey);
       // Sort by last modified (newest first) using version.when from Confluence API
@@ -114,6 +173,29 @@ export const ConfluenceDashboard = () => {
     }
   };
 
+  // Build tree from ALL pages, then filter
+  const fullTree = buildPageTree(pages);
+
+  function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
+    if (!query) return nodes;
+    const q = query.toLowerCase();
+    return nodes.reduce<TreeNode[]>((acc, node) => {
+      const titleMatch = node.title.toLowerCase().includes(q);
+      const filteredChildren = filterTree(node.children, query);
+      if (titleMatch) {
+        // Folder matches search — keep ALL its children so it renders as a folder
+        acc.push({ ...node, children: node.children });
+      } else if (filteredChildren.length > 0) {
+        // Children match — show folder with only matching children
+        acc.push({ ...node, children: filteredChildren });
+      }
+      return acc;
+    }, []);
+  }
+
+  const filteredTree = filterTree(fullTree, searchTerm);
+
+  // Flat filtered list for backward compat (page count etc)
   const filteredPages = pages.filter(page =>
     page.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -183,35 +265,71 @@ export const ConfluenceDashboard = () => {
                       Loading pages...
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {filteredPages.map((page) => (
-                        <div
-                          key={page.id}
-                          className={`p-3 sm:p-4 border-[#DEDCDC] border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${selectedPageId === page.id ? 'border-primary bg-primary/5' : ''
-                            }`}
-                          onClick={() => setSelectedPageId(page.id)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-medium text-sm text-foreground truncate pr-2 flex-1">
-                              {page.title}
-                            </h3>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          </div>
+                    <div className="space-y-1">
+                      {(() => {
+                        const tree = filteredTree;
+                        const toggleFolder = (id: string) => {
+                          setExpandedFolders(prev => {
+                            const next = new Set(prev);
+                            next.has(id) ? next.delete(id) : next.add(id);
+                            return next;
+                          });
+                        };
+                        const renderNode = (node: TreeNode, depth: number = 0): React.ReactNode => {
+                          const hasChildren = node.children.length > 0;
+                          // Auto-expand folders when searching
+                          const isExpanded = searchTerm ? true : expandedFolders.has(node.id);
 
-                          <div className="flex items-center justify-between">
-                            <span
-                              className="text-[10px] truncate text-black px-2 py-1 bg-[#E5E5E5] rounded-full"
+                          if (hasChildren) {
+                            // Folder node (page with children)
+                            return (
+                              <div key={node.id}>
+                                <div
+                                  className={`flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${selectedPageId === node.id ? 'bg-primary/5 border border-primary' : ''}`}
+                                  style={{ marginLeft: `${depth * 16}px` }}
+                                  onClick={() => {
+                                    toggleFolder(node.id);
+                                    if (node.page) setSelectedPageId(node.id);
+                                  }}
+                                >
+                                  {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                                  {isExpanded ? <FolderOpen className="w-4 h-4 text-amber-500 flex-shrink-0" /> : <Folder className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+                                  <span className="text-sm font-medium text-foreground truncate flex-1">{node.title}</span>
+                                  <span className="text-[10px] text-muted-foreground">{node.children.length}</span>
+                                </div>
+                                {isExpanded && (
+                                  <div>
+                                    {node.children.map(child => renderNode(child, depth + 1))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          // Leaf page node
+                          return (
+                            <div
+                              key={node.id}
+                              className={`p-3 border-[#DEDCDC] border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${selectedPageId === node.id ? 'border-primary bg-primary/5' : ''}`}
+                              style={{ marginLeft: `${depth * 16}px` }}
+                              onClick={() => setSelectedPageId(node.id)}
                             >
-                              {page.status}
-                            </span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <FileText className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                                  <h3 className="font-medium text-sm text-foreground truncate">{node.title}</h3>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              </div>
+                            </div>
+                          );
+                        };
+                        return tree.length > 0 ? tree.map(node => renderNode(node)) : (
+                          <div className="text-center text-muted-foreground text-sm py-8">
+                            No pages found matching your search.
                           </div>
-                        </div>
-                      ))}
-                      {filteredPages.length === 0 && (
-                        <div className="text-center text-muted-foreground text-sm py-8">
-                          No pages found matching your search.
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -248,30 +366,7 @@ export const ConfluenceDashboard = () => {
                     <span className="sm:hidden">Generate</span>
                   </Button>
                   )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button
-                          variant="outline"
-                          className="text-sm font-normal flex items-center gap-2 transition-colors"
-                          style={{
-                            backgroundColor: colors.brand,
-                            color: '#fff',
-                            borderColor: colors.brand,
-                          }}
-                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
-                          disabled={!selectedPageId}
-                        >
-                          <FlaskConical className="w-4 h-4" />
-                          <span className="hidden sm:inline">Generate Test Scenarios</span>
-                          <span className="sm:hidden">Test</span>
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {!selectedPageId && (
-                      <TooltipContent>Select a BRD page from the list first</TooltipContent>
-                    )}
-                  </Tooltip>
+
 
                 </div>
               </div>
@@ -287,7 +382,7 @@ export const ConfluenceDashboard = () => {
                     <>
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarFallback className="text-sm text-white" style={{ backgroundColor: colors.brand }}>
+                          <AvatarFallback className="text-sm text-white bg-primary">
                             {pageDetails.version.by.displayName.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -296,16 +391,11 @@ export const ConfluenceDashboard = () => {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: colors.brand }} />
+                          <Calendar className="w-4 h-4 flex-shrink-0 text-primary" />
                           <span>{new Date(pageDetails.version.when).toLocaleString()}</span>
                         </div>
                         <Badge
-                          className={`${getStatusBadge(pageDetails.status)} self-start`}
-                          style={{
-                            backgroundColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                            borderColor: pageDetails.status === 'Current' ? '#0000FF' : undefined,
-                            color: pageDetails.status === 'Current' ? '#fff' : undefined
-                          }}
+                          className={`${getStatusBadge(pageDetails.status)} self-start ${pageDetails.status === 'Current' ? 'bg-blue-700 border-blue-700 text-white' : ''}`}
                         >
                           {pageDetails.status}
                         </Badge>
@@ -381,11 +471,8 @@ export const ConfluenceDashboard = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: colors.brandLight }}
-              >
-                <ShieldX className="w-5 h-5" style={{ color: colors.brand }} />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary-light">
+                <ShieldX className="w-5 h-5 text-primary" />
               </div>
               <DialogTitle className="text-lg font-semibold">Access Denied</DialogTitle>
             </div>
@@ -397,8 +484,7 @@ export const ConfluenceDashboard = () => {
           <DialogFooter className="mt-2">
             <Button
               onClick={() => setShowAccessDenied(false)}
-              className="text-white"
-              style={{ backgroundColor: colors.brand }}
+              className="bg-primary text-white"
             >
               Return to Dashboard
             </Button>

@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppState } from "@/contexts/AppStateContext";
 import { fetchConfluencePages, type ConfluencePage } from "@/services/confluenceApi";
 import { testGenerationApi, type FeatureFile, type ParsedScenario } from "@/services/testGenerationApi";
-import { colors } from '@/config/theme';
+import { cn } from "@/lib/utils";
 import {
   CheckCircle2,
   ChevronDown,
@@ -254,18 +254,17 @@ const splitGherkinIntoFeatureFiles = (gherkin: string, scenarios: ParsedScenario
 
 const StepBadge = ({ step, active, done }: { step: number; active: boolean; done: boolean }) => (
   <div
-    className="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-all"
-    style={{
-      backgroundColor: done ? "#16a34a" : active ? colors.brand : "#e5e7eb",
-      color: done || active ? "#fff" : "#9ca3af",
-    }}
+    className={cn(
+      "w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 transition-all",
+      done ? "bg-green-600 text-white" : active ? "bg-primary text-white" : "bg-gray-200 text-gray-400"
+    )}
   >
     {done ? <Check className="w-4 h-4" /> : step}
   </div>
 );
 
 const StepConnector = ({ done }: { done: boolean }) => (
-  <div className="flex-1 h-0.5 mx-3 transition-all rounded-full" style={{ backgroundColor: done ? "#16a34a" : "#e5e7eb" }} />
+  <div className={cn("flex-1 h-0.5 mx-3 transition-all rounded-full", done ? "bg-green-600" : "bg-gray-200")} />
 );
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -522,16 +521,16 @@ export const TestingPage = () => {
 
   return (
     <MainLayout currentView="testing">
-      <div className="min-h-screen" style={{ backgroundColor: "#F7F9FC" }}>
+      <div className="min-h-screen bg-[#F7F9FC]">
 
         {/* ── Page Header ── */}
         <div className="px-6 sm:px-8 py-5 border-b border-gray-200 bg-white">
           <div className="max-w-4xl">
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: colors.brand }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary">
                 <FlaskConical className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-xl font-semibold" style={{ color: "#1a1a1a" }}>Testing Pipeline</h1>
+              <h1 className="text-xl font-semibold text-[#1a1a1a]">Testing Pipeline</h1>
             </div>
             <p className="text-sm text-gray-500 ml-11">
               Select a test scenario document, generate an AI prompt, collect Gherkin output, and deliver to Confluence + GitHub.
@@ -544,10 +543,10 @@ export const TestingPage = () => {
           {/* ── MCP Setup Selection ── */}
           {mcpSetup === "pending" && (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.08)` }}>
-                <Settings2 className="w-7 h-7" style={{ color: colors.brand }} />
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 bg-primary/[8%]">
+                <Settings2 className="w-7 h-7 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold mb-1" style={{ color: "#1a1a1a" }}>Choose your testing workflow</h2>
+              <h2 className="text-lg font-semibold mb-1 text-[#1a1a1a]">Choose your testing workflow</h2>
               <p className="text-sm text-gray-500 mb-8 text-center max-w-md">
                 Select how your AI IDE sends test cases back to the platform.
               </p>
@@ -560,16 +559,16 @@ export const TestingPage = () => {
                   className="group relative flex flex-col rounded-xl border-2 border-gray-200 bg-white hover:border-primary hover:shadow-lg transition-all text-left overflow-hidden"
                 >
                   {/* Top accent */}
-                  <div className="h-1.5 w-full" style={{ backgroundColor: "#16a34a" }} />
+                  <div className="h-1.5 w-full bg-green-600" />
 
                   <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Header row */}
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(22, 163, 74, 0.1)" }}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-600/10">
                         <Plug className="w-5 h-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>MCP Configured</p>
+                        <p className="text-sm font-semibold text-[#1a1a1a]">MCP Configured</p>
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-50 text-green-600">Recommended</span>
                       </div>
                     </div>
@@ -582,15 +581,15 @@ export const TestingPage = () => {
                     {/* Flow steps */}
                     <div className="space-y-2.5 mt-1">
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: colors.brand }}>1</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-primary">1</div>
                         <p className="text-xs text-gray-600">Tell your IDE to generate test cases using MCP tools</p>
                       </div>
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: colors.brand }}>2</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-primary">2</div>
                         <p className="text-xs text-gray-600">IDE auto-chains: find scenarios &rarr; get prompt &rarr; generate &rarr; submit back</p>
                       </div>
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: "#16a34a" }}>3</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-green-600">3</div>
                         <p className="text-xs text-gray-600">Gherkin auto-received here &rarr; review &rarr; push to GitHub / Confluence</p>
                       </div>
                     </div>
@@ -610,17 +609,17 @@ export const TestingPage = () => {
                   className="group relative flex flex-col rounded-xl border-2 border-gray-200 bg-white hover:border-primary hover:shadow-lg transition-all text-left overflow-hidden"
                 >
                   {/* Top accent */}
-                  <div className="h-1.5 w-full" style={{ backgroundColor: colors.brand }} />
+                  <div className="h-1.5 w-full bg-primary" />
 
                   <div className="p-5 flex flex-col gap-4 flex-1">
                     {/* Header row */}
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.08)` }}>
-                        <FileText className="w-5 h-5" style={{ color: colors.brand }} />
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/[8%]">
+                        <FileText className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>MCP Not Configured</p>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.06)`, color: colors.brand }}>Manual workflow</span>
+                        <p className="text-sm font-semibold text-[#1a1a1a]">MCP Not Configured</p>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/[6%] text-primary">Manual workflow</span>
                       </div>
                     </div>
 
@@ -632,24 +631,24 @@ export const TestingPage = () => {
                     {/* Flow steps */}
                     <div className="space-y-2.5 mt-1">
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: colors.brand }}>1</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-primary">1</div>
                         <p className="text-xs text-gray-600">Select scenario page &rarr; generate AI prompt</p>
                       </div>
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: colors.brand }}>2</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-primary">2</div>
                         <p className="text-xs text-gray-600">Copy prompt &rarr; paste into your AI IDE &rarr; get Gherkin output</p>
                       </div>
                       <div className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white" style={{ backgroundColor: colors.brand }}>3</div>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white bg-primary">3</div>
                         <p className="text-xs text-gray-600">Paste .feature output back &rarr; review &rarr; push to GitHub / Confluence</p>
                       </div>
                     </div>
 
                     {/* CTA footer */}
                     <div className="flex items-center gap-2 mt-auto pt-3 border-t border-gray-100">
-                      <Copy className="w-3.5 h-3.5" style={{ color: colors.brand }} />
-                      <span className="text-xs font-medium" style={{ color: colors.brand }}>Manual copy & paste</span>
-                      <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: colors.brand }} />
+                      <Copy className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-medium text-primary">Manual copy & paste</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                     </div>
                   </div>
                 </button>
@@ -670,7 +669,7 @@ export const TestingPage = () => {
                   MCP Mode
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.06)`, color: colors.brand }}>
+                <div className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/[6%] text-primary">
                   <Copy className="w-3 h-3" />
                   Manual Mode
                 </div>
@@ -703,15 +702,15 @@ export const TestingPage = () => {
              ════════════════════════════════════════════════════════════════ */}
           {mode === "mcp" && (
             <Card className="border-gray-200 shadow-sm">
-              <div className="h-1 w-full" style={{ backgroundColor: step2Done ? "#16a34a" : pastedGherkin ? colors.brand : "#16a34a" }} />
+              <div className={cn("h-1 w-full", step2Done || !pastedGherkin ? "bg-green-600" : "bg-primary")} />
               <CardHeader className="pb-3 pt-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(22, 163, 74, 0.1)" }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-green-600/10">
                       <Terminal className="w-4 h-4 text-green-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-base font-semibold" style={{ color: "#1a1a1a" }}>
+                      <CardTitle className="text-base font-semibold text-[#1a1a1a]">
                         {pastedGherkin ? "Review & Deliver Test Cases" : "Waiting for Test Cases from IDE"}
                       </CardTitle>
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -733,7 +732,7 @@ export const TestingPage = () => {
                     </div>
                   )}
                   {step2Done && (
-                    <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#16a34a" }}>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-green-600">
                       <CheckCircle2 className="w-4 h-4" />
                       Delivered
                     </div>
@@ -746,10 +745,10 @@ export const TestingPage = () => {
                 {!pastedGherkin && (
                   <div className="space-y-4">
                     {/* How it works */}
-                    <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-blue-100" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.03)` }}>
-                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: colors.brand }} />
+                    <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-blue-100 bg-primary/[3%]">
+                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
                       <div className="text-xs text-gray-500 leading-relaxed">
-                        <span className="font-medium" style={{ color: colors.brand }}>How it works:</span> Your AI IDE has the AgentCore MCP server connected. When you run the tool command below, the IDE will:
+                        <span className="font-medium text-primary">How it works:</span> Your AI IDE has the AgentCore MCP server connected. When you run the tool command below, the IDE will:
                         <ol className="mt-1.5 space-y-1 list-decimal list-inside text-gray-600">
                           <li>Fetch test scenarios from your project's Confluence space</li>
                           <li>Scan your codebase to understand the implementation</li>
@@ -764,8 +763,8 @@ export const TestingPage = () => {
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 block">
                         Say this in your AI IDE
                       </label>
-                      <div className="rounded-lg border overflow-hidden" style={{ borderColor: "#1e293b" }}>
-                        <div className="flex items-center justify-between px-4 py-2 border-b" style={{ backgroundColor: "#1e293b", borderColor: "#334155" }}>
+                      <div className="rounded-lg border border-[#1e293b] overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2 border-b bg-[#1e293b] border-[#334155]">
                           <div className="flex items-center gap-2">
                             <Terminal className="w-3.5 h-3.5 text-gray-400" />
                             <span className="text-[11px] text-gray-400 font-mono">Prompt for your AI IDE</span>
@@ -781,7 +780,7 @@ export const TestingPage = () => {
                             Copy
                           </button>
                         </div>
-                        <div className="px-4 py-3 font-mono text-xs leading-relaxed" style={{ backgroundColor: "#0f172a", color: "#7dd3fc" }}>
+                        <div className="px-4 py-3 font-mono text-xs leading-relaxed bg-[#0f172a] text-[#7dd3fc]">
                           Use the MCP tools to generate test cases: first call list_test_scenario_pages to find the scenario page, then get_test_prompt to get the generation instructions, generate the Gherkin .feature files, and finally call submit_test_cases to send them back.
                         </div>
                       </div>
@@ -843,10 +842,7 @@ export const TestingPage = () => {
                   placeholder={mode === "mcp"
                     ? "Gherkin test cases will appear here automatically when your AI IDE sends them via MCP...\n\nTell your IDE to generate test cases — it will use the MCP tools automatically."
                     : `@TS-001 @regression\nFeature: Language Detection and Support\n\n  Background:\n    Given the language detection service is running\n    And the NLP models are loaded\n\n  Scenario: Successfully detect Spanish input\n    When I send a POST request to "/api/v1/detect-language" with body:\n      """\n      {"text": "Hola, necesito ayuda"}\n      """\n    Then the response status should be 200\n    And the response field "detected_language" should be "es"\n\n  Scenario: Reject unsupported language\n    When I send a POST request to "/api/v1/detect-language" with body:\n      """\n      {"text": "unsupported"}\n      """\n    Then the response status should be 422`}
-                  className="w-full h-52 px-4 py-3 text-sm rounded-lg border border-gray-200 resize-none focus:outline-none focus:ring-2 focus:border-transparent transition-all font-mono leading-relaxed"
-                  style={{ color: "#1a1a1a" }}
-                  onFocus={(e) => { e.target.style.boxShadow = "0 0 0 2px rgba(27,60,113,0.2)"; }}
-                  onBlur={(e) => { e.target.style.boxShadow = "none"; }}
+                  className="w-full h-52 px-4 py-3 text-sm text-[#1a1a1a] rounded-lg border border-gray-200 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent transition-all font-mono leading-relaxed"
                 />
               </div>
 
@@ -877,24 +873,21 @@ export const TestingPage = () => {
               {/* Coverage Matrix */}
               {coverageMatrix.length > 0 && pastedGherkin.trim() && (
                 <div className="rounded-lg border border-gray-200 overflow-hidden">
-                  <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.04)` }}>
+                  <div className="px-4 py-3 flex items-center justify-between bg-primary/[4%]">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4" style={{ color: colors.brand }} />
-                      <span className="text-sm font-semibold" style={{ color: colors.brand }}>
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-primary">
                         Coverage Matrix
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 rounded-full bg-gray-200 overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${totalCount > 0 ? (coveredCount / totalCount) * 100 : 0}%`,
-                            backgroundColor: coveredCount === totalCount ? "#16a34a" : "#f59e0b",
-                          }}
+                          className={cn("h-full rounded-full transition-all", coveredCount === totalCount ? "bg-green-600" : "bg-yellow-500")}
+                          style={{ width: `${totalCount > 0 ? (coveredCount / totalCount) * 100 : 0}%` }}
                         />
                       </div>
-                      <span className="text-xs font-medium" style={{ color: coveredCount === totalCount ? "#16a34a" : "#f59e0b" }}>
+                      <span className={cn("text-xs font-medium", coveredCount === totalCount ? "text-green-600" : "text-yellow-500")}>
                         {coveredCount}/{totalCount}
                       </span>
                     </div>
@@ -908,11 +901,7 @@ export const TestingPage = () => {
                           <XCircle className="w-4 h-4 text-gray-300 flex-shrink-0" />
                         )}
                         <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0"
-                          style={{
-                            backgroundColor: item.covered ? "rgba(22, 163, 74, 0.08)" : "rgba(0,0,0,0.04)",
-                            color: item.covered ? "#16a34a" : "#9ca3af",
-                          }}
+                          className={cn("text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0", item.covered ? "bg-green-600/[8%] text-green-600" : "bg-black/[4%] text-gray-400")}
                         >
                           {item.id}
                         </span>
@@ -943,8 +932,7 @@ export const TestingPage = () => {
                     <Button
                       onClick={handlePushToConfluence}
                       disabled={!isGherkinValid || isPushingConfluence || pushedToConfluence}
-                      className="text-white text-sm font-medium"
-                      style={pushedToConfluence ? { backgroundColor: "#16a34a" } : { backgroundColor: colors.brand }}
+                      className={cn("text-white text-sm font-medium", pushedToConfluence ? "bg-green-600" : "bg-primary")}
                     >
                       {isPushingConfluence ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Pushing...</>
@@ -959,8 +947,7 @@ export const TestingPage = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(confluencePageUrl, "_blank")}
-                        className="text-xs"
-                        style={{ borderColor: colors.brand, color: colors.brand }}
+                        className="text-xs border-primary text-primary"
                       >
                         <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                         View in Confluence
@@ -988,10 +975,7 @@ export const TestingPage = () => {
                         value={repoUrl}
                         onChange={(e) => setRepoUrl(e.target.value)}
                         placeholder="https://github.com/your-org/katalon-tests"
-                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none transition-all"
-                        style={{ color: "#1a1a1a" }}
-                        onFocus={(e) => { e.target.style.boxShadow = "0 0 0 2px rgba(27,60,113,0.2)"; }}
-                        onBlur={(e) => { e.target.style.boxShadow = "none"; }}
+                        className="w-full px-3 py-2.5 text-sm text-[#1a1a1a] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       />
                     </div>
                     <div>
@@ -1001,10 +985,7 @@ export const TestingPage = () => {
                         value={githubBranch}
                         onChange={(e) => setGithubBranch(e.target.value)}
                         placeholder="test/auto-generated"
-                        className="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none transition-all"
-                        style={{ color: "#1a1a1a" }}
-                        onFocus={(e) => { e.target.style.boxShadow = "0 0 0 2px rgba(27,60,113,0.2)"; }}
-                        onBlur={(e) => { e.target.style.boxShadow = "none"; }}
+                        className="w-full px-3 py-2.5 text-sm text-[#1a1a1a] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       />
                     </div>
                   </div>
@@ -1017,10 +998,7 @@ export const TestingPage = () => {
                         value={githubToken}
                         onChange={(e) => setGithubToken(e.target.value)}
                         placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                        className="w-full px-3 py-2.5 pr-10 text-sm rounded-lg border border-gray-200 focus:outline-none transition-all font-mono"
-                        style={{ color: "#1a1a1a" }}
-                        onFocus={(e) => { e.target.style.boxShadow = "0 0 0 2px rgba(27,60,113,0.2)"; }}
-                        onBlur={(e) => { e.target.style.boxShadow = "none"; }}
+                        className="w-full px-3 py-2.5 pr-10 text-sm text-[#1a1a1a] rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
                       />
                       <button
                         type="button"
@@ -1048,8 +1026,7 @@ export const TestingPage = () => {
                   <Button
                     onClick={handlePushToGitHub}
                     disabled={!isGherkinValid || !repoUrl.trim() || !githubToken.trim() || isPushingGitHub || pushedToGitHub}
-                    className="text-white text-sm font-medium w-full"
-                    style={pushedToGitHub ? { backgroundColor: "#16a34a" } : { backgroundColor: colors.brand }}
+                    className={cn("text-white text-sm font-medium w-full", pushedToGitHub ? "bg-green-600" : "bg-primary")}
                   >
                     {isPushingGitHub ? (
                       <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Pushing to GitHub...</>
@@ -1069,8 +1046,7 @@ export const TestingPage = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(githubPrUrl!, "_blank")}
-                            className="text-xs"
-                            style={{ borderColor: colors.brand, color: colors.brand }}
+                            className="text-xs border-primary text-primary"
                           >
                             <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                             View Pull Request
@@ -1129,17 +1105,14 @@ export const TestingPage = () => {
 
             {/* ── Step 1: Select Confluence Page & Copy Prompt ── */}
             <Card className="border-gray-200 shadow-sm mb-5">
-              <div className="h-1 w-full" style={{ backgroundColor: step1Done ? "#16a34a" : colors.brand }} />
+              <div className={cn("h-1 w-full", step1Done ? "bg-green-600" : "bg-primary")} />
               <CardHeader className="pb-3 pt-5">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: step1Done ? "rgba(22, 163, 74, 0.1)" : `rgba(${colors.brandRgb}, 0.08)` }}
-                  >
-                    <BookOpen className="w-4 h-4" style={{ color: step1Done ? "#16a34a" : colors.brand }} />
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", step1Done ? "bg-green-600/10" : "bg-primary/[8%]")}>
+                    <BookOpen className={cn("w-4 h-4", step1Done ? "text-green-600" : "text-primary")} />
                   </div>
                   <div>
-                    <CardTitle className="text-base font-semibold" style={{ color: "#1a1a1a" }}>
+                    <CardTitle className="text-base font-semibold text-[#1a1a1a]">
                       Select Scenario Page & Copy Prompt
                     </CardTitle>
                     <p className="text-xs text-gray-400 mt-0.5">
@@ -1158,8 +1131,7 @@ export const TestingPage = () => {
                   <div className="relative">
                     <button
                       onClick={() => setPageDropdownOpen(!pageDropdownOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg border border-gray-200 bg-white hover:border-gray-300 transition-colors text-left"
-                      style={{ color: "#1a1a1a" }}
+                      className="w-full flex items-center justify-between px-4 py-3 text-sm text-[#1a1a1a] rounded-lg border border-gray-200 bg-white hover:border-gray-300 transition-colors text-left"
                     >
                       <span className={selectedPageObj ? "text-gray-900" : "text-gray-400"}>
                         {selectedPageObj ? selectedPageObj.title : "Select a Confluence page..."}
@@ -1197,7 +1169,7 @@ export const TestingPage = () => {
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 text-left transition-colors"
                               >
                                 <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                <span className="truncate" style={{ color: "#1a1a1a" }}>{page.title}</span>
+                                <span className="truncate text-[#1a1a1a]">{page.title}</span>
                                 {page.title.toLowerCase().includes("test scenario") && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-600 font-medium flex-shrink-0">
                                     Scenario
@@ -1215,9 +1187,9 @@ export const TestingPage = () => {
                 {/* Loading indicator */}
                 {isLoadingContent && (
                   <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 bg-gray-50">
-                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: colors.brand }} />
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#1a1a1a" }}>Parsing scenarios...</p>
+                      <p className="text-sm font-medium text-[#1a1a1a]">Parsing scenarios...</p>
                       <p className="text-xs text-gray-400">Analysing page with AI to extract test scenarios and build your prompt</p>
                     </div>
                   </div>
@@ -1233,8 +1205,7 @@ export const TestingPage = () => {
                       {parsedScenarios.map((s) => (
                         <div key={s.id} className="px-4 py-2.5 flex items-center gap-3">
                           <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0"
-                            style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.06)`, color: colors.brand }}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 bg-primary/[6%] text-primary"
                           >
                             {s.id}
                           </span>
@@ -1272,8 +1243,7 @@ export const TestingPage = () => {
                     </div>
                     <Button
                       onClick={handleCopyPrompt}
-                      className="mt-3 text-white text-sm font-medium w-full"
-                      style={{ backgroundColor: promptCopied ? "#16a34a" : colors.brand }}
+                      className={cn("mt-3 text-white text-sm font-medium w-full", promptCopied ? "bg-green-600" : "bg-primary")}
                     >
                       {promptCopied ? (
                         <><CheckCircle2 className="w-4 h-4 mr-2" />Prompt Copied!</>
@@ -1291,17 +1261,14 @@ export const TestingPage = () => {
 
             {/* ── Step 2: Paste Gherkin & Deliver ── */}
             <Card className={`border-gray-200 shadow-sm ${!step1Done ? "opacity-50 pointer-events-none" : ""}`}>
-              <div className="h-1 w-full" style={{ backgroundColor: step2Done ? "#16a34a" : step1Done ? colors.brand : "#e5e7eb" }} />
+              <div className={cn("h-1 w-full", step2Done ? "bg-green-600" : step1Done ? "bg-primary" : "bg-gray-200")} />
               <CardHeader className="pb-3 pt-5">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: step2Done ? "rgba(22, 163, 74, 0.1)" : `rgba(${colors.brandRgb}, 0.08)` }}
-                  >
-                    <Sparkles className="w-4 h-4" style={{ color: step2Done ? "#16a34a" : colors.brand }} />
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", step2Done ? "bg-green-600/10" : "bg-primary/[8%]")}>
+                    <Sparkles className={cn("w-4 h-4", step2Done ? "text-green-600" : "text-primary")} />
                   </div>
                   <div>
-                    <CardTitle className="text-base font-semibold" style={{ color: "#1a1a1a" }}>
+                    <CardTitle className="text-base font-semibold text-[#1a1a1a]">
                       Paste & Deliver Test Cases
                     </CardTitle>
                     <p className="text-xs text-gray-400 mt-0.5">
@@ -1364,22 +1331,19 @@ export const TestingPage = () => {
                 {/* Coverage Matrix */}
                 {coverageMatrix.length > 0 && pastedGherkin.trim() && (
                   <div className="rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: `rgba(${colors.brandRgb}, 0.04)` }}>
+                    <div className="px-4 py-3 flex items-center justify-between bg-primary/[4%]">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4" style={{ color: colors.brand }} />
-                        <span className="text-sm font-semibold" style={{ color: colors.brand }}>Coverage Matrix</span>
+                        <ShieldCheck className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-semibold text-primary">Coverage Matrix</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 rounded-full bg-gray-200 overflow-hidden">
                           <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${totalCount > 0 ? (coveredCount / totalCount) * 100 : 0}%`,
-                              backgroundColor: coveredCount === totalCount ? "#16a34a" : "#f59e0b",
-                            }}
+                            className={cn("h-full rounded-full transition-all", coveredCount === totalCount ? "bg-green-600" : "bg-yellow-500")}
+                            style={{ width: `${totalCount > 0 ? (coveredCount / totalCount) * 100 : 0}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium" style={{ color: coveredCount === totalCount ? "#16a34a" : "#f59e0b" }}>
+                        <span className={cn("text-xs font-medium", coveredCount === totalCount ? "text-green-600" : "text-yellow-500")}>
                           {coveredCount}/{totalCount}
                         </span>
                       </div>
@@ -1392,13 +1356,7 @@ export const TestingPage = () => {
                           ) : (
                             <XCircle className="w-4 h-4 text-gray-300 flex-shrink-0" />
                           )}
-                          <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0"
-                            style={{
-                              backgroundColor: item.covered ? "rgba(22, 163, 74, 0.08)" : "rgba(0,0,0,0.04)",
-                              color: item.covered ? "#16a34a" : "#9ca3af",
-                            }}
-                          >
+                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0", item.covered ? "bg-green-600/[8%] text-green-600" : "bg-black/[4%] text-gray-400")}>
                             {item.id}
                           </span>
                           <span className={`text-xs flex-1 truncate ${item.covered ? "text-gray-700" : "text-gray-400"}`}>
@@ -1428,8 +1386,7 @@ export const TestingPage = () => {
                       <Button
                         onClick={handlePushToConfluence}
                         disabled={!isGherkinValid || isPushingConfluence || pushedToConfluence}
-                        className="text-white text-sm font-medium"
-                        style={pushedToConfluence ? { backgroundColor: "#16a34a" } : { backgroundColor: colors.brand }}
+                        className={cn("text-white text-sm font-medium", pushedToConfluence ? "bg-green-600" : "bg-primary")}
                       >
                         {isPushingConfluence ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Pushing...</>
@@ -1444,8 +1401,7 @@ export const TestingPage = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => window.open(confluencePageUrl, "_blank")}
-                          className="text-xs"
-                          style={{ borderColor: colors.brand, color: colors.brand }}
+                          className="text-xs border-primary text-primary"
                         >
                           <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                           View in Confluence
@@ -1529,8 +1485,7 @@ export const TestingPage = () => {
                     <Button
                       onClick={handlePushToGitHub}
                       disabled={!isGherkinValid || !repoUrl.trim() || !githubToken.trim() || isPushingGitHub || pushedToGitHub}
-                      className="text-white text-sm font-medium w-full"
-                      style={pushedToGitHub ? { backgroundColor: "#16a34a" } : { backgroundColor: colors.brand }}
+                      className={cn("text-white text-sm font-medium w-full", pushedToGitHub ? "bg-green-600" : "bg-primary")}
                     >
                       {isPushingGitHub ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Pushing to GitHub...</>
@@ -1549,8 +1504,7 @@ export const TestingPage = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(githubPrUrl!, "_blank")}
-                              className="text-xs"
-                              style={{ borderColor: colors.brand, color: colors.brand }}
+                              className="text-xs border-primary text-primary"
                             >
                               <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                               View Pull Request
@@ -1561,8 +1515,7 @@ export const TestingPage = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(githubBranchUrl!, "_blank")}
-                              className="text-xs"
-                              style={{ borderColor: "#6b7280", color: "#6b7280" }}
+                              className="text-xs border-gray-500 text-gray-500"
                             >
                               <GitBranch className="w-3.5 h-3.5 mr-1.5" />
                               View Branch

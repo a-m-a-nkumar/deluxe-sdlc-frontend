@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "./PairProgrammingDashboard.css";
-import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, Code2 } from "lucide-react";
+import { ArrowLeft, Copy, Check, Terminal, Globe, Package, ChevronRight, Info, Code2, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/contexts/AppStateContext";
 import { API_CONFIG } from "@/config/api";
 import { THEME } from "@/config/theme";
+import { triggerIncrementalSync, getSyncStatus } from "@/services/orchestrationApi";
+import { toast } from "sonner";
 
 interface PairProgrammingDashboardProps {
     onBack?: () => void;
@@ -61,10 +63,99 @@ const InfoBox = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
+const OsToggle = ({ os, setOs }: { os: "windows" | "mac"; setOs: (os: "windows" | "mac") => void }) => (
+    <div className="relative inline-flex rounded-full p-1 bg-gradient-to-r from-gray-100 to-gray-50 border border-gray-200 shadow-inner">
+        {/* Animated sliding pill background */}
+        <div
+            className="absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            style={{
+                left: os === "windows" ? "4px" : "calc(50% + 2px)",
+                width: "calc(50% - 6px)",
+            }}
+        />
+        <button
+            onClick={() => setOs("windows")}
+            className={`relative z-10 px-5 py-2 text-xs font-bold rounded-full transition-colors duration-300 ${os === "windows" ? "text-white drop-shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+        >
+            🪟 Windows
+        </button>
+        <button
+            onClick={() => setOs("mac")}
+            className={`relative z-10 px-5 py-2 text-xs font-bold rounded-full transition-colors duration-300 ${os === "mac" ? "text-white drop-shadow-sm" : "text-gray-400 hover:text-gray-600"}`}
+        >
+            🍎 macOS
+        </button>
+    </div>
+);
+
 export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardProps) => {
-    const { selectedProject } = useAppState();
+    const { selectedProject, isSyncInProgress, setIsSyncInProgress, syncMessage, setSyncMessage } = useAppState();
+    const [os, setOs] = useState<"windows" | "mac">("windows");
     const [frontendReqs, setFrontendReqs] = useState("");
     const [backendReqs, setBackendReqs] = useState("");
+    const [isSyncing, setIsSyncing] = useState(false);
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Poll sync status
+    const pollSyncStatus = useCallback(async () => {
+        if (!selectedProject?.project_id) return;
+        try {
+            const status = await getSyncStatus(selectedProject.project_id);
+            if (status) {
+                setIsSyncInProgress(status.is_syncing);
+                setSyncMessage(status.sync_message || "");
+            }
+        } catch {
+            // Silently ignore polling errors
+        }
+    }, [selectedProject?.project_id, setIsSyncInProgress, setSyncMessage]);
+
+    useEffect(() => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+
+        if (selectedProject?.project_id) {
+            pollSyncStatus();
+            pollIntervalRef.current = setInterval(() => {
+                if (isSyncInProgress || isSyncing) {
+                    pollSyncStatus();
+                }
+            }, 5000);
+        } else {
+            setIsSyncInProgress(false);
+            setSyncMessage("");
+        }
+
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        };
+    }, [selectedProject?.project_id, pollSyncStatus, isSyncInProgress, isSyncing, setIsSyncInProgress, setSyncMessage]);
+
+    const handleSync = async () => {
+        if (!selectedProject?.project_id) {
+            toast.error("No project selected");
+            return;
+        }
+
+        setIsSyncing(true);
+        try {
+            const result = await triggerIncrementalSync(selectedProject.project_id);
+            if (result.success) {
+                toast.success("Sync started! Only changed documents will be updated.");
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error) {
+            toast.error("Failed to start sync");
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     const projectId = selectedProject?.project_id || "<YOUR_PROJECT_ID>";
     const apiUrl = THEME === 'siriusai' ? "https://sdlc.siriusai.com" : "https://sdlc-dev.deluxe.com";
@@ -175,6 +266,40 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                 </div>
             )}
 
+            {/* Sync Knowledge Base */}
+            {selectedProject && (
+                <div className="rounded-xl border border-yellow-300 p-4 mb-6 bg-yellow-50">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-yellow-800 flex items-center gap-1.5">
+                                <Info className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+                                Sync Knowledge Base Before You Start
+                            </p>
+                            <p className="text-xs text-yellow-700 mt-1 ml-5.5" style={{ marginLeft: "1.375rem" }}>
+                                <strong>Important:</strong> The MCP server queries your vector database to provide accurate context. Syncing updates your Confluence pages and Jira issues into the vector DB.
+                                If your docs have changed recently, hit <strong>Sync Docs</strong> to ensure your AI coding assistant has the latest information.
+                            </p>
+                        </div>
+                        <Button
+                            onClick={handleSync}
+                            disabled={isSyncing || isSyncInProgress}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 ml-4 flex-shrink-0"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${(isSyncing || isSyncInProgress) ? "animate-spin" : ""}`} />
+                            {isSyncing ? "Syncing..." : "Sync Docs"}
+                        </Button>
+                    </div>
+                    {isSyncInProgress && (
+                        <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+                            <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                            <span className="truncate">{syncMessage || "Syncing your knowledge base..."}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="max-w-4xl space-y-8">
 
                 {/* Section 1: Overview */}
@@ -206,17 +331,27 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <h2 className="text-base font-semibold text-gray-700 px-2">Pre-requisites</h2>
                         <div className="h-px flex-1 pp-divider-right" />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
                         {[
-                            { icon: "🐍", label: "Python 3.10+" },
-                            { icon: "🔧", label: "Git installed" },
-                            { icon: "💻", label: "VS Code Copilot / Claude Code / Cursor" },
+                            { icon: "🐍", label: "Python 3.10+", sub: "with pip3" },
+                            { icon: "🔧", label: "Git installed", sub: "with SSH keys" },
+                            { icon: "💻", label: "VS Code ≥1.114", sub: "or Cursor / Claude Code" },
+                            { icon: "🔑", label: "SSH configured", sub: "for Bitbucket" },
+                            { icon: "🤖", label: "GitHub Copilot", sub: "or Claude Code" },
                         ].map((item) => (
                             <div key={item.label} className="rounded-lg p-3 text-center pp-feature-card">
                                 <div className="text-xl mb-1">{item.icon}</div>
                                 <div className="text-xs font-medium text-gray-700">{item.label}</div>
+                                <div className="text-[10px] text-gray-400 mt-0.5">{item.sub}</div>
                             </div>
                         ))}
+                    </div>
+                    <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 flex items-start gap-2">
+                        <span className="text-sm">🔑</span>
+                        <p className="text-xs text-amber-800">
+                            <strong>SSH is mandatory</strong> for installing the MCP package. Set up SSH keys for Bitbucket before proceeding.
+                            Go to <strong>Bitbucket → Personal settings → SSH keys</strong> and add your public key.
+                        </p>
                     </div>
                 </section>
 
@@ -238,47 +373,59 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             </div>
                         </div>
 
-                        {/* Step 2: Install MCP package — two paths */}
+                        {/* Step 2: Install MCP package */}
                         <div className="flex gap-4">
                             <StepBadge number={2} />
                             <div className="flex-1">
                                 <div className="rounded-xl p-4 border-2 border-blue-200 bg-blue-50/30">
-                                    <h3 className="font-bold text-gray-900 mb-1 text-base">Install the MCP package</h3>
-                                    <p className="text-sm text-gray-600 mb-3">Choose one of the two options below:</p>
-
-                                    {/* Option A: global */}
-                                    <div className="mb-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install (recommended)</span>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mb-1">No virtual environment needed — installs the command directly into your system PATH:</p>
-                                        <CodeBlock language="bash" code={`pip install git+${githubRepo}`} />
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-gray-900 text-base">Install the MCP package</h3>
+                                        <OsToggle os={os} setOs={setOs} />
                                     </div>
 
-                                    {/* Option B: venv */}
+                                    {/* Option A: Global Install */}
+                                    <div className="mb-5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install</span>
+                                        </div>
+                                        {os === "windows" ? (
+                                            <>
+                                                <p className="text-xs text-gray-500 mb-1">Installs the command directly into your system PATH:</p>
+                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="text-xs text-gray-500 mb-1">macOS requires <code className="bg-gray-100 px-1 rounded text-xs">pipx</code> for global installs:</p>
+                                                <CodeBlock language="bash" code={`brew install pipx && pipx ensurepath\n# Restart your terminal, then:\n\n# Using SSH (recommended)\npipx install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npipx install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Option B: Virtual Environment */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Option B — Virtual Environment</span>
                                         </div>
 
-                                        <p className="text-xs text-gray-500 mb-0">1. Create the virtual environment <span className="bg-yellow-100 text-yellow-800 font-semibold px-1.5 py-0.5 rounded text-xs">(skip if you already have one)</span>:</p>
-                                        <CodeBlock language="bash" code={`python -m venv .venv`} />
-
-                                        <p className="text-xs text-gray-500 mb-0">2. Activate it:</p>
-                                        <p className="text-xs font-semibold text-gray-400 mt-2 mb-0">🪟 Windows</p>
-                                        <CodeBlock language="bash" code={`.venv\\Scripts\\activate`} />
-                                        <p className="text-xs font-semibold text-gray-400 mt-1 mb-0">🍎 macOS / Linux</p>
-                                        <CodeBlock language="bash" code={`source .venv/bin/activate`} />
-
-                                        <p className="text-xs text-gray-500 mb-0">3. Install the package:</p>
-                                        <CodeBlock language="bash" code={`pip install git+${githubRepo}`} />
+                                        {os === "windows" ? (
+                                            <>
+                                                <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
+                                                <CodeBlock language="bash" code={`python -m venv .venv\n.venv\\Scripts\\activate`} />
+                                                <p className="text-xs text-gray-500 mb-0">2. Install the package:</p>
+                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
+                                                <CodeBlock language="bash" code={`python3 -m venv .venv\nsource .venv/bin/activate`} />
+                                                <p className="text-xs text-gray-500 mb-0">2. Install the package:</p>
+                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip3 install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip3 install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
+                                            </>
+                                        )}
                                     </div>
 
-                                    <p className="text-xs text-gray-500 mt-1">Verify installation:</p>
-                                    <CodeBlock
-                                        language="bash"
-                                        code={`prompt-enhancer-mcp --help`}
-                                    />
+                                    <p className="text-xs text-gray-500 mt-3">Verify installation:</p>
+                                    <CodeBlock language="bash" code={`prompt-enhancer-mcp --help`} />
                                 </div>
                             </div>
                         </div>
@@ -365,13 +512,16 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         </div>
                     </div>
 
+                    <div className="flex items-center justify-between mb-4">
+                        <p className="text-sm text-gray-600">Config differs based on <strong>install method</strong> and <strong>OS</strong>.</p>
+                        <OsToggle os={os} setOs={setOs} />
+                    </div>
+
                     {/* Config for global */}
                     <div className="mb-6">
                         <div className="flex items-center gap-2 mb-2">
                             <Globe className="w-4 h-4 text-gray-500" />
-                            <h3 className="font-semibold text-gray-700">
-                                Option A: Installed Globally (pip) <span className="text-xs font-normal text-blue-600 ml-1">(recommended)</span>
-                            </h3>
+                            <h3 className="font-semibold text-gray-700">Option A: Installed Globally</h3>
                         </div>
                         <p className="text-sm text-gray-500 mb-1">Use this when you installed the package globally — the command is available in your system PATH.</p>
                         <CodeBlock language="json" code={globalConfigJson} />
@@ -385,20 +535,13 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                 Option B: Installed in <code className="font-mono text-sm bg-gray-100 px-1.5 rounded">.venv</code>
                             </h3>
                         </div>
-                        <p className="text-sm text-gray-500 mb-1">Use this when you installed inside a virtual environment. The path to the executable differs by OS.</p>
-
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-3 mb-0">
-                            🪟 Windows — uses <code className="font-mono">.venv\Scripts\prompt-enhancer-mcp.exe</code>
-                        </h4>
-                        <CodeBlock language="json" code={venvConfigJson} />
-
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-3 mb-0">
-                            🍎 macOS / Linux — uses <code className="font-mono">.venv/bin/prompt-enhancer-mcp</code>
-                        </h4>
-                        <CodeBlock language="json" code={venvConfigJsonLinux} />
-
+                        <p className="text-sm text-gray-500 mb-1">Use this when you installed inside a virtual environment.</p>
+                        <CodeBlock language="json" code={os === "windows" ? venvConfigJson : venvConfigJsonLinux} />
                         <InfoBox>
-                            On <strong>Windows</strong>, pip creates the executable at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv\Scripts\prompt-enhancer-mcp.exe</code>. On <strong>macOS/Linux</strong>, it's at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv/bin/prompt-enhancer-mcp</code> (no .exe). Use an absolute path if your IDE doesn't resolve relative paths from the project root.
+                            {os === "windows"
+                                ? <>On Windows, the executable is at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv\Scripts\prompt-enhancer-mcp.exe</code>. Use an absolute path if your IDE doesn't resolve relative paths.</>
+                                : <>On macOS/Linux, the executable is at <code className="bg-blue-50 px-1 rounded font-mono text-xs">.venv/bin/prompt-enhancer-mcp</code> (no .exe). Use an <strong>absolute path</strong> — VS Code on Mac often can't resolve relative paths.</>
+                            }
                         </InfoBox>
                     </div>
 
@@ -409,7 +552,7 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             <div>
                                 <p className="text-sm font-bold text-amber-900">Important: Reload after pasting the config</p>
                                 <p className="text-sm text-amber-800 mt-1">
-                                    After pasting the config into your <code className="bg-amber-100 px-1 rounded font-mono text-xs">mcp.json</code> file, press <kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+S</kbd> to save, then run <strong>Developer: Reload Window</strong> from the command palette (<kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">Ctrl+Shift+P</kbd> → type "Reload Window") for the MCP server to start.
+                                    After pasting the config into your <code className="bg-amber-100 px-1 rounded font-mono text-xs">mcp.json</code> file, press <kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">{os === "mac" ? "⌘+S" : "Ctrl+S"}</kbd> to save, then run <strong>Developer: Reload Window</strong> from the command palette (<kbd className="bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-mono font-bold">{os === "mac" ? "⌘+Shift+P" : "Ctrl+Shift+P"}</kbd> → type "Reload Window") for the MCP server to start.
                                 </p>
                             </div>
                         </div>
@@ -503,27 +646,6 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <div className="h-px flex-1 pp-divider-right" />
                     </div>
 
-                    {/* MCP Screenshots */}
-                    <div className="space-y-6 mb-6">
-                        <div className="rounded-xl border border-gray-200 overflow-hidden">
-                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                                <span className="text-sm font-semibold text-gray-700">MCP Config & VS Code Copilot in Action</span>
-                            </div>
-                            <div className="p-4 space-y-4">
-                                <img
-                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
-                                    alt="VS Code with MCP config and Copilot chat showing enhance task"
-                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
-                                />
-                                <img
-                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
-                                    alt="VS Code Copilot showing MCP command picker with enhance-prompt"
-                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
                     <p className="text-sm text-gray-600 mb-4">
                         Once configured, try the MCP tool in your IDE by typing a coding task. The server will enrich it with context gathered from your project's knowledge base — the <strong>redesigned prompt is displayed directly back to you</strong> in your IDE.
                     </p>
@@ -571,6 +693,27 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                 <p className="text-xs text-gray-400 mt-2 italic">→ Directly selects the tool — no ambiguity, Copilot always calls enhance_task</p>
                             </div>
                         </div>
+
+                    {/* MCP Screenshots */}
+                    <div className="space-y-6 mb-6">
+                        <div className="rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                                <span className="text-sm font-semibold text-gray-700">MCP Config & VS Code Copilot in Action</span>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <img
+                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
+                                    alt="VS Code Copilot showing MCP command picker with enhance-prompt"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                                <img
+                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
+                                    alt="VS Code with MCP config and Copilot chat showing enhance task"
+                                    className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
                         {/* What you'll get back */}
                         <div className="rounded-xl p-4 pp-card-light">

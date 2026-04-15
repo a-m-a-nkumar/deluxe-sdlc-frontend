@@ -62,7 +62,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
     refetchOnWindowFocus: false,
   });
 
-  const isAtlassianLinked = atlassianStatus?.linked || false;
+  const isAtlassianLinked = (atlassianStatus?.linked && !atlassianStatus?.token_expired) || false;
 
   const handleLogout = () => {
     // Clear cache and app state on logout
@@ -167,7 +167,6 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
           <Button
             variant="outline"
             className="text-sm px-3 sm:px-4 flex items-center gap-2 hover:bg-accent"
-            style={{ backgroundColor: '#fff' }}
             onClick={() => setIsCreateModalOpen(true)}
           >
             <FolderKanban size={16} />
@@ -181,7 +180,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback style={{ backgroundColor: '#6b7280' }} className="text-white">
+                    <AvatarFallback className="bg-gray-500 text-white">
                       {getInitials(user.email)}
                     </AvatarFallback>
                   </Avatar>

@@ -7,7 +7,7 @@ import "./index.css";
 document.documentElement.setAttribute("data-theme", THEME);
 
 // Set favicon and page title based on theme
-document.title = "SDLC Orchestrator";
+document.title = "Veluxe";
 const favicon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
 if (favicon) {
     favicon.href = THEME === "siriusai" ? "/favicon_sirius.ico" : "/dlx-logo.png";

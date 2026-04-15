@@ -1,5 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
+import { toast } from "sonner";
+
+// Inactivity timeout — auto-logout after 5 minutes of no activity
+const INACTIVITY_TIMEOUT_MS = 300_000;
 
 // ── Environment-aware RBAC ──
 // SiriusAI: no RBAC — everyone gets all modules
@@ -13,7 +17,7 @@ const ALL_MODULES = ["brd", "confluence", "jira", "design", "pair-programming", 
 
 const GROUP_MODULE_MAP: Record<string, string[]> = {
   [BUSINESS_GROUP_OID]: ["brd", "confluence", "jira"],
-  [TECH_GROUP_OID]: ["design", "pair-programming", "testing", "confluence", "jira"],
+  [TECH_GROUP_OID]: ["design", "pair-programming", "testing", "confluence", "jira", "harness"],
 };
 
 function computeAllowedModules(groups: string[]): string[] {
@@ -133,6 +137,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     },
     [user]
   );
+
+  // ── Inactivity auto-logout ──
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const resetTimer = () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        // Clear MSAL accounts locally without triggering Azure redirect
+        const accounts = msalInstance.getAllAccounts();
+        accounts.forEach((a) => msalInstance.setActiveAccount(null));
+        localStorage.clear();
+
+        setUser(null);
+        setAccessToken(null);
+        toast("Your session has ended", {
+          description: "You were signed out after being inactive. Please log in again to continue.",
+          duration: Infinity,
+          icon: "🔒",
+        });
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events: (keyof WindowEventMap)[] = ["mousemove", "keydown", "scroll", "mousedown", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer();
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider

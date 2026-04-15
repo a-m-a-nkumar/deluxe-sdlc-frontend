@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatSession } from "@/services/analystApi";
-import { colors } from '@/config/theme';
 
 interface SessionSidebarProps {
     sessions: ChatSession[];
@@ -180,8 +179,7 @@ export const SessionSidebar = ({
                 </div>
                 <Button
                     onClick={onNewSession}
-                    className="w-full flex items-center gap-2 text-white hover:opacity-90"
-                    style={{ backgroundColor: colors.brand, padding: '20px 16px' }}
+                    className="w-full flex items-center gap-2 bg-primary text-white hover:opacity-90 py-5 px-4"
                 >
                     <Plus className="w-4 h-4" />
                     New Chat
@@ -245,7 +243,7 @@ export const SessionSidebar = ({
                                                         onClick={handleCancelEdit}
                                                         size="icon"
                                                         variant="outline"
-                                                        className="w-8 h-8 hover:bg-blue-50" style={{ color: colors.brand }}
+                                                        className="w-8 h-8 hover:bg-blue-50 text-primary"
                                                         title="Cancel"
                                                     >
                                                         <X className="w-4 h-4" />
@@ -253,18 +251,15 @@ export const SessionSidebar = ({
                                                 </div>
                                             ) : (
                                                 <div
-                                                    className="flex items-center gap-2 rounded-md group/session transition-colors overflow-hidden"
-                                                    style={{ backgroundColor: currentSessionId === session.id ? '#FDEDEF' : '#f6f6f6', padding: '16px' }}
-                                                    onMouseEnter={e => { if (currentSessionId !== session.id) e.currentTarget.style.backgroundColor = '#eeeeee'; }}
-                                                    onMouseLeave={e => { if (currentSessionId !== session.id) e.currentTarget.style.backgroundColor = '#f6f6f6'; }}
+                                                    className={`flex items-center gap-2 rounded-md group/session transition-colors overflow-hidden p-4 ${currentSessionId === session.id ? 'bg-primary-selected' : 'bg-[#f6f6f6] hover:bg-[#eeeeee]'}`}
                                                 >
                                                     <div
                                                         onClick={() => onSelectSession(session.id)}
                                                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                                                     >
-                                                        <MessageSquare className="w-4 h-4 flex-shrink-0" style={{ color: '#6b7280' }} />
+                                                        <MessageSquare className="w-4 h-4 flex-shrink-0 text-gray-500" />
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-sm font-medium whitespace-nowrap" style={{ color: '#111827' }}>
+                                                            <div className="text-sm font-medium whitespace-nowrap text-gray-900">
                                                                 {session.title.length > 25 ? session.title.slice(0, 25) + '...' : session.title}
                                                             </div>
                                                         </div>
@@ -273,8 +268,7 @@ export const SessionSidebar = ({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-7 w-7 hover:text-foreground"
-                                                            style={{ color: '#6b7280' }}
+                                                            className="h-7 w-7 text-gray-500 hover:text-foreground"
                                                             title="Rename"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -286,8 +280,7 @@ export const SessionSidebar = ({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-7 w-7 hover:text-red-600"
-                                                            style={{ color: '#6b7280' }}
+                                                            className="h-7 w-7 text-gray-500 hover:text-red-600"
                                                             title="Delete"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -316,10 +309,7 @@ export const SessionSidebar = ({
                     <button
                         onClick={onGenerateBRD}
                         disabled={isGeneratingBRD || !currentSessionId}
-                        className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                        style={{ backgroundColor: colors.brandLight, color: colors.brand, border: 'none', padding: '10px 16px' }}
-                        onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#F5CDD1'; }}
-                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = colors.brandLight; }}
+                        className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors disabled:opacity-50 disabled:pointer-events-none bg-primary-light text-primary border-none py-2.5 px-4 hover:bg-primary/20"
                     >
                         {isGeneratingBRD ? (
                             <>
@@ -336,10 +326,7 @@ export const SessionSidebar = ({
                     {brdId && (
                         <button
                             onClick={onDownloadBRD}
-                            className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors"
-                            style={{ backgroundColor: colors.brandLight, color: colors.brand, border: 'none', padding: '10px 16px' }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F5CDD1'; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = colors.brandLight; }}
+                            className="flex-1 flex items-center justify-center gap-2 text-xs font-medium rounded-md transition-colors bg-primary-light text-primary border-none py-2.5 px-4 hover:bg-primary/20"
                         >
                             <Download className="w-4 h-4" />
                             Download BRD
@@ -350,8 +337,7 @@ export const SessionSidebar = ({
                     <Button
                         onClick={onPushToConfluence}
                         disabled={isPushingToConfluence}
-                        className="w-full flex items-center justify-center gap-2 text-xs text-white hover:opacity-90"
-                        style={{ backgroundColor: colors.brand, padding: '20px 16px' }}
+                        className="w-full flex items-center justify-center gap-2 text-xs bg-primary text-white hover:opacity-90 py-5 px-4"
                     >
                         {isPushingToConfluence ? (
                             <>

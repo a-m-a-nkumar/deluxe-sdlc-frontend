@@ -19,7 +19,7 @@ const msalConfig = {
     cacheLocation: "localStorage" as const,
     storeAuthStateInCookie: true,
   },
-};
+};  
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -73,7 +73,7 @@ export async function getEffectiveToken(): Promise<string | null> {
   return getAccessToken();
 }
 
-export async function getAccessToken(): Promise<string | null> {
+export async function getAccessToken(forceRefresh = false): Promise<string | null> {
   try {
     await ensureMsalInitialized();
     const accounts = msalInstance.getAllAccounts();
@@ -85,6 +85,7 @@ export async function getAccessToken(): Promise<string | null> {
     const response = await msalInstance.acquireTokenSilent({
       scopes: ["User.Read"],
       account: account,
+      forceRefresh,
     });
     return response.idToken;
   } catch (error) {
@@ -97,6 +98,13 @@ export async function getAccessToken(): Promise<string | null> {
       return null;
     }
   }
+}
+
+/**
+ * Force refresh the token (used after 401 responses)
+ */
+export async function refreshToken(): Promise<string | null> {
+  return getAccessToken(true);
 }
 
 /**

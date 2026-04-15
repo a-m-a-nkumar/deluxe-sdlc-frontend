@@ -40,3 +40,5 @@ const themes: Record<ThemeName, ThemeColors> = {
 };
 
 export const colors = themes[THEME];
+
+export const APP_NAME = THEME === 'siriusai' ? 'SDLC Orchestrator' : 'Veluxe';

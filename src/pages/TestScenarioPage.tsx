@@ -6,6 +6,7 @@ import { testGenerationApi } from '@/services/testGenerationApi';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload, ExternalLink, ArrowLeft } from 'lucide-react';
+import { API_CONFIG } from '@/config/api';
 
 /** Remove any trailing incomplete section — a ### or #### heading with no Expected Outcome after it. */
 const stripIncompleteScenario = (content: string): string => {
@@ -63,8 +64,7 @@ const TestScenarioPage = () => {
     setIsGenerating(true);
     setContent('');
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_BASE_URL}/api/test/generate-from-confluence-stream`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/test/generate-from-confluence-stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${accessToken}` },
         body: JSON.stringify({ confluence_page_id: confluencePageId, project_id: selectedProject.project_id }),
@@ -190,8 +190,8 @@ const TestScenarioPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        {isGenerating ? (
+      <div className="flex-1 px-6 py-4">
+        {isGenerating && !content ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
             <p className="text-gray-500 text-sm">Generating test scenarios from BRD...</p>
@@ -202,14 +202,21 @@ const TestScenarioPage = () => {
             </p>
           </div>
         ) : (
-          <textarea
-            className="w-full font-mono text-sm text-gray-800 border border-[#DEDCDC] rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed"
-            className="min-h-[calc(100vh-160px)]"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Test scenarios will appear here..."
-            spellCheck={false}
-          />
+          <div className="relative">
+            {isGenerating && (
+              <div className="absolute top-3 right-3 flex items-center gap-2 text-xs text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </div>
+            )}
+            <textarea
+              className="w-full min-h-[calc(100vh-160px)] font-mono text-sm text-gray-800 border border-[#DEDCDC] rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Test scenarios will appear here..."
+              spellCheck={false}
+            />
+          </div>
         )}
       </div>
     </div>

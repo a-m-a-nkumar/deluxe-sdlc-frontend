@@ -1,6 +1,7 @@
 import { ShieldX, ExternalLink, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { APP_NAME } from "@/config/theme";
 
 const USER_GUIDE_URL =
   "https://deluxe.atlassian.net/wiki/spaces/AE/pages/8295710865/User_Guide+-+SDLC_Orchestrator#How-to-request-the-access-for-modules";
@@ -23,7 +24,7 @@ const AccessDenied = () => {
 
         {/* Description */}
         <p className="text-lg text-gray-700 leading-relaxed px-4">
-          You don't have access to <span className="font-semibold">Veluxe</span>.
+          You don't have access to <span className="font-semibold">{APP_NAME}</span>.
           <br />
           Please follow the steps mentioned in the document below to raise a request.
         </p>
@@ -34,7 +35,7 @@ const AccessDenied = () => {
           onClick={() => window.open(USER_GUIDE_URL, "_blank")}
         >
           <ExternalLink className="w-5 h-5" />
-          User Guide - Veluxe
+          User Guide - {APP_NAME}
         </Button>
 
         {/* Signed-in info + sign out */}

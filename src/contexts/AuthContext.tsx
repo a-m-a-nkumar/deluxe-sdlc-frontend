@@ -13,7 +13,7 @@ const IS_SIRIUSAI = import.meta.env.VITE_THEME === "siriusai";
 const BUSINESS_GROUP_OID = "be88c38e-8a45-4026-ac85-f0f850b8cc03";
 const TECH_GROUP_OID = "670e52fc-59cc-4a13-b89c-c91367c7060c";
 
-const ALL_MODULES = ["brd", "confluence", "jira", "design", "pair-programming", "testing"];
+const ALL_MODULES = ["brd", "confluence", "jira", "design", "pair-programming", "testing", "harness"];
 
 const GROUP_MODULE_MAP: Record<string, string[]> = {
   [BUSINESS_GROUP_OID]: ["brd", "confluence", "jira"],

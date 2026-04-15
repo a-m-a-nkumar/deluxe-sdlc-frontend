@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { THEME } from "@/config/theme";
+import { THEME, APP_NAME } from "@/config/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiGet } from "@/services/api";
 
@@ -100,7 +100,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {
-    overview: "Veluxe Home Page",
+    overview: `${APP_NAME} Home Page`,
     brd: "BRD Generation Module",
     analyst: "BRD Generation by conversing with AI",
     confluence: "Planning Module",
@@ -327,7 +327,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                 <HelpCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-gray-900">Veluxe User Guide</DialogTitle>
+                <DialogTitle className="text-lg font-bold text-gray-900">{APP_NAME} User Guide</DialogTitle>
                 <p className="text-xs text-gray-500 mt-0.5">Documentation &amp; setup instructions</p>
               </div>
             </div>

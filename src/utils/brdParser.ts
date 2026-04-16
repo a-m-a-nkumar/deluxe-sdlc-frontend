@@ -7,13 +7,14 @@ export interface BRDSection {
 
 /**
  * Parses BRD markdown content into structured sections.
+ * Uses two-phase parsing: first collect raw sections, then filter to match backend numbering.
  * @param content The raw markdown content of the BRD
  * @returns Array of parsed BRD sections
  */
 export const parseBRDSections = (content: string): BRDSection[] => {
     const rawSections: BRDSection[] = [];
 
-    // Split content by markdown headers (##)
+    // Phase 1: Parse all sections from markdown
     const lines = content.split('\n');
     let currentSection: BRDSection | null = null;
     let currentContent: string[] = [];
@@ -95,7 +96,5 @@ export const parseBRDSections = (content: string): BRDSection[] => {
         sections.push(sec);
     }
 
-    // If no sections found in markdown format, return empty array
-    // (Document Overview will still show as it's independent)
     return sections;
 };

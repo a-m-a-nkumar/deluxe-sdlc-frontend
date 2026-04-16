@@ -156,7 +156,7 @@ export const getBRDTemplates = async (): Promise<BRDTemplate[]> => {
   return [
     {
       template_id: "deluxe-brd-template",
-      template_name: "Deluxe BRD Template v2",
+      template_name: "template.docx",
       s3_path: import.meta.env.VITE_S3_TEMPLATE_URL || "https://test-development-bucket-siriusai.s3.us-east-1.amazonaws.com/templates/Deluxe_BRD_Template_v2+2.docx",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

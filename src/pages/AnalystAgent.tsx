@@ -23,7 +23,8 @@ interface ChatMessageType {
   isLoading?: boolean;
 }
 
-const AnalystAgent = () => {
+// Extracted inner content so it can be reused inside BRDAssistant without double MainLayout wrapping
+export const AnalystAgentContent = () => {
   const navigate = useNavigate();
   const { selectedProject } = useAppState();
 
@@ -601,7 +602,6 @@ const AnalystAgent = () => {
   const currentSession = sessions.find(s => s.id === currentSessionId);
 
   return (
-    <MainLayout currentView="analyst" showBackButton onBack={handleBack}>
       <div className="flex h-full">
         {/* Session Sidebar - Desktop */}
         <div className="hidden lg:block h-[calc(100vh-4rem)] sticky top-16">
@@ -740,6 +740,15 @@ const AnalystAgent = () => {
           </div>
         </div>
       </div>
+  );
+};
+
+// Page wrapper for standalone /analyst-agent route
+const AnalystAgent = () => {
+  const navigate = useNavigate();
+  return (
+    <MainLayout currentView="analyst" showBackButton onBack={() => navigate("/")}>
+      <AnalystAgentContent />
     </MainLayout>
   );
 };

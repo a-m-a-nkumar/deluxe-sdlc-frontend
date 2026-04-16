@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import { type Project } from "@/services/projectApi";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { type Project, getProjectById } from "@/services/projectApi";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ChatMessageType {
   id: string;
@@ -35,6 +36,7 @@ interface BRDSection {
 interface AppStateContextType {
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
+  isRestoringProject: boolean;
   selectedBRDTemplate: string | null;
   setSelectedBRDTemplate: (template: string | null) => void;
   chatMessages: {
@@ -76,9 +78,48 @@ interface AppStateContextType {
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
 
+const SELECTED_PROJECT_KEY = "sdlc_selected_project_id";
+
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [selectedProject, setSelectedProjectState] = useState<Project | null>(null);
+  const [isRestoringProject, setIsRestoringProject] = useState(() => !!localStorage.getItem(SELECTED_PROJECT_KEY));
   const [selectedBRDTemplate, setSelectedBRDTemplate] = useState<string | null>(null);
+
+  // Wrap setSelectedProject to persist the project ID to localStorage
+  const setSelectedProject = useCallback((project: Project | null) => {
+    setSelectedProjectState(project);
+    if (project?.id) {
+      localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
+    } else {
+      localStorage.removeItem(SELECTED_PROJECT_KEY);
+    }
+  }, []);
+
+  // Restore selected project from localStorage once auth is ready
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated) {
+      return;
+    }
+
+    const storedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
+    if (storedProjectId) {
+      setIsRestoringProject(true);
+      getProjectById(storedProjectId)
+        .then((project) => {
+          setSelectedProjectState(project);
+        })
+        .catch(() => {
+          localStorage.removeItem(SELECTED_PROJECT_KEY);
+        })
+        .finally(() => {
+          setIsRestoringProject(false);
+        });
+    } else {
+      setIsRestoringProject(false);
+    }
+  }, [isAuthLoading, isAuthenticated]);
+
   const [chatMessages, setChatMessagesState] = useState<AppStateContextType["chatMessages"]>({
     overview: [],
     brd: [],
@@ -120,6 +161,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
       value={{
         selectedProject,
         setSelectedProject,
+        isRestoringProject,
         selectedBRDTemplate,
         setSelectedBRDTemplate,
         chatMessages,

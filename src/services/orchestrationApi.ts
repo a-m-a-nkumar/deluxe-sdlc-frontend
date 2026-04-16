@@ -37,10 +37,6 @@ export async function* streamOrchestrationQuery(
 
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 project_id: request.project_id,
                 query: request.query,

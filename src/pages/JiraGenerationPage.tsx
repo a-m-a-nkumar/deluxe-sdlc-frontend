@@ -14,7 +14,7 @@ export const JiraGenerationPage = () => {
     const { confluencePageId } = useParams<{ confluencePageId: string }>();
     const navigate = useNavigate();
     const { accessToken } = useAuth();
-    const { selectedProject } = useAppState();
+    const { selectedProject, isRestoringProject } = useAppState();
     const { toast } = useToast();
 
     const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +26,8 @@ export const JiraGenerationPage = () => {
     const [showBoardModal, setShowBoardModal] = useState(false);
 
     useEffect(() => {
+        if (isRestoringProject) return;
+
         if (!confluencePageId || !selectedProject || !accessToken) {
             toast({
                 title: 'Missing information',
@@ -37,7 +39,7 @@ export const JiraGenerationPage = () => {
         }
 
         generateJiraItems();
-    }, [confluencePageId, selectedProject, accessToken]);
+    }, [confluencePageId, selectedProject, accessToken, isRestoringProject]);
 
     const generateJiraItems = async () => {
         if (!confluencePageId || !selectedProject || !accessToken) return;
@@ -167,15 +169,24 @@ export const JiraGenerationPage = () => {
                 boardId || undefined
             );
 
-            const { summary } = response;
+            const { summary, failed } = response;
             const boardLabel = boardName ? ` on board "${boardName}"` : '';
 
-            toast({
-                title: 'Jira items created',
-                description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira${boardLabel}.`,
-            });
+            if (failed && failed.length > 0) {
+                toast({
+                    title: 'Partially created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} stories, but ${summary.total_failed} item(s) failed${boardLabel}. Check console for details.`,
+                    variant: 'destructive',
+                });
+                console.error('[JIRA] Failed items:', failed);
+            } else {
+                toast({
+                    title: 'Jira items created',
+                    description: `Created ${summary.total_epics_created} epics and ${summary.total_stories_created} user stories in Jira${boardLabel}.`,
+                });
+            }
 
-            navigate('/jira');
+            navigate('/jira', { replace: true });
         } catch (error: any) {
             console.error('Error creating Jira items:', error);
             toast({

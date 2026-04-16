@@ -1,22 +1,113 @@
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Home, SearchX } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { THEME, colors } from "@/config/theme";
+
+const appName = THEME === "siriusai" ? "SiriusAI" : "SDLC Orchestrator";
+
+const Logo = () => {
+  if (THEME === "siriusai") {
+    return (
+      <img
+        src="/Logo - SiriusAI (2).png"
+        alt="SiriusAI"
+        className="h-8 object-contain"
+      />
+    );
+  }
+  return (
+    <img
+        src="https://www.deluxe.com/etc.clientlibs/deluxe/clientlibs/clientlib-commons/resources/images/sprites/view/svg/sprite.view.svg#deluxe_logo_2020"
+        alt="SiriusAI"
+        className="h-20 object-contain"
+      />
+  );
+};
 
 const NotFound = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-gray-600">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 underline hover:text-blue-700">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+
+      {/* ── Top bar ── */}
+      <header className="bg-white border-b px-6 py-3 flex items-center">
+        <Logo />
+      </header>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center space-y-8">
+
+          {/* Decorative ring + icon */}
+          <div className="relative mx-auto w-32 h-32">
+            <div
+              className="absolute inset-0 rounded-full opacity-20"
+              style={{ backgroundColor: colors.brand }}
+            />
+            <div
+              className="absolute inset-3 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.brandLight }}
+            >
+              <SearchX
+                className="w-12 h-12"
+                style={{ color: colors.brand }}
+                strokeWidth={1.5}
+              />
+            </div>
+          </div>
+
+          {/* 404 heading */}
+          <div className="space-y-1">
+            <p
+              className="text-8xl font-extrabold leading-none tracking-tight select-none"
+              style={{ color: colors.brand }}
+            >
+              404
+            </p>
+            <h1 className="text-2xl font-bold text-gray-900 mt-2">
+              Page Not Found
+            </h1>
+          </div>
+
+          {/* Description */}
+          <p className="text-gray-500 leading-relaxed text-sm">
+            The page{" "}
+            <code className="bg-gray-100 text-gray-700 text-xs font-mono px-2 py-0.5 rounded border border-gray-200">
+              {location.pathname}
+            </code>{" "}
+            doesn&apos;t exist or may have been moved. Double-check the URL or
+            head back to the dashboard.
+          </p>
+
+          {/* CTA */}
+          <div className="flex justify-center pt-2">
+            <Button
+              onClick={() => navigate("/")}
+              className="gap-2 px-6 text-white font-medium hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: colors.brand }}
+            >
+              <Home className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </div>
+
+        </div>
+      </main>
+
+      {/* ── Footer ── */}
+      <footer className="py-4 text-center">
+        <p className="text-xs text-gray-400">
+          &copy; {new Date().getFullYear()} {appName}. All rights reserved.
+        </p>
+      </footer>
+
     </div>
   );
 };

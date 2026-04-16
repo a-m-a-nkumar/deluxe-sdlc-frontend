@@ -1,10 +1,18 @@
-import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical } from "lucide-react";
+import { Search, ChevronRight, User, FileText, Users, Calendar, Tag, ExternalLink, Eye, Sparkles, FlaskConical, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { fetchConfluencePages, fetchConfluencePageDetails, ConfluencePage, ConfluencePageDetails } from "@/services/confluenceApi";
 import { useToast } from "@/hooks/use-toast";
@@ -14,11 +22,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { colors } from '@/config/theme';
 
 export const ConfluenceDashboard = () => {
-  const { accessToken } = useAuth();
+  const { accessToken, isBusinessUser } = useAuth();
   const {
     activeConfluencePageId,
     setActiveConfluencePageId,
-    selectedProject
+    selectedProject,
+    isRestoringProject
   } = useAppState();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,12 +35,13 @@ export const ConfluenceDashboard = () => {
   const [pageDetails, setPageDetails] = useState<ConfluencePageDetails | null>(null);
   const [isLoadingPages, setIsLoadingPages] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (accessToken) loadPages();
-  }, [accessToken, selectedProject]);
+    if (accessToken && !isRestoringProject) loadPages();
+  }, [accessToken, selectedProject, isRestoringProject]);
 
   // Set active page when activeConfluencePageId is set
   useEffect(() => {
@@ -52,11 +62,26 @@ export const ConfluenceDashboard = () => {
 
   const loadPages = async () => {
     if (!accessToken) return;
+    if (!selectedProject?.confluence_space_key) {
+      setPages([]);
+      setIsLoadingPages(false);
+      toast({
+        title: "No project selected",
+        description: "Select a project to view Confluence pages.",
+      });
+      return;
+    }
     try {
       setIsLoadingPages(true);
-      const spaceKey = selectedProject?.confluence_space_key || 'SO';
+      const spaceKey = selectedProject.confluence_space_key;
       const fetchedPages = await fetchConfluencePages(accessToken, spaceKey);
-      setPages(fetchedPages);
+      // Sort by last modified (newest first) using version.when from Confluence API
+      const sorted = [...fetchedPages].sort((a: any, b: any) => {
+        const dateA = a.version?.when || "";
+        const dateB = b.version?.when || "";
+        return dateB.localeCompare(dateA);
+      });
+      setPages(sorted);
       // Only auto-select first page if there's no activeConfluencePageId waiting to be set
       if (fetchedPages.length > 0 && !selectedPageId && !activeConfluencePageId) {
         setSelectedPageId(fetchedPages[0].id);
@@ -151,10 +176,8 @@ export const ConfluenceDashboard = () => {
                 </div>
               </div>
 
-              {/* Payment Gateway Section */}
               <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[#E6E6E6] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full">
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold mb-4">Payment Gateway</h2>
                   {isLoadingPages ? (
                     <div className="text-center py-8 text-muted-foreground text-sm">
                       Loading pages...
@@ -213,6 +236,7 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">View in Confluence</span>
                     <span className="sm:hidden">View</span>
                   </Button>
+                  {isBusinessUser && (
                   <Button
                     variant="outline"
                     className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
@@ -223,14 +247,18 @@ export const ConfluenceDashboard = () => {
                     <span className="hidden sm:inline">Generate Jira Items</span>
                     <span className="sm:hidden">Generate</span>
                   </Button>
-
-                  {/* TEST_SCENARIO_FEATURE - remove this block to undo */}
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span>
                         <Button
                           variant="outline"
-                          className="bg-purple-600 text-white border border-purple-600 text-sm font-normal flex items-center gap-2 hover:bg-purple-700 hover:text-white hover:border-purple-700 transition-colors"
+                          className="text-sm font-normal flex items-center gap-2 transition-colors"
+                          style={{
+                            backgroundColor: colors.brand,
+                            color: '#fff',
+                            borderColor: colors.brand,
+                          }}
                           onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
                           disabled={!selectedPageId}
                         >
@@ -244,7 +272,6 @@ export const ConfluenceDashboard = () => {
                       <TooltipContent>Select a BRD page from the list first</TooltipContent>
                     )}
                   </Tooltip>
-                  {/* END TEST_SCENARIO_FEATURE */}
 
                 </div>
               </div>
@@ -348,6 +375,36 @@ export const ConfluenceDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Access Denied Dialog */}
+      <Dialog open={showAccessDenied} onOpenChange={setShowAccessDenied}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: colors.brandLight }}
+              >
+                <ShieldX className="w-5 h-5" style={{ color: colors.brand }} />
+              </div>
+              <DialogTitle className="text-lg font-semibold">Access Denied</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-gray-600 leading-relaxed pt-1">
+              You do not have permission to access this module. Please contact your
+              administrator to request access through the appropriate Azure AD group.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-2">
+            <Button
+              onClick={() => setShowAccessDenied(false)}
+              className="text-white"
+              style={{ backgroundColor: colors.brand }}
+            >
+              Return to Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

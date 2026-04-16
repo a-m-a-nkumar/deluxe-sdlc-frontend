@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "./JiraDashboard.css";
-import { Search, ChevronDown, ArrowUp, User, Calendar, Link, FileText, Clock, ExternalLink, Code } from "lucide-react";
+import { Search, ChevronDown, ArrowUp, User, Calendar, ExternalLink, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -24,6 +24,7 @@ interface DisplayIssue {
   points: string;
   created: string;
   updated: string;
+  updatedRaw: string;
   description: string;
   sprint: string;
   labels: string[];
@@ -104,6 +105,7 @@ export const JiraDashboard = () => {
       points: jiraIssue.fields.customfield_10016?.toString() || "0",
       created: jiraIssue.fields.created ? formatDate(jiraIssue.fields.created) : "Unknown",
       updated: jiraIssue.fields.updated ? formatDate(jiraIssue.fields.updated) : "Unknown",
+      updatedRaw: jiraIssue.fields.updated || "",
       description: extractTextFromADF(jiraIssue.fields.description),
       sprint: jiraIssue.fields.sprint?.name || "No sprint",
       labels: jiraIssue.fields.labels || [],
@@ -147,6 +149,8 @@ export const JiraDashboard = () => {
           accessToken
         );
         const mappedIssues = response.issues.map(mapJiraIssueToDisplayIssue);
+        // Sort by last updated (newest first)
+        mappedIssues.sort((a, b) => b.updatedRaw.localeCompare(a.updatedRaw));
         setIssues(mappedIssues);
 
         // Check if there's a newly created issue to highlight
@@ -508,11 +512,6 @@ export const JiraDashboard = () => {
                       <span className="hidden sm:inline">View in Jira</span>
                       <span className="sm:hidden">View</span>
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-sm">
-                      <Code className="w-4 h-4" />
-                      <span className="hidden sm:inline font-normal">Generate Code</span>
-                      <span className="sm:hidden">Generate</span>
-                    </Button>
                   </div>
                 </div>
 
@@ -578,39 +577,6 @@ export const JiraDashboard = () => {
                 </div>
               </div>
 
-              {/* BRD Integration Actions */}
-              <div className="border border-[#CCCCCC] rounded-md p-4">
-                <h3 className="font-semibold mb-4 jira-title-text">BRD Integration Actions</h3>
-
-                {/* Blue background section */}
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-                  <button className="text-blue-600 font-medium mb-2 hover:underline cursor-pointer bg-transparent border-none p-0">
-                    Create BRD from Issue
-                  </button>
-                  <p className="text-[#3B3B3B] text-sm mb-4">
-                    Generate a Business Requirements Document based on this Jira issue and its details.
-                  </p>
-                  <Button className="bg-primary text-white hover:bg-primary/90 w-full sm:w-auto">
-                    Generate BRD from Issue
-                  </Button>
-                </div>
-
-                {/* Action buttons outside blue section */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
-                  <Button variant="outline" size="sm" className="gap-2 bg-white font-normal">
-                    <Link className="w-4 h-4" />
-                    Link to BRD
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2 bg-white font-normal">
-                    <FileText className="w-4 h-4" />
-                    Export Details
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-2 bg-white font-normal">
-                    <Clock className="w-4 h-4" />
-                    Track Progress
-                  </Button>
-                </div>
-              </div>
             </>
           )}
         </div>

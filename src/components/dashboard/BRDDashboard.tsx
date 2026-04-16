@@ -3,7 +3,7 @@ import { BRDProgress } from "../brd/BRDProgress";
 import { ChatInterface } from "../chat/ChatInterface";
 import { FileUploadSection } from "../files/FileUploadSection";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useNavigate } from "react-router-dom";
 import { sendChatMessage } from "@/services/chatbotApi";
@@ -59,7 +59,7 @@ export const BRDDashboard = ({
   selectedBRDTemplate,
   isRestoringSession = false
 }: BRDDashboardProps) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Removed: analyst button moved to card selection
   const {
     chatMessages,
     setChatMessages,
@@ -276,15 +276,6 @@ export const BRDDashboard = ({
           </Button>
           <h1 className="text-xl font-bold sm:text-base">{contextProject?.project_name || "No Project Selected"}</h1>
         </div>
-        <Button
-          onClick={() => navigate("/analyst-agent")}
-          className="flex items-center gap-2"
-          variant="outline"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">Create BRD with Analyst</span>
-          <span className="sm:hidden">Analyst</span>
-        </Button>
       </div>
     </div>
 

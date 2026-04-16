@@ -5,6 +5,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force scrollbar visibility on macOS Safari/Chrome */
+[cmdk-list],
+[cmdk-list-sizer],
+[data-radix-scroll-area-viewport],
+[role="listbox"],
+.overflow-y-auto,
+.overflow-auto {
+  scrollbar-width: thin !important;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto !important;
+}
+[cmdk-list]::-webkit-scrollbar,
+[cmdk-list-sizer]::-webkit-scrollbar,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar,
+[role="listbox"]::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar {
+  width: 8px !important;
+  -webkit-appearance: none !important;
+  display: block !important;
+}
+[cmdk-list]::-webkit-scrollbar-track,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track,
+[role="listbox"]::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+[cmdk-list]::-webkit-scrollbar-thumb,
+[cmdk-list-sizer]::-webkit-scrollbar-thumb,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb,
+[role="listbox"]::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  min-height: 30px;
+}
+[cmdk-list]::-webkit-scrollbar-thumb:hover,
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover,
+[role="listbox"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 /* SDLC Orchestration Design System */
 
 @layer base {
@@ -22,7 +65,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 355 84% 45%;
+    --primary: 220 61% 27%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -31,7 +74,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 0 0% 23%;
 
-    --accent: 350 100% 97.5%;
+    --accent: 220 100% 97.5%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -39,16 +82,16 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 355 84% 45%;
+    --ring: 220 61% 27%;
 
     --radius: 0.5rem;
 
     /* SDLC Specific Colors */
     --sidebar-bg: 0 0% 100%;
     --sidebar-border: 220 13% 91%;
-    --stats-red: 355 84% 45%;
+    --stats-red: 220 61% 27%;
     --chat-bg: 0 0% 100%;
-    --progress-red: 355 84% 45%;
+    --progress-red: 220 61% 27%;
     --heading-primary: 0 0% 23%;
 
     --sidebar-background: 0 0% 98%;

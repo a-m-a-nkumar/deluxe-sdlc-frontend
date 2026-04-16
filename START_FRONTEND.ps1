@@ -13,7 +13,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Frontend directory path
-$FrontendPath = "C:\Users\ArushSingh\Desktop\FRONTEND1_new"
+$FrontendPath = "C:\Users\t479164\Desktop\development\sdlc_nextjs_frontend"
 
 # STEP 1 - Verify frontend directory
 Write-Host "[1/5] Checking frontend directory..." -ForegroundColor Yellow

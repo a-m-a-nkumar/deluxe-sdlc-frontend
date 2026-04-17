@@ -166,7 +166,8 @@ export const JiraGenerationPage = () => {
                 selectedProject.jira_project_key,
                 epics,
                 accessToken,
-                boardId || undefined
+                boardId || undefined,
+                confluencePageId
             );
 
             const { summary, failed } = response;

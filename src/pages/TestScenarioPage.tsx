@@ -119,7 +119,10 @@ const TestScenarioPage = () => {
         selectedProject.project_id,
         pageTitle,
         content,
-        accessToken
+        accessToken,
+        undefined,
+        undefined,
+        confluencePageId
       );
       setPushedPageUrl(response.web_url);
       toast({

@@ -95,7 +95,8 @@ export const jiraGenerationApi = {
         jiraProjectKey: string,
         epics: Epic[],
         token: string,
-        boardId?: number
+        boardId?: number,
+        confluencePageId?: string
     ): Promise<CreateJiraItemsResponse> => {
         if (!token) {
             throw new Error('Authentication required');
@@ -107,7 +108,8 @@ export const jiraGenerationApi = {
                 project_id: projectId,
                 jira_project_key: jiraProjectKey,
                 epics: epics,
-                board_id: boardId || null
+                board_id: boardId || null,
+                confluence_page_id: confluencePageId || null
             },
             {
                 headers: { Authorization: `Bearer ${token}` }

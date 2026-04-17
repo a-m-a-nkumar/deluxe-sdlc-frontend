@@ -90,7 +90,8 @@ export const testGenerationApi = {
     content: string,
     token: string,
     sourceScenarioPage?: string,
-    coverageSummary?: string
+    coverageSummary?: string,
+    sourceBrdPageId?: string
   ): Promise<PushToConfluenceResponse> => {
     const response = await fetch(`${API_BASE_URL}/api/test/push-to-confluence`, {
       method: 'POST',
@@ -104,6 +105,7 @@ export const testGenerationApi = {
         content: content,
         source_scenario_page: sourceScenarioPage,
         coverage_summary: coverageSummary,
+        source_brd_page_id: sourceBrdPageId || null,
       }),
     });
     if (!response.ok) {

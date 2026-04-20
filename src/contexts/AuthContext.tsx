@@ -1,24 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
+import { fetchBackendUserInfo } from "@/services/authApi";
 import { toast } from "sonner";
 
 // Inactivity timeout — auto-logout after 5 minutes of no activity
 const INACTIVITY_TIMEOUT_MS = 300_000;
 
-// ── Azure AD Group-Based RBAC ──
+// Kept only for the isBusinessUser convenience flag — the authoritative
+// allowed-modules list now comes from the backend (which handles Azure AD
+// groups-claim overage via Microsoft Graph).
 const BUSINESS_GROUP_OID = "be88c38e-8a45-4026-ac85-f0f850b8cc03";
-const TECH_GROUP_OID = "670e52fc-59cc-4a13-b89c-c91367c7060c";
-
-const GROUP_MODULE_MAP: Record<string, string[]> = {
-  [BUSINESS_GROUP_OID]: ["brd", "confluence", "jira"],
-  [TECH_GROUP_OID]: ["design", "pair-programming", "testing", "confluence", "jira", "harness"],
-};
-
-function computeAllowedModules(groups: string[]): string[] {
-  const modules = new Set<string>();
-  groups.forEach((g) => (GROUP_MODULE_MAP[g] || []).forEach((m) => modules.add(m)));
-  return Array.from(modules);
-}
 
 interface User {
   id: string;
@@ -46,9 +37,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const buildUser = (userInfo: { id: string; email: string; name: string; groups: string[] }): User => {
-    const allowed = computeAllowedModules(userInfo.groups);
-    return { ...userInfo, allowedModules: allowed };
+  // Ask the backend who this user is (source of truth for RBAC).
+  // Falls back to empty modules if the call fails — user will see AccessDenied.
+  const buildUserFromBackend = async (
+    msalUser: { id: string; email: string; name: string; groups: string[] },
+    token: string,
+  ): Promise<User> => {
+    try {
+      const backend = await fetchBackendUserInfo(token);
+      return {
+        id: msalUser.id,
+        email: backend.email || msalUser.email,
+        name: backend.name || msalUser.name,
+        groups: backend.groups || [],
+        allowedModules: backend.allowed_modules || [],
+      };
+    } catch (err) {
+      console.error("[AUTH] Failed to fetch user info from backend — denying access:", err);
+      return {
+        ...msalUser,
+        allowedModules: [],
+      };
+    }
   };
 
   // Initialize auth — handle redirect response when Azure sends user back
@@ -60,10 +70,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // CRITICAL: handle redirect response when Azure redirects back after login
         const redirectResult = await msalInstance.handleRedirectPromise();
         if (redirectResult) {
-          const userInfo = getUserInfo();
-          if (userInfo) {
-            setUser(buildUser(userInfo));
-            setAccessToken(redirectResult.idToken);
+          const msalUser = getUserInfo();
+          if (msalUser) {
+            const token = redirectResult.idToken;
+            setAccessToken(token);
+            const hydrated = await buildUserFromBackend(msalUser, token);
+            setUser(hydrated);
           }
           setIsLoading(false);
           return;
@@ -71,11 +83,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Already logged in (token in localStorage from previous session)
         if (checkAzureAuth()) {
-          const userInfo = getUserInfo();
-          if (userInfo) {
-            setUser(buildUser(userInfo));
+          const msalUser = getUserInfo();
+          if (msalUser) {
             const token = await getAccessToken();
-            setAccessToken(token);
+            if (token) {
+              setAccessToken(token);
+              const hydrated = await buildUserFromBackend(msalUser, token);
+              setUser(hydrated);
+            }
           }
         }
       } catch (error) {
@@ -93,10 +108,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const response = await loginWithAzureAD();
       if (response) {
-        const userInfo = getUserInfo();
-        if (userInfo) {
-          setUser(buildUser(userInfo));
-          setAccessToken(response.accessToken);
+        const msalUser = getUserInfo();
+        if (msalUser) {
+          const token = response.accessToken;
+          setAccessToken(token);
+          const hydrated = await buildUserFromBackend(msalUser, token);
+          setUser(hydrated);
         }
       }
     } catch (error) {

@@ -109,18 +109,28 @@ export const integrationsApi = {
     },
 
     /**
-     * Get all accessible Confluence spaces
+     * Get a page of Confluence spaces (lazy loading).
+     * Returns { spaces, hasMore }.
      */
-    getConfluenceSpaces: async (token: string): Promise<ConfluenceSpace[]> => {
+    getConfluenceSpaces: async (
+        token: string,
+        start: number = 0,
+        limit: number = 100,
+        search: string = "",
+    ): Promise<{ spaces: ConfluenceSpace[]; hasMore: boolean }> => {
         if (!token) {
             console.warn('No access token provided for Confluence spaces request');
             throw new Error('Authentication required');
         }
 
+        const params: Record<string, string | number> = { start, limit };
+        if (search) params.search = search;
+
         const response = await axios.get(`${API_BASE_URL}/api/integrations/confluence/spaces`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            params,
         });
-        return response.data.spaces;
+        return { spaces: response.data.spaces, hasMore: response.data.hasMore };
     },
 
     /**

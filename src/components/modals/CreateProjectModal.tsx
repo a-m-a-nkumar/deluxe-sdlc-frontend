@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -79,6 +79,10 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   const [isAtlassianLinked, setIsAtlassianLinked] = useState(false);
   const [jiraProjects, setJiraProjects] = useState<JiraProject[]>([]);
   const [confluenceSpaces, setConfluenceSpaces] = useState<ConfluenceSpace[]>([]);
+  const [spacesHasMore, setSpacesHasMore] = useState(false);
+  const [spacesStart, setSpacesStart] = useState(0);
+  const [loadingMoreSpaces, setLoadingMoreSpaces] = useState(false);
+  const spacesListRef = useRef<HTMLDivElement | null>(null);
   const [selectedJiraProject, setSelectedJiraProject] = useState("");
   const [selectedConfluenceSpace, setSelectedConfluenceSpace] = useState("");
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
@@ -186,13 +190,15 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
       setIsAtlassianLinked(status.linked && !status.token_expired);
 
       if (status.linked) {
-        // Fetch Jira projects and Confluence spaces in parallel
+        // Fetch Jira projects and first page of Confluence spaces in parallel
         const [jiraData, confluenceData] = await Promise.all([
           integrationsApi.getJiraProjects(accessToken),
-          integrationsApi.getConfluenceSpaces(accessToken)
+          integrationsApi.getConfluenceSpaces(accessToken, 0, 100)
         ]);
         setJiraProjects(jiraData || []);
-        setConfluenceSpaces(confluenceData || []);
+        setConfluenceSpaces(confluenceData?.spaces || []);
+        setSpacesHasMore(confluenceData?.hasMore ?? false);
+        setSpacesStart(100);
       }
     } catch (error) {
       console.error('Error fetching Atlassian data:', error);
@@ -205,6 +211,29 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
       setLoadingIntegrations(false);
     }
   }, [accessToken, toast]);
+
+  const loadMoreSpaces = useCallback(async () => {
+    if (!accessToken || loadingMoreSpaces || !spacesHasMore) return;
+    setLoadingMoreSpaces(true);
+    try {
+      const data = await integrationsApi.getConfluenceSpaces(accessToken, spacesStart, 100);
+      setConfluenceSpaces(prev => [...prev, ...(data.spaces || [])]);
+      setSpacesHasMore(data.hasMore);
+      setSpacesStart(prev => prev + 100);
+    } catch (err) {
+      console.error("Error loading more spaces:", err);
+    } finally {
+      setLoadingMoreSpaces(false);
+    }
+  }, [accessToken, spacesStart, spacesHasMore, loadingMoreSpaces]);
+
+  const handleSpacesScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    // Load more when scrolled within 50px of the bottom
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
+      loadMoreSpaces();
+    }
+  }, [loadMoreSpaces]);
 
   useEffect(() => {
     if (open) {
@@ -630,7 +659,7 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
                               <Command>
                                 <CommandInput placeholder="Search Confluence spaces..." />
-                                <CommandList>
+                                <CommandList onScroll={handleSpacesScroll}>
                                   <CommandEmpty>No space found.</CommandEmpty>
                                   <CommandGroup>
                                     {confluenceSpaces.map(space => (
@@ -648,6 +677,17 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                                         <span className="ml-1 text-muted-foreground truncate">- {space.name}</span>
                                       </CommandItem>
                                     ))}
+                                    {loadingMoreSpaces && (
+                                      <div className="flex items-center justify-center py-2">
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                        <span className="text-xs text-muted-foreground">Loading more spaces...</span>
+                                      </div>
+                                    )}
+                                    {spacesHasMore && !loadingMoreSpaces && (
+                                      <div className="text-center py-1">
+                                        <span className="text-xs text-muted-foreground">Scroll for more</span>
+                                      </div>
+                                    )}
                                   </CommandGroup>
                                 </CommandList>
                               </Command>

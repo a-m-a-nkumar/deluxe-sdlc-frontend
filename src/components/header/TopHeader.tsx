@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Menu, FolderKanban, LogOut, Link as LinkIcon, CheckCircle } from "lucide-react";
+import { ChevronDown, Menu, FolderKanban, LogOut, Link as LinkIcon, CheckCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -33,7 +33,7 @@ interface TopHeaderProps {
   currentView?: string;
 }
 
-export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps) => {
+export const TopHeader = ({ onMenuClick, isMobile }: TopHeaderProps) => {
   const { selectedProject, setSelectedProject } = useAppState();
   const { user, logout, accessToken } = useAuth();
   const navigate = useNavigate();
@@ -63,6 +63,7 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
   });
 
   const isAtlassianLinked = (atlassianStatus?.linked && !atlassianStatus?.token_expired) || false;
+  const isAtlassianExpired = atlassianStatus?.linked && atlassianStatus?.token_expired;
 
   const handleLogout = () => {
     // Clear cache and app state on logout
@@ -126,7 +127,9 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
     queryClient.invalidateQueries({ queryKey: ["atlassian-status"] });
     toast({
       title: "Success",
-      description: "Atlassian account linked successfully",
+      description: isAtlassianLinked || isAtlassianExpired
+        ? "Atlassian token updated successfully"
+        : "Atlassian account linked successfully",
     });
   };
 
@@ -197,15 +200,36 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
-                {!isAtlassianLinked ? (
-                  <DropdownMenuItem onClick={() => setIsLinkModalOpen(true)} className="cursor-pointer text-blue-600 focus:text-blue-700">
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    <span>Link Atlassian Account</span>
+                {/* Atlassian status row */}
+                {isAtlassianLinked && (
+                  <DropdownMenuItem disabled className="opacity-100 cursor-default focus:bg-transparent">
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-green-700">Atlassian Connected</span>
+                      <span className="text-[11px] text-muted-foreground truncate max-w-[160px]">{atlassianStatus?.domain}</span>
+                    </div>
+                  </DropdownMenuItem>
+                )}
+                {isAtlassianExpired && (
+                  <DropdownMenuItem disabled className="opacity-100 cursor-default focus:bg-transparent">
+                    <AlertTriangle className="mr-2 h-4 w-4 text-amber-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-amber-700">Token Expired</span>
+                      <span className="text-[11px] text-muted-foreground">Please update your PAT</span>
+                    </div>
+                  </DropdownMenuItem>
+                )}
+
+                {/* Atlassian action row */}
+                {isAtlassianLinked || isAtlassianExpired ? (
+                  <DropdownMenuItem onClick={() => setIsLinkModalOpen(true)} className="cursor-pointer focus:bg-accent">
+                    <RefreshCw className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Update Atlassian Token</span>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem disabled className="text-muted-foreground flex items-center">
-                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                    <span>Atlassian Connected</span>
+                  <DropdownMenuItem onClick={() => setIsLinkModalOpen(true)} className="cursor-pointer text-blue-600 focus:text-blue-700">
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    <span className="text-sm">Link Atlassian Account</span>
                   </DropdownMenuItem>
                 )}
 
@@ -223,6 +247,8 @@ export const TopHeader = ({ onMenuClick, isMobile, currentView }: TopHeaderProps
           isOpen={isLinkModalOpen}
           onClose={() => setIsLinkModalOpen(false)}
           onSuccess={handleLinkSuccess}
+          existingDomain={atlassianStatus?.domain}
+          existingEmail={atlassianStatus?.email}
         />
       </div>
     </>

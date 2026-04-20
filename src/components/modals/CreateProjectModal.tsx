@@ -63,7 +63,8 @@ interface CreateProjectModalProps {
 
 export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProjects, onProjectCreated, onProjectSelected }: CreateProjectModalProps) => {
   const { toast } = useToast();
-  const { accessToken } = useAuth();
+  const { accessToken, hasModuleAccess } = useAuth();
+  const canSelectTemplate = hasModuleAccess("brd");
   const [activeTab, setActiveTab] = useState<"my-project" | "new-project">("my-project");
   const [brdTemplates, setBrdTemplates] = useState<BRDTemplate[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
@@ -503,39 +504,41 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="brd_template"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTemplates}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white border-border h-10 overflow-hidden">
-                                <SelectValue placeholder={isLoadingTemplates ? "Loading templates..." : "Select BRD Template"} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white">
-                              {isLoadingTemplates ? (
-                                <div className="flex items-center justify-center py-6">
-                                  <Loader2 className="h-5 w-5 animate-spin text-primary-red" />
-                                </div>
-                              ) : brdTemplates.length > 0 ? (
-                                brdTemplates.map((template) => (
-                                  <SelectItem key={template.template_id} value={template.template_id}>
-                                    {template.template_name}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <div className="py-2 px-3 text-sm text-muted-foreground text-center">
-                                  No templates available
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {canSelectTemplate && (
+                      <FormField
+                        control={form.control}
+                        name="brd_template"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTemplates}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-border h-10 overflow-hidden">
+                                  <SelectValue placeholder={isLoadingTemplates ? "Loading templates..." : "Select BRD Template"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-white">
+                                {isLoadingTemplates ? (
+                                  <div className="flex items-center justify-center py-6">
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary-red" />
+                                  </div>
+                                ) : brdTemplates.length > 0 ? (
+                                  brdTemplates.map((template) => (
+                                    <SelectItem key={template.template_id} value={template.template_id}>
+                                      {template.template_name}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className="py-2 px-3 text-sm text-muted-foreground text-center">
+                                    No templates available
+                                  </div>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     {/* Atlassian Integration Section - REQUIRED */}
                     {isAtlassianLinked ? (

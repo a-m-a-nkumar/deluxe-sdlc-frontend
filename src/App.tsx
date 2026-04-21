@@ -19,6 +19,7 @@ import DesignAssistant from "./pages/DesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
 import TestingPage from "./pages/TestingPage";
 import HarnessPage from "./pages/HarnessPage";
+import FigmaPage from "./pages/FigmaPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -142,6 +143,14 @@ const App = () => {
                     <ProtectedRoute>
                       <HarnessPage />
                     </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/figma"
+                  element={
+                    <ModuleProtectedRoute moduleId="figma">
+                      <FigmaPage />
+                    </ModuleProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

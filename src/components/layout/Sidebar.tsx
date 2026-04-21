@@ -4,6 +4,7 @@ import {
   BookOpen,
   Ticket,
   Palette,
+  PenTool,
   HelpCircle,
   ChevronLeft,
   X,
@@ -52,6 +53,13 @@ const navigationItems = [
     description: "Technical architecture planning",
     id: "design",
     path: "/design-assistant",
+  },
+  {
+    icon: PenTool,
+    label: "Figma Design",
+    description: "Generate Figma prompts from stories",
+    id: "figma",
+    path: "/figma",
   },
   {
     icon: Code2,

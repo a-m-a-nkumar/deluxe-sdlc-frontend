@@ -12,6 +12,7 @@ import {
   Code2,
   FlaskConical,
   Workflow,
+  PenTool,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,13 @@ const navigationItems = [
     description: "Technical architecture planning",
     id: "design",
     path: "/design-assistant",
+  },
+  {
+    icon: PenTool,
+    label: "Figma Design",
+    description: "Generate Figma prompts from stories",
+    id: "figma",
+    path: "/figma",
   },
   {
     icon: Code2,

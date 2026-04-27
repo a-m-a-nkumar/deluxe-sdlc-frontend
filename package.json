@@ -99,6 +99,7 @@
     "side-channel-weakmap": "1.0.0",
     "side-channel": "1.0.6",
     "baseline-browser-mapping": "2.10.16",
-    "call-bind": "1.0.8"
+    "call-bind": "1.0.8",
+    "@swc/core": "1.13.2"
   }
 }

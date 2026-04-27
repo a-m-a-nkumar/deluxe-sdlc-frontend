@@ -220,7 +220,9 @@ export const uploadFiles = async (files: File[], projectId?: string | null): Pro
 
   // Step 2: Generate BRD from S3 (backend fetches transcript and template from S3)
   const generateFormData = new FormData();
-  generateFormData.append("transcript_s3_paths", s3Paths.join(","));
+  // Send as JSON so filenames containing commas (e.g. "Monday, March 30.txt")
+  // don't get split into separate paths server-side.
+  generateFormData.append("transcript_s3_paths", JSON.stringify(s3Paths));
   if (projectId) {
     generateFormData.append("project_id", projectId);
   }

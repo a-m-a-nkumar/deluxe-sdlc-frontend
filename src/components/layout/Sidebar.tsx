@@ -77,7 +77,7 @@ const navigationItems = [
   },
   {
     icon: Workflow,
-    label: "DevOps",
+    label: "Deployment",
     description: "Pipelines, deployments & logs",
     id: "harness",
     path: "/harness",

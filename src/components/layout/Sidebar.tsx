@@ -108,7 +108,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {
-    overview: "Veluxe Home Page",
+    overview: "Velox Home Page",
     brd: "BRD Generation Module",
     analyst: "BRD Generation by conversing with AI",
     confluence: "Planning Module",
@@ -197,7 +197,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           {THEME === "deluxe" && (!collapsed || isMobile) && (
             <div className="flex flex-col">
               <span className="text-[1.35rem] font-semibold tracking-tight text-gray-900 leading-none">
-                Velu<span className="text-primary">x</span>e
+                Velo<span className="text-primary">x</span>
               </span>
               <span className="text-[0.65rem] font-semibold tracking-wider text-gray-500 mt-0.5">
                 Drive Engineering Excellence @dlx
@@ -335,7 +335,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                 <HelpCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-bold text-gray-900">Veluxe User Guide</DialogTitle>
+                <DialogTitle className="text-lg font-bold text-gray-900">Velox User Guide</DialogTitle>
                 <p className="text-xs text-gray-500 mt-0.5">Documentation &amp; setup instructions</p>
               </div>
             </div>

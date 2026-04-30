@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { RefreshCw, FileText, CheckSquare, Square, Wand2, AlertCircle, ExternalLink, LayoutDashboard, Link2, CheckCircle2 } from "lucide-react";
+import { RefreshCw, FileText, CheckSquare, Square, Wand2, AlertCircle, ExternalLink, LayoutDashboard, Link2, CheckCircle2, Layers, Server, Shield, Copy, Check, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,23 @@ export const LucidDashboard = () => {
   // Lucid OAuth connection state
   const [isLucidConnected, setIsLucidConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // Diagram type selection
+  const [diagramType, setDiagramType] = useState<"logical" | "infrastructure" | "security">("infrastructure");
+
+  // Copy prompt state
+  const [copied, setCopied] = useState(false);
+
+  // Expand/minimize prompt
+  const [isPromptExpanded, setIsPromptExpanded] = useState(false);
+
+  const handleCopyPrompt = () => {
+    if (!generatedPrompt) return;
+    navigator.clipboard.writeText(generatedPrompt).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
 
   const filteredPages = pages.filter((p) =>
@@ -80,6 +97,12 @@ export const LucidDashboard = () => {
     setDiagramUrl("");
     setSelectedPageIds(new Set());
   }, [selectedProject?.id]);
+
+  // Reset prompt when diagram type changes
+  useEffect(() => {
+    setGeneratedPrompt("");
+    setDiagramUrl("");
+  }, [diagramType]);
 
   // Check Lucid connection status on mount
   useEffect(() => {
@@ -147,7 +170,7 @@ export const LucidDashboard = () => {
         )
       );
       await generateLucidPromptStream(
-        { project_id: selectedProject.id, page_contents: pageContents },
+        { project_id: selectedProject.id, page_contents: pageContents, diagram_type: diagramType },
         (text) => setGeneratedPrompt((prev) => prev + text),
       );
     } catch (error: any) {
@@ -366,19 +389,135 @@ export const LucidDashboard = () => {
         {/* ══ RIGHT PANEL: Steps 2 & 3 ══ */}
         <div className="flex-1 min-w-0 overflow-y-auto p-5 space-y-5">
 
-          {/* ── Step 2: Architecture Prompt ── */}
+          {/* ── Diagram Type Selector ── */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Choose Diagram Type</p>
+            <div className="grid grid-cols-3 gap-3">
+
+              {/* Logical */}
+              <button
+                onClick={() => setDiagramType("logical")}
+                className={cn(
+                  "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  diagramType === "logical"
+                    ? "border-blue-500 bg-blue-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"
+                )}
+              >
+                {diagramType === "logical" && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500" />
+                )}
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                  diagramType === "logical" ? "bg-blue-100" : "bg-gray-100"
+                )}>
+                  <Layers className={cn("w-5 h-5", diagramType === "logical" ? "text-blue-600" : "text-gray-500")} />
+                </div>
+                <div>
+                  <p className={cn("text-sm font-semibold", diagramType === "logical" ? "text-blue-700" : "text-gray-700")}>Logical</p>
+                  <p className="text-xs text-gray-400 mt-0.5">What & Why?</p>
+                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">Vendor-agnostic view of what the system does and how data flows</p>
+                  <span className="inline-block mt-2 text-[10px] font-medium bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Devs · Architects · Business</span>
+                </div>
+              </button>
+
+              {/* Infrastructure */}
+              <button
+                onClick={() => setDiagramType("infrastructure")}
+                className={cn(
+                  "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  diagramType === "infrastructure"
+                    ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"
+                )}
+              >
+                {diagramType === "infrastructure" && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500" />
+                )}
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                  diagramType === "infrastructure" ? "bg-emerald-100" : "bg-gray-100"
+                )}>
+                  <Server className={cn("w-5 h-5", diagramType === "infrastructure" ? "text-emerald-600" : "text-gray-500")} />
+                </div>
+                <div>
+                  <p className={cn("text-sm font-semibold", diagramType === "infrastructure" ? "text-emerald-700" : "text-gray-700")}>Infrastructure</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Where & How?</p>
+                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">Deployment-level view of where the system runs and how resources connect</p>
+                  <span className="inline-block mt-2 text-[10px] font-medium bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full">DevOps · SRE · Platform</span>
+                </div>
+              </button>
+
+              {/* Security */}
+              <button
+                onClick={() => setDiagramType("security")}
+                className={cn(
+                  "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  diagramType === "security"
+                    ? "border-rose-500 bg-rose-50 shadow-sm"
+                    : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
+                )}
+              >
+                {diagramType === "security" && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
+                )}
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                  diagramType === "security" ? "bg-rose-100" : "bg-gray-100"
+                )}>
+                  <Shield className={cn("w-5 h-5", diagramType === "security" ? "text-rose-600" : "text-gray-500")} />
+                </div>
+                <div>
+                  <p className={cn("text-sm font-semibold", diagramType === "security" ? "text-rose-700" : "text-gray-700")}>Security</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Who & Protected?</p>
+                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">Trust boundaries, security controls, and access policies</p>
+                  <span className="inline-block mt-2 text-[10px] font-medium bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full">Security · Auditors · Compliance</span>
+                </div>
+              </button>
+
+            </div>
+          </div>
+
+        {/* ── Step 2: Architecture Prompt ── */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0",
-                step2Done ? "bg-green-600" : "bg-primary"
-              )}>
-                2
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0",
+                  step2Done ? "bg-green-600" : "bg-primary"
+                )}>
+                  2
+                </div>
+                <span className="text-sm font-semibold text-[#1a1a1a]">
+                  Review {diagramType === "logical" ? "Logical" : diagramType === "security" ? "Security" : "Infrastructure"} Description
+                </span>
               </div>
-              <span className="text-sm font-semibold text-[#1a1a1a]">Review Architecture Description</span>
+              {generatedPrompt && !isGeneratingPrompt && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={handleCopyPrompt}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-all",
+                      copied
+                        ? "bg-green-50 border-green-200 text-green-600"
+                        : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    )}
+                  >
+                    {copied ? <><Check className="w-3.5 h-3.5" />Copied!</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
+                  </button>
+                  <button
+                    onClick={() => setIsPromptExpanded(v => !v)}
+                    className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+                  >
+                    {isPromptExpanded
+                      ? <><Minimize2 className="w-3.5 h-3.5" />Minimize</>
+                      : <><Maximize2 className="w-3.5 h-3.5" />Expand</>}
+                  </button>
+                </div>
+              )}
             </div>
             <p className="text-xs text-gray-500 ml-8">
-              Claude reads your Confluence pages and generates a human-readable architecture description. Review and edit it before creating the diagram.
+              Claude reads your Confluence pages and generates a {diagramType === "logical" ? "logical architecture" : diagramType === "security" ? "security architecture" : "infrastructure"} description. Review and edit it before creating the diagram.
             </p>
 
             {!generatedPrompt && !isGeneratingPrompt ? (
@@ -391,7 +530,10 @@ export const LucidDashboard = () => {
                 value={generatedPrompt}
                 onChange={(e) => setGeneratedPrompt(e.target.value)}
                 placeholder={isGeneratingPrompt ? "Generating architecture description…" : ""}
-                className="text-sm font-mono resize-none min-h-[260px] ml-8"
+                className={cn(
+                  "text-sm font-mono resize-none ml-8 transition-all duration-300",
+                  isPromptExpanded ? "min-h-[600px]" : "min-h-[260px]"
+                )}
                 disabled={isGeneratingPrompt}
               />
             )}

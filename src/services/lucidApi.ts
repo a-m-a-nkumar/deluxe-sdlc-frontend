@@ -7,6 +7,7 @@ const BASE = API_CONFIG.BASE_URL;
 export interface GenerateLucidPromptRequest {
   project_id: string;
   page_contents: string[];
+  diagram_type?: string;
 }
 
 
@@ -32,6 +33,7 @@ export const generateLucidPromptStream = async (
   const response = await apiPost(`${BASE}/api/design/generate-lucid-prompt-stream`, {
     project_id: req.project_id,
     page_contents: req.page_contents,
+    diagram_type: req.diagram_type ?? 'infrastructure',
   });
 
   if (!response.ok || !response.body) {

@@ -8,9 +8,15 @@ const isTimeoutError = (msg: string) =>
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export const generateArchitecturePrompt = async (pageContents: string[]): Promise<string> => {
+export type DesignDiagramType = 'logical' | 'infrastructure' | 'security';
+
+export const generateArchitecturePrompt = async (
+  pageContents: string[],
+  diagramType: DesignDiagramType = 'infrastructure',
+): Promise<string> => {
   const response = await apiPost(`${BASE}/api/design/generate-prompt`, {
     page_contents: pageContents,
+    diagram_type: diagramType,
   });
 
   if (!response.ok) {
@@ -25,9 +31,11 @@ export const generateArchitecturePrompt = async (pageContents: string[]): Promis
 export const generateArchitecturePromptStream = async (
   pageContents: string[],
   onChunk: (text: string) => void,
+  diagramType: DesignDiagramType = 'infrastructure',
 ): Promise<void> => {
   const response = await apiPost(`${BASE}/api/design/generate-prompt-stream`, {
     page_contents: pageContents,
+    diagram_type: diagramType,
   });
   if (!response.ok || !response.body) {
     const err = await response.json().catch(() => ({ detail: response.statusText }));
@@ -212,5 +220,90 @@ export const loadDiagramFromConfluence = async (
   }
 
   return response.json();
+};
+
+
+// ----------------------------------------------------------------------------
+// Session-aware variants (multi-session Design Assistant)
+// ----------------------------------------------------------------------------
+
+export interface SaveDiagramSessionArgs {
+  projectId: string;
+  sessionId: string;
+  /** Any combination of xml, svg, png. The backend requires at least one.
+   * - xml: source of truth, written to logical.xml (re-editable, also feeds
+   *   the in-app draw.io viewer iframe).
+   * - svg: optional vector render for in-app `<img>` display.
+   * - png: optional rasterised render — preferred by DOCX export because
+   *   python-docx embeds it directly with no cairosvg roundtrip. Sent as a
+   *   `data:image/png;base64,...` URL string. */
+  xml?: string;
+  svg?: string;
+  png?: string;
+  spaceKey?: string;     // optional Confluence push (sharing)
+  pageTitle?: string;
+  /** Per-type slot the artifact fills (SAD-redesign). One of "logical" |
+   * "infrastructure" | "security". Defaults server-side to "logical" so
+   * legacy callers (single-slot path) still hit the same S3 key as before. */
+  diagramType?: "logical" | "infrastructure" | "security";
+}
+
+export interface SaveDiagramSessionResponse {
+  page_url: string | null;
+  page_id: string | null;
+  diagram_s3_key: string | null;
+  diagram_svg_s3_key: string | null;
+  session_stage: string | null;
+}
+
+export const saveDiagramToSession = async (
+  args: SaveDiagramSessionArgs,
+): Promise<SaveDiagramSessionResponse> => {
+  const r = await apiPost(`${BASE}/api/design/save-diagram`, {
+    project_id: args.projectId,
+    session_id: args.sessionId,
+    xml: args.xml,
+    svg: args.svg,
+    png: args.png,
+    space_key: args.spaceKey ?? '',
+    page_title: args.pageTitle ?? '',
+    diagram_type: args.diagramType,
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || 'Failed to save diagram to session');
+  }
+  return r.json();
+};
+
+export interface LoadDiagramSessionResponse {
+  xml: string;
+  page_url: string;
+  page_id: string;
+  diagram_s3_key: string | null;
+  diagram_svg_s3_key: string | null;
+  source: 's3' | 'confluence';
+}
+
+export const loadDiagramForSession = async (
+  projectId: string,
+  sessionId: string,
+  spaceKey?: string,
+  pageId?: string,
+  diagramType?: 'logical' | 'infrastructure' | 'security',
+): Promise<LoadDiagramSessionResponse | null> => {
+  const r = await apiPost(`${BASE}/api/design/load-diagram`, {
+    project_id: projectId,
+    session_id: sessionId,
+    space_key: spaceKey ?? '',
+    page_id: pageId ?? '',
+    diagram_type: diagramType,
+  });
+  if (r.status === 404) return null;
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || 'Failed to load diagram for session');
+  }
+  return r.json();
 };
 

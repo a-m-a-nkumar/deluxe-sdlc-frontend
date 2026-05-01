@@ -1,0 +1,918 @@
+/*
+ * Design Assistant theme — "Drafting table on parchment, Deluxe red ink".
+ *
+ * Scoped via the .design-surface class so the rest of the app stays intact.
+ * Aligned with Deluxe brand: --primary (355 84% 45%) = crimson, used the
+ * way an architect's red revision-mark pencil is used on vellum — sparingly,
+ * and only when something matters.
+ *
+ * Tokens stay in the `--design-*` namespace so we don't collide with the
+ * app-wide shadcn variables (--primary, --background, etc.). Each component
+ * inside .design-surface paints itself from these tokens, never from the
+ * generic ones.
+ *
+ * The four pillars:
+ *   1. Typography — Spectral (serif headings), Familjen Grotesk (body),
+ *      JetBrains Mono (plate numbers, eyebrows, cartouches).
+ *   2. Colour — graphite ink, parchment paper, Deluxe crimson as the only
+ *      action accent. No purple. No saffron. No multi-color.
+ *   3. Depth — borders only, with a single 2px ink rule for emphasis.
+ *      No drop shadows; "stamp" shadows (offset solid colour) for buttons
+ *      so pressure reads as ink-on-paper.
+ *   4. Motion — one orchestrated entrance per plate, then stillness.
+ */
+
+.design-surface {
+  /* --- Foundation tokens --- */
+  --design-ink: 218 55% 16%;            /* graphite-navy, deep brand ink */
+  --design-ink-soft: 218 30% 32%;       /* secondary text */
+  --design-ink-muted: 218 15% 48%;      /* tertiary / metadata */
+  --design-paper: 350 100% 97.5%;       /* Deluxe blush off-white */
+  --design-paper-deep: 350 60% 95%;     /* card / inset surface */
+  --design-paper-warm: 36 35% 92%;      /* margin / aside surface */
+
+  --design-rule: 218 30% 78%;           /* hairline borders */
+  --design-rule-strong: 218 45% 28%;    /* 2px emphasis rules */
+
+  --design-mark: 355 84% 45%;           /* Deluxe crimson — the accent */
+  --design-mark-soft: 355 100% 95%;     /* Deluxe primary-light blush */
+  --design-mark-deep: 355 80% 32%;      /* hover state for the accent */
+
+  --design-sepia: 30 40% 38%;           /* margin notes */
+  --design-emerald: 158 60% 30%;        /* audit GREEN */
+  --design-amber: 30 90% 42%;           /* audit AMBER */
+
+  /* --- Surface --- */
+  color: hsl(var(--design-ink));
+  background:
+    radial-gradient(circle at 12% 0%, hsl(355 100% 96% / 0.55), transparent 55%),
+    radial-gradient(circle at 90% 100%, hsl(218 50% 90% / 0.45), transparent 50%),
+    hsl(var(--design-paper));
+  font-family:
+    "Familjen Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.005em;
+  position: relative;
+}
+
+/* Faint cyanotype grid layered behind content, fades at the edges. */
+.design-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(hsl(var(--design-rule) / 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--design-rule) / 0.22) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+  mask-image: radial-gradient(ellipse at center, black 55%, transparent 92%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 92%);
+  z-index: 0;
+}
+
+.design-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────── */
+
+.design-surface h1,
+.design-surface h2,
+.design-surface h3,
+.design-surface .design-heading {
+  font-family: "Spectral", "Iowan Old Style", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: hsl(var(--design-ink));
+}
+
+.design-surface h1 { font-size: 1.875rem; line-height: 1.18; }
+.design-surface h2 { font-size: 1.5rem;   line-height: 1.22; }
+.design-surface h3 { font-size: 1.2rem;   line-height: 1.3;  }
+
+.design-surface .design-eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--design-ink-muted));
+}
+
+.design-surface .design-mono,
+.design-surface .design-plate-num {
+  font-family: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+  font-feature-settings: "ss05", "cv01";
+}
+
+.design-surface .design-plate-num {
+  color: hsl(var(--design-mark));
+  font-weight: 600;
+}
+
+.design-surface .design-marginalia {
+  font-family: "Spectral", Georgia, serif;
+  font-style: italic;
+  color: hsl(var(--design-sepia));
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* ─── Cartouche (the title-block signature) ──────────────────────────── */
+
+.design-cartouche {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid hsl(var(--design-ink) / 0.7);
+  border-radius: 2px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--design-ink));
+  background: hsl(var(--design-paper-deep));
+  white-space: nowrap;
+}
+
+.design-cartouche__divider {
+  color: hsl(var(--design-mark));
+  font-weight: 700;
+}
+
+.design-cartouche__field-label {
+  color: hsl(var(--design-ink-muted));
+}
+
+.design-cartouche__field-value {
+  color: hsl(var(--design-ink));
+}
+
+/* ─── Plate cards ────────────────────────────────────────────────────── */
+
+.design-surface .design-plate {
+  background: hsl(var(--design-paper-deep));
+  border: 1px solid hsl(var(--design-rule) / 0.6);
+  border-top: 2px solid hsl(var(--design-rule-strong));
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.design-surface .design-plate--mark {
+  border-top-color: hsl(var(--design-mark));
+}
+
+/* ─── Buttons (graphite stamps) ──────────────────────────────────────── */
+
+.design-surface .design-btn-primary {
+  background: hsl(var(--design-ink));
+  color: hsl(var(--design-paper));
+  border: 1px solid hsl(var(--design-ink));
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.9rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 160ms ease, box-shadow 160ms ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.design-surface .design-btn-primary:hover:not(:disabled) {
+  background: hsl(var(--design-mark));
+  color: hsl(0 0% 100%);
+  border-color: hsl(var(--design-mark));
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+}
+
+.design-surface .design-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.design-surface .design-btn-ghost {
+  background: transparent;
+  color: hsl(var(--design-ink));
+  border: 1px solid hsl(var(--design-rule));
+  border-radius: 2px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.design-surface .design-btn-ghost:hover:not(:disabled) {
+  border-color: hsl(var(--design-ink));
+  background: hsl(var(--design-mark-soft));
+}
+
+.design-surface .design-btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.design-surface .design-btn-mark {
+  background: hsl(var(--design-mark));
+  color: hsl(0 0% 100%);
+  border: 1px solid hsl(var(--design-mark));
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.9rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.design-surface .design-btn-mark:hover:not(:disabled) {
+  background: hsl(var(--design-mark-deep));
+  border-color: hsl(var(--design-mark-deep));
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+}
+
+.design-surface .design-btn-mark:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Dismiss stamp (used on the edit-mode formatting help banner) ─────
+ * A small crimson "wax seal" the user clicks to retire a one-time hint.
+ * Sits half-outside the panel's top-right corner so it reads as a
+ * deliberate stamp on the page, not a CSS afterthought. Lifts on hover
+ * with the same letterpress offset-shadow as the crimson primary, and
+ * collapses flush on active for a pressed feel. */
+
+.design-surface .design-hint-dismiss {
+  position: absolute;
+  top: -0.65rem;
+  right: -0.65rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: hsl(var(--design-paper));
+  color: hsl(var(--design-ink));
+  border: 1.5px solid hsl(var(--design-ink));
+  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background-color 120ms ease-out,
+    color 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+.design-surface .design-hint-dismiss:hover {
+  background: hsl(var(--design-mark));
+  color: hsl(var(--design-paper));
+  border-color: hsl(var(--design-mark-deep));
+  box-shadow: 3px 3px 0 hsl(var(--design-ink) / 0.85);
+  transform: translate(-1px, -1px);
+}
+
+.design-surface .design-hint-dismiss:active {
+  box-shadow: 0 0 0 hsl(var(--design-ink) / 0);
+  transform: translate(2px, 2px);
+}
+
+.design-surface .design-hint-dismiss:focus-visible {
+  outline: 2px solid hsl(var(--design-mark));
+  outline-offset: 2px;
+}
+
+/* ─── Tabs (plate selector) ──────────────────────────────────────────── */
+
+.design-surface .design-tab {
+  position: relative;
+  padding: 0.6rem 1rem 0.5rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--design-ink-muted));
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.design-surface .design-tab:hover:not(:disabled) {
+  color: hsl(var(--design-ink));
+}
+
+.design-surface .design-tab[data-active="true"] {
+  color: hsl(var(--design-ink));
+  border-bottom-color: hsl(var(--design-mark));
+}
+
+.design-surface .design-tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Section list rows (the plate index) ────────────────────────────── */
+
+.design-surface .design-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.65rem 0.8rem;
+  border-left: 2px solid transparent;
+  border-radius: 0 2px 2px 0;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+  width: 100%;
+  text-align: left;
+}
+
+.design-surface .design-row:hover {
+  background: hsl(var(--design-mark-soft) / 0.6);
+}
+
+.design-surface .design-row[data-active="true"] {
+  background: hsl(var(--design-paper-deep));
+  border-left-color: hsl(var(--design-mark));
+}
+
+/* ─── Resize handles (react-resizable-panels) ────────────────────────── */
+/*
+ * Vertical divider between two horizontal Panels. Visually it's a
+ * hairline rule that matches the rest of the document chrome; the
+ * actual hit area is wider (6px) so the cursor doesn't have to be
+ * pixel-perfect. Hover/drag thickens it and tints crimson — the
+ * design system's signal for "this is interactive".
+ */
+.design-resize-handle {
+  position: relative;
+  width: 6px;
+  flex-shrink: 0;
+  background: transparent;
+  cursor: col-resize;
+  transition: background 140ms ease;
+  outline: none;
+}
+
+.design-resize-handle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin-inline: auto;
+  width: 1px;
+  background: hsl(var(--design-rule) / 0.55);
+  transition: background 140ms ease, width 140ms ease;
+}
+
+.design-resize-handle:hover::before,
+.design-resize-handle[data-resize-handle-state="hover"]::before,
+.design-resize-handle[data-resize-handle-state="drag"]::before {
+  background: hsl(var(--design-mark));
+  width: 2px;
+}
+
+.design-resize-handle[data-resize-handle-state="drag"] {
+  background: hsl(var(--design-mark-soft) / 0.5);
+}
+
+/* Horizontal variant for vertical PanelGroups (top|bottom splits, future use). */
+.design-resize-handle--horizontal {
+  width: auto;
+  height: 6px;
+  cursor: row-resize;
+}
+
+.design-resize-handle--horizontal::before {
+  inset: auto 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1px;
+  width: 100%;
+  margin-inline: 0;
+}
+
+.design-resize-handle--horizontal:hover::before,
+.design-resize-handle--horizontal[data-resize-handle-state="hover"]::before,
+.design-resize-handle--horizontal[data-resize-handle-state="drag"]::before {
+  height: 2px;
+  width: 100%;
+}
+
+/* ─── Chat ───────────────────────────────────────────────────────────── */
+
+.design-surface .design-bubble-user {
+  background: hsl(var(--design-ink));
+  color: hsl(var(--design-paper));
+  border-radius: 12px 12px 2px 12px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.005em;
+  max-width: 80%;
+  box-shadow: 1.5px 2px 0 hsl(var(--design-mark) / 0.55);
+  /* Force unbroken strings (URLs, long tokens) to wrap inside the bubble
+   * instead of expanding it horizontally and triggering a parent scroll. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.design-surface .design-bubble-assistant {
+  background: hsl(var(--design-paper-deep));
+  border: 1px solid hsl(var(--design-rule) / 0.7);
+  border-radius: 12px 12px 12px 2px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+  max-width: 80%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.design-surface .design-chat-input {
+  background: hsl(var(--design-paper-deep));
+  border: 1px solid hsl(var(--design-rule));
+  border-radius: 2px;
+  padding: 0.55rem 0.7rem;
+  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.88rem;
+  color: hsl(var(--design-ink));
+  width: 100%;
+  resize: none;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.design-surface .design-chat-input:focus {
+  outline: none;
+  border-color: hsl(var(--design-mark));
+  background: hsl(var(--design-paper));
+  box-shadow: 0 0 0 3px hsl(var(--design-mark) / 0.12);
+}
+
+.design-surface .design-chat-input:disabled {
+  opacity: 0.6;
+}
+
+/* ─── Tables (drafting tabular: heavy double rule, hairline rows) ────── */
+
+.design-surface .design-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.design-surface .design-table thead th {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 0.55rem 0.6rem;
+  border-top: 2px solid hsl(var(--design-rule-strong));
+  border-bottom: 1px solid hsl(var(--design-rule-strong));
+  background: transparent;
+  color: hsl(var(--design-ink));
+}
+.design-surface .design-table tbody td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid hsl(var(--design-rule) / 0.7);
+  vertical-align: top;
+}
+.design-surface .design-table tbody tr:last-child td {
+  border-bottom: 2px solid hsl(var(--design-rule-strong));
+}
+
+/* ─── Audit signal dots ──────────────────────────────────────────────── */
+
+.design-surface .design-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.design-surface .design-dot--green { background: hsl(var(--design-emerald)); }
+.design-surface .design-dot--amber { background: hsl(var(--design-amber)); }
+.design-surface .design-dot--red   { background: hsl(var(--design-mark)); }
+.design-surface .design-dot--muted { background: hsl(var(--design-ink-muted) / 0.5); }
+
+/* ─── Motion ─────────────────────────────────────────────────────────── */
+
+@keyframes design-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes design-pulse-mark {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--design-mark) / 0.45); }
+  50%      { box-shadow: 0 0 0 5px hsl(var(--design-mark) / 0); }
+}
+
+.design-surface .design-rise {
+  animation: design-rise 540ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.design-surface .design-stagger > * {
+  animation: design-rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.design-surface .design-stagger > *:nth-child(1)  { animation-delay:   0ms; }
+.design-surface .design-stagger > *:nth-child(2)  { animation-delay:  60ms; }
+.design-surface .design-stagger > *:nth-child(3)  { animation-delay: 120ms; }
+.design-surface .design-stagger > *:nth-child(4)  { animation-delay: 180ms; }
+.design-surface .design-stagger > *:nth-child(5)  { animation-delay: 240ms; }
+.design-surface .design-stagger > *:nth-child(6)  { animation-delay: 300ms; }
+.design-surface .design-stagger > *:nth-child(7)  { animation-delay: 360ms; }
+.design-surface .design-stagger > *:nth-child(8)  { animation-delay: 420ms; }
+.design-surface .design-stagger > *:nth-child(9)  { animation-delay: 480ms; }
+.design-surface .design-stagger > *:nth-child(10) { animation-delay: 540ms; }
+
+.design-surface .design-pulse-mark {
+  border-radius: 999px;
+  animation: design-pulse-mark 1.6s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .design-surface .design-rise,
+  .design-surface .design-stagger > *,
+  .design-surface .design-pulse-mark {
+    animation: none !important;
+  }
+}
+
+/* ─── SAD-redesign extensions ─────────────────────────────────────────
+ *
+ * Tokens, classes, and density spec persisted in `.interface-design/system.md`.
+ * Status mapping follows the editorial palette (Pending = muted graphite,
+ * InProgress = crimson with pulse, Done = emerald, Skipped = amber pip +
+ * sepia text, Failed = crimson-deep + glyph). No new colour vocabulary —
+ * we layer the redesign onto the same parchment system used elsewhere. */
+
+.design-surface {
+  /* Soft sepia for the italic "(saved)" suffix on a soft-skipped Done row.
+   * Lighter than --design-sepia so it whispers next to the louder amber pip,
+   * while still passing 4.5:1 against parchment. */
+  --design-sepia-soft: 30 30% 50%;
+}
+
+/* Text-only crimson link button. Used for "Fix this →", "Open logs", and
+ * inline secondary actions where a button border would be too heavy. */
+.design-surface .design-btn-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: hsl(var(--design-mark));
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.design-surface .design-btn-link:hover:not(:disabled) {
+  color: hsl(var(--design-mark-deep));
+  text-decoration: underline;
+}
+
+.design-surface .design-btn-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Status badges — mono caps with state mapping ───────────────────── */
+
+.design-surface .design-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.5rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.design-surface .design-status-badge::before {
+  content: "";
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.design-surface .design-status-badge[data-state="pending"] {
+  color: hsl(var(--design-ink-muted));
+  background: transparent;
+}
+.design-surface .design-status-badge[data-state="pending"]::before {
+  background: hsl(var(--design-ink-muted) / 0.5);
+}
+
+.design-surface .design-status-badge[data-state="in_progress"] {
+  color: hsl(var(--design-mark-deep));
+  background: hsl(var(--design-mark-soft));
+}
+.design-surface .design-status-badge[data-state="in_progress"]::before {
+  background: hsl(var(--design-mark));
+  animation: design-pulse-mark 1.6s ease-out infinite;
+}
+
+.design-surface .design-status-badge[data-state="done"] {
+  color: hsl(var(--design-emerald));
+  background: transparent;
+}
+.design-surface .design-status-badge[data-state="done"]::before {
+  background: hsl(var(--design-emerald));
+}
+
+.design-surface .design-status-badge[data-state="skipped"],
+.design-surface .design-status-badge[data-state="skipped_saved"] {
+  color: hsl(var(--design-sepia));
+  background: transparent;
+}
+.design-surface .design-status-badge[data-state="skipped"]::before,
+.design-surface .design-status-badge[data-state="skipped_saved"]::before {
+  background: hsl(var(--design-amber));
+}
+
+/* The "(saved)" suffix on a soft-skipped Done row — italic Spectral whisper
+ * appended after the badge text. Rendered as a sibling element with this
+ * class, since attribute-based pseudo-content can't carry the italic font. */
+.design-surface .design-status-badge__suffix {
+  font-family: "Spectral", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: hsl(var(--design-sepia-soft));
+  margin-left: 0.25rem;
+}
+
+.design-surface .design-status-badge[data-state="failed"] {
+  color: hsl(var(--design-mark-deep));
+  background: transparent;
+}
+.design-surface .design-status-badge[data-state="failed"]::before {
+  background: hsl(var(--design-mark-deep));
+}
+
+/* ─── Editorial banners — info / recoverable / blocking ──────────────── */
+
+.design-surface .design-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid transparent;
+  border-radius: 0 2px 2px 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.design-surface .design-banner__title {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+.design-surface .design-banner__body {
+  font-family: "Spectral", Georgia, serif;
+  font-style: italic;
+  color: hsl(var(--design-ink));
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.design-surface .design-banner[data-variant="info"] {
+  border-left-color: hsl(var(--design-rule-strong));
+  background: hsl(var(--design-paper-warm));
+}
+.design-surface .design-banner[data-variant="info"] .design-banner__title {
+  color: hsl(var(--design-ink));
+}
+
+.design-surface .design-banner[data-variant="recoverable"] {
+  border-left-color: hsl(var(--design-mark));
+  background: hsl(var(--design-paper));
+  border-top: 1px solid hsl(var(--design-rule) / 0.55);
+  border-right: 1px solid hsl(var(--design-rule) / 0.55);
+  border-bottom: 1px solid hsl(var(--design-rule) / 0.55);
+}
+.design-surface .design-banner[data-variant="recoverable"] .design-banner__title {
+  color: hsl(var(--design-mark-deep));
+}
+
+.design-surface .design-banner[data-variant="blocking"] {
+  border-left-color: hsl(var(--design-mark-deep));
+  border-left-width: 5px;
+  background: hsl(var(--design-paper-warm));
+}
+.design-surface .design-banner[data-variant="blocking"] .design-banner__title {
+  color: hsl(var(--design-mark-deep));
+}
+
+/* ─── Hub row — three-line density with state-driven left rule ───────── */
+
+.design-surface .design-row-status {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "eyebrow badge"
+    "title   title"
+    "marg    marg"
+    "footer  actions";
+  gap: 0.15rem 1rem;
+  padding: 0.85rem 1rem 0.95rem 1.15rem;
+  border-bottom: 1px solid hsl(var(--design-rule) / 0.55);
+  cursor: default;
+  transition: background-color 140ms ease;
+}
+
+.design-surface .design-row-status::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 2px;
+  background: transparent;
+  transition: background 140ms ease;
+}
+
+.design-surface .design-row-status:hover {
+  background: hsl(var(--design-mark-soft) / 0.6);
+}
+
+.design-surface .design-row-status[data-state="in_progress"]::before {
+  background: hsl(var(--design-mark));
+}
+.design-surface .design-row-status[data-state="done"]::before,
+.design-surface .design-row-status[data-state="skipped_saved"]::before {
+  background: hsl(var(--design-emerald));
+}
+.design-surface .design-row-status[data-state="skipped"]::before {
+  background: hsl(var(--design-amber) / 0.4);
+}
+.design-surface .design-row-status[data-state="failed"]::before {
+  background: hsl(var(--design-mark-deep));
+  width: 3px;
+}
+
+.design-surface .design-row-status[data-state="failed"] {
+  background: hsl(var(--design-paper-warm));
+}
+
+.design-surface .design-row-status__eyebrow {
+  grid-area: eyebrow;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--design-ink-muted));
+  align-self: center;
+}
+
+.design-surface .design-row-status__badge {
+  grid-area: badge;
+  align-self: center;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+}
+
+.design-surface .design-row-status__title {
+  grid-area: title;
+  font-family: "Spectral", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  letter-spacing: -0.012em;
+  color: hsl(var(--design-ink));
+  margin-top: 0.15rem;
+}
+
+.design-surface .design-row-status__marg {
+  grid-area: marg;
+  font-family: "Spectral", Georgia, serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: hsl(var(--design-sepia));
+  margin-top: 0.25rem;
+  /* 2-line clamp; full text via title attribute */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.design-surface .design-row-status__footer {
+  grid-area: footer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-feature-settings: "tnum" 1, "ss05" 1;
+  color: hsl(var(--design-ink-muted));
+}
+
+.design-surface .design-row-status__actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  justify-self: end;
+}
+
+@media (max-width: 720px) {
+  /* Compact actions cluster collapses titles below the row body. The
+   * footer (SAD §N · Saved at HH:MM) wraps under the body; actions
+   * become a horizontal strip. */
+  .design-surface .design-row-status {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "eyebrow"
+      "badge"
+      "title"
+      "marg"
+      "footer"
+      "actions";
+  }
+  .design-surface .design-row-status__badge,
+  .design-surface .design-row-status__actions {
+    justify-self: start;
+  }
+}
+
+/* ─── Stage 12 responsive additions ─────────────────────────────────── */
+
+/* Coarse-pointer touch-target floor. Doesn't affect mouse-driven layouts. */
+@media (pointer: coarse) {
+  .design-surface .design-btn-mark,
+  .design-surface .design-btn-ghost {
+    min-height: 44px;
+  }
+  .design-surface .design-btn-link {
+    min-height: 32px;
+    padding: 0.25rem 0.4rem;
+    /* Counter-padding so visual position stays the same on desktop. */
+    margin: -0.25rem -0.4rem;
+  }
+}
+
+/* Hub footer wraps below sm so the Generate SAD CTA never collides with
+ * the tool-change cluster. The class lives on the footer flex container
+ * in DiagramHub.tsx. */
+@media (max-width: 640px) {
+  .design-surface .design-hub-footer {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+  /* Banners stack their action cluster below the body on narrow widths. */
+  .design-surface .design-banner {
+    flex-wrap: wrap;
+  }
+  .design-surface .design-banner > div:last-child {
+    flex-basis: 100%;
+    margin-left: 1.75rem;
+  }
+}

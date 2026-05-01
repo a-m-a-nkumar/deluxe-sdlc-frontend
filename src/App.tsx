@@ -15,7 +15,7 @@ import ConfluencePage from "./pages/ConfluencePage";
 import JiraPage from "./pages/JiraPage";
 import JiraGenerationPage from "./pages/JiraGenerationPage";
 import TestScenarioPage from "./pages/TestScenarioPage";
-import DesignAssistant from "./pages/DesignAssistant";
+import SessionDesignAssistant from "./pages/SessionDesignAssistant";
 import PairProgramming from "./pages/PairProgramming";
 import TestingPage from "./pages/TestingPage";
 import HarnessPage from "./pages/HarnessPage";
@@ -89,11 +89,20 @@ const App = () => {
                   }
                 />
                 {/* Tech group modules */}
+                {/* Design Assistant — multi-session (Diagram + SAD phases). */}
                 <Route
                   path="/design-assistant"
                   element={
                     <ModuleProtectedRoute moduleId="design">
-                      <DesignAssistant />
+                      <SessionDesignAssistant />
+                    </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/design-assistant/:projectId/:sessionId?"
+                  element={
+                    <ModuleProtectedRoute moduleId="design">
+                      <SessionDesignAssistant />
                     </ModuleProtectedRoute>
                   }
                 />

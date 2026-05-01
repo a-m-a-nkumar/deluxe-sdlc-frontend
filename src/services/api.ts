@@ -99,6 +99,28 @@ export async function apiPut(
 }
 
 /**
+ * Make a PATCH request
+ */
+export async function apiPatch(
+  url: string,
+  body?: any,
+  options: RequestInit = {}
+): Promise<Response> {
+  const requestOptions: RequestInit = {
+    ...options,
+    method: "PATCH",
+  };
+
+  if (body instanceof FormData) {
+    requestOptions.body = body;
+  } else if (body) {
+    requestOptions.body = JSON.stringify(body);
+  }
+
+  return apiRequest(url, requestOptions);
+}
+
+/**
  * Make a DELETE request
  */
 export async function apiDelete(url: string, options: RequestInit = {}): Promise<Response> {

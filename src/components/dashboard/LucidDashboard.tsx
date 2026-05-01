@@ -397,8 +397,10 @@ export const LucidDashboard = () => {
               {/* Logical */}
               <button
                 onClick={() => setDiagramType("logical")}
+                disabled={isProcessing}
                 className={cn(
                   "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  isProcessing && "opacity-50 cursor-not-allowed",
                   diagramType === "logical"
                     ? "border-blue-500 bg-blue-50 shadow-sm"
                     : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"
@@ -424,8 +426,10 @@ export const LucidDashboard = () => {
               {/* Infrastructure */}
               <button
                 onClick={() => setDiagramType("infrastructure")}
+                disabled={isProcessing}
                 className={cn(
                   "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  isProcessing && "opacity-50 cursor-not-allowed",
                   diagramType === "infrastructure"
                     ? "border-emerald-500 bg-emerald-50 shadow-sm"
                     : "border-gray-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"
@@ -451,8 +455,10 @@ export const LucidDashboard = () => {
               {/* Security */}
               <button
                 onClick={() => setDiagramType("security")}
+                disabled={isProcessing}
                 className={cn(
                   "relative flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all",
+                  isProcessing && "opacity-50 cursor-not-allowed",
                   diagramType === "security"
                     ? "border-rose-500 bg-rose-50 shadow-sm"
                     : "border-gray-200 bg-white hover:border-rose-200 hover:bg-rose-50/40"
@@ -526,16 +532,100 @@ export const LucidDashboard = () => {
                 <span>Select pages and click "Generate Prompt" to get started</span>
               </div>
             ) : (
-              <Textarea
-                value={generatedPrompt}
-                onChange={(e) => setGeneratedPrompt(e.target.value)}
-                placeholder={isGeneratingPrompt ? "Generating architecture description…" : ""}
-                className={cn(
-                  "text-sm font-mono resize-none ml-8 transition-all duration-300",
-                  isPromptExpanded ? "min-h-[600px]" : "min-h-[260px]"
-                )}
-                disabled={isGeneratingPrompt}
-              />
+              <div className="ml-8 flex flex-col gap-2">
+                <div className={cn(
+                  "self-start flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                  diagramType === "logical"
+                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                    : diagramType === "security"
+                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                )}>
+                  <span className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    diagramType === "logical" ? "bg-blue-500" : diagramType === "security" ? "bg-rose-500" : "bg-emerald-500"
+                  )} />
+                  {diagramType === "logical"
+                    ? "Logical Architecture — What & Why"
+                    : diagramType === "security"
+                    ? "Security Architecture — Who & Protected"
+                    : "Infrastructure Architecture — Where & How"}
+                </div>
+                <Textarea
+                  value={generatedPrompt}
+                  onChange={(e) => setGeneratedPrompt(e.target.value)}
+                  placeholder={isGeneratingPrompt ? "Generating architecture description…" : ""}
+                  className="text-sm font-mono resize-none min-h-[260px]"
+                  disabled={isGeneratingPrompt}
+                />
+              </div>
+            )}
+
+            {/* ── Full-screen prompt overlay ── */}
+            {isPromptExpanded && (
+              <div className="fixed inset-0 z-50 flex flex-col bg-white">
+                {/* Overlay header */}
+                <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0",
+                        step2Done ? "bg-green-600" : "bg-primary"
+                      )}>
+                        2
+                      </div>
+                      <span className="text-sm font-semibold text-[#1a1a1a]">
+                        Review Description
+                      </span>
+                    </div>
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                      diagramType === "logical"
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : diagramType === "security"
+                        ? "bg-rose-50 border-rose-200 text-rose-700"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    )}>
+                      <span className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        diagramType === "logical" ? "bg-blue-500" : diagramType === "security" ? "bg-rose-500" : "bg-emerald-500"
+                      )} />
+                      {diagramType === "logical"
+                        ? "Logical — What & Why"
+                        : diagramType === "security"
+                        ? "Security — Who & Protected"
+                        : "Infrastructure — Where & How"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyPrompt}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border transition-all",
+                        copied
+                          ? "bg-green-50 border-green-200 text-green-600"
+                          : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                      )}
+                    >
+                      {copied ? <><Check className="w-3.5 h-3.5" />Copied!</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
+                    </button>
+                    <button
+                      onClick={() => setIsPromptExpanded(false)}
+                      className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+                    >
+                      <Minimize2 className="w-3.5 h-3.5" />Minimize
+                    </button>
+                  </div>
+                </div>
+                {/* Full-height textarea */}
+                <Textarea
+                  value={generatedPrompt}
+                  onChange={(e) => setGeneratedPrompt(e.target.value)}
+                  placeholder={isGeneratingPrompt ? "Generating architecture description…" : ""}
+                  className="flex-1 w-full rounded-none border-0 border-t-0 resize-none text-sm font-mono p-6 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  disabled={isGeneratingPrompt}
+                />
+              </div>
             )}
           </div>
 

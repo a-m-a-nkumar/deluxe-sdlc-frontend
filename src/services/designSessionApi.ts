@@ -31,7 +31,6 @@ export interface DesignSession {
   diagram_svg_s3_key: string | null;
   sad_id: string | null;
   confluence_page_id: string | null;
-  is_deleted: boolean;
   created_at: number;
   last_activity_ts: number;
 }

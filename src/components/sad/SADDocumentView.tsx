@@ -690,7 +690,16 @@ function DiagramBlock({
       .catch(() => {
         if (cancelled) return;
         // SVG missing — fall back to loading XML and rendering via iframe.
-        loadDiagramForSession(projectId, sessionId)
+        // Pass `kind` so the per-type slot is consulted; otherwise the
+        // backend defaults to "logical", silently substituting the wrong
+        // type into §6 / §7 (or 400-ing when Logical is also empty).
+        loadDiagramForSession(
+          projectId,
+          sessionId,
+          undefined,
+          undefined,
+          kind as "logical" | "infrastructure" | "security",
+        )
           .then((res) => {
             if (cancelled) return;
             if (res?.xml && res.xml.trim()) {

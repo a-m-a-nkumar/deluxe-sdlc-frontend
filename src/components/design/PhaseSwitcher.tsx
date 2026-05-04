@@ -31,8 +31,14 @@ interface Props {
   stageLabel: string;
 }
 
+// SAD tab is unlocked only after the user has explicitly clicked
+// "Continue to SAD" on the diagram hub (which advances stage to one of
+// the SAD_* states). Saving a diagram alone (which advances to
+// DIAGRAM_READY) does NOT unlock the tab — the user must walk through
+// the hub footer to reach SAD the first time. After that one-time
+// gate, the tab stays clickable for the rest of the session.
 const sadPhaseUnlocked = (s: DesignStage): boolean =>
-  s !== "NEW" && s !== "DIAGRAM_GATHERING";
+  s === "SAD_GATHERING" || s === "SAD_GENERATING" || s === "SAD_REFINING";
 
 export function PhaseSwitcher({
   phase,

@@ -1,18 +1,25 @@
 /**
- * SadGenerationConfirm — pre-flight summary before SAD generation.
+ * SadGenerationConfirm — informational hand-off from Diagram phase to SAD phase.
  *
- * The trust contract surface (P3): shows each diagram type, its status,
- * and which SAD section it lands in. The user confirms or jumps back to
- * fix anything misrepresented before spending 60–120s on generation.
+ * Click "Generate SAD" on the hub footer → this screen → the SAD pane.
+ * It surfaces the trust contract (P3) — which diagrams will land in
+ * which SAD section, and what placeholdered — and then primes the user
+ * for what they can do once inside the SAD pane (chat, generate, audit,
+ * edit per section, regenerate).
+ *
+ * NB: clicking the Continue button does NOT start LLM generation here.
+ * The SAD pane has its own Generate button so the user can chat with
+ * the assistant first, add facts, and only then run generation.
  *
  * Blocking conditions:
- *   • All slots Pending → Confirm disabled, banner + hint
- *   • Any slot InProgress → Confirm disabled, banner with "Open editor" link
- *   • All slots Skipped → allowed, but a marginalia warning is shown
+ *   • Any slot InProgress → Continue disabled, banner with "Open editor" link
+ *   • All slots Pending   → Continue disabled, banner with hint
+ *   • All slots Skipped   → allowed, info banner explains placeholder behaviour
  */
 
 import { useEffect } from "react";
-import { ArrowLeft, ArrowRight, CheckCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Banner } from "./Banner";
 import { StatusBadge } from "./StatusBadge";
 import {
@@ -62,19 +69,21 @@ export const SadGenerationConfirm = ({
     <div className="design-surface flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[760px] mx-auto px-6 py-12 design-stagger">
-          <div className="design-eyebrow">SAD · Generation</div>
+          <div className="design-eyebrow">SAD · Hand-off</div>
           <h1
             className="design-heading mt-1"
             style={{ fontSize: "1.875rem", lineHeight: 1.18 }}
           >
-            Generate the Software Architecture Document
+            Continue to the SAD pane
           </h1>
           <p
             className="design-marginalia mt-2"
             style={{ fontSize: "0.95rem", maxWidth: "44rem" }}
           >
-            Review what will be included before you generate. You can go back
-            to fix anything that's not how you want it.
+            Take your saved diagrams forward into Plates 01–10 — the SAD
+            specification pane — where you can chat with the assistant,
+            run generation when you're ready, audit each section, and
+            edit content as needed.
           </p>
 
           {/* ── Blocking banners ── */}
@@ -220,6 +229,73 @@ export const SadGenerationConfirm = ({
             </p>
           </div>
 
+          {/* ── What you can do in the SAD pane ── */}
+          <div className="design-plate p-5 mt-6">
+            <div className="design-eyebrow mb-3">
+              In the SAD pane you can
+            </div>
+            <ul className="space-y-2.5" style={{ fontSize: "0.88rem" }}>
+              <li className="flex items-baseline gap-2">
+                <ChevronRight
+                  className="w-3 h-3 flex-shrink-0 mt-1"
+                  style={{ color: "hsl(var(--design-mark))" }}
+                />
+                <span>
+                  <strong style={{ color: "hsl(var(--design-ink))" }}>
+                    Chat with the assistant
+                  </strong>{" "}
+                  — paste Confluence URLs, upload docs, add facts. The
+                  assistant will absorb everything before you run generation.
+                </span>
+              </li>
+              <li className="flex items-baseline gap-2">
+                <ChevronRight
+                  className="w-3 h-3 flex-shrink-0 mt-1"
+                  style={{ color: "hsl(var(--design-mark))" }}
+                />
+                <span>
+                  <strong style={{ color: "hsl(var(--design-ink))" }}>
+                    Generate the SAD
+                  </strong>{" "}
+                  — when ready, click <em>Generate</em> in the SAD pane to
+                  draft all 10 plates from your saved diagrams + facts.
+                </span>
+              </li>
+              <li className="flex items-baseline gap-2">
+                <ChevronRight
+                  className="w-3 h-3 flex-shrink-0 mt-1"
+                  style={{ color: "hsl(var(--design-mark))" }}
+                />
+                <span>
+                  <strong style={{ color: "hsl(var(--design-ink))" }}>
+                    Audit
+                  </strong>{" "}
+                  — score each section and surface what's missing or unclear.
+                </span>
+              </li>
+              <li className="flex items-baseline gap-2">
+                <ChevronRight
+                  className="w-3 h-3 flex-shrink-0 mt-1"
+                  style={{ color: "hsl(var(--design-mark))" }}
+                />
+                <span>
+                  <strong style={{ color: "hsl(var(--design-ink))" }}>
+                    Edit per section
+                  </strong>{" "}
+                  — hand-edit, regenerate, or revert any section. Drafts are
+                  versioned so a regenerate is always reversible.
+                </span>
+              </li>
+            </ul>
+            <p
+              className="design-marginalia mt-4"
+              style={{ fontSize: "0.82rem" }}
+            >
+              Continuing now does not start generation. The SAD pane has its
+              own Generate button so you can author at your own pace.
+            </p>
+          </div>
+
           {/* ── Footer actions ── */}
           <div className="flex items-center justify-end gap-3 mt-8">
             <button
@@ -236,8 +312,7 @@ export const SadGenerationConfirm = ({
               disabled={blocked}
               onClick={onConfirm}
             >
-              <CheckCheck className="w-3.5 h-3.5" />
-              Confirm & generate
+              Continue to SAD
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -210,7 +210,7 @@ export const DiagramHub = ({
             onClick={onGenerateSad}
             title={generateHint ?? undefined}
           >
-            Generate SAD
+            Continue to SAD
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

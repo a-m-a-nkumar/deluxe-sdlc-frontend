@@ -659,9 +659,7 @@ export default function SessionDesignAssistant() {
                     await handleSaveDiagramToSession(type);
                     return { artifactKey: undefined };
                   }}
-                  onGenerateSad={async () => {
-                    await handleGenerateSad();
-                  }}
+                  onContinueToSad={handleContinueToSad}
                   onDownloadSad={async () => {
                     if (!currentSession) return;
                     await downloadSadDocx(

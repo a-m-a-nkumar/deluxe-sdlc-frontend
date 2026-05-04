@@ -48,11 +48,17 @@ interface Props {
     type: DiagramType;
     tool: AuthoringTool;
   }) => Promise<{ artifactKey?: string }>;
-  /** Generates the SAD using whichever slots are Done. */
-  onGenerateSad: () => Promise<void>;
-  /** Download the generated SAD as DOCX. */
+  /** Hand off from the diagram hub to the SAD pane. Advances the session
+   *  stage to SAD_GATHERING and switches the parent's phase to "sad".
+   *  Does NOT start LLM generation — the SAD pane has its own Generate
+   *  button for that. This is what the bottom-right "Continue to SAD"
+   *  button on the hub triggers (via the pre-flight confirm screen). */
+  onContinueToSad: () => Promise<void> | void;
+  /** Download the generated SAD as DOCX (used by sad_done screen, kept
+   *  for parity with the older flow that auto-generated on confirm). */
   onDownloadSad: () => Promise<void> | void;
-  /** Switches the parent's phase to "sad" (Plates 01–10) for in-app review. */
+  /** Kept for backward compat. Not currently used since "Continue to SAD"
+   *  uses onContinueToSad which also advances stage. */
   onOpenSadWorkspace: () => void;
 }
 
@@ -60,7 +66,7 @@ export const DiagramPhaseHost = ({
   sessionId,
   projectId,
   onPersistDiagram,
-  onGenerateSad,
+  onContinueToSad,
   onDownloadSad,
   onOpenSadWorkspace,
 }: Props) => {
@@ -173,17 +179,22 @@ export const DiagramPhaseHost = ({
     [slots, goHub],
   );
 
-  const handleGenerateSad = useCallback(async () => {
+  // Hand-off from confirm screen to the SAD pane. The user explicitly
+  // chose to continue; we advance the session stage and the parent
+  // re-renders the SAD pane in place. No LLM call here — generation is
+  // a separate user action inside the SAD pane.
+  const handleContinueToSad = useCallback(async () => {
     setGenError(null);
-    setScreen({ kind: "sad_generating" });
     try {
-      await onGenerateSad();
-      setScreen({ kind: "sad_done" });
+      await onContinueToSad();
+      // Parent re-renders into the SAD pane; this component unmounts.
     } catch (e) {
-      setGenError(e instanceof Error ? e.message : "SAD generation failed.");
+      setGenError(
+        e instanceof Error ? e.message : "Couldn't switch to the SAD pane.",
+      );
       setScreen({ kind: "hub" });
     }
-  }, [onGenerateSad]);
+  }, [onContinueToSad]);
 
   const handleChangeTool = useCallback(() => {
     setScreen({ kind: "tool_select" });
@@ -243,7 +254,7 @@ export const DiagramPhaseHost = ({
         <SadGenerationConfirm
           slots={slots}
           onCancel={goHub}
-          onConfirm={handleGenerateSad}
+          onConfirm={handleContinueToSad}
           onFix={(t) => {
             goHub();
             requestAnimationFrame(() => {
@@ -315,18 +326,18 @@ export const DiagramPhaseHost = ({
         >
           <Banner
             variant="recoverable"
-            title="SAD generation failed"
+            title="Couldn't continue to SAD"
             actions={
               <button
                 type="button"
                 className="design-btn-mark"
-                onClick={handleGenerateSad}
+                onClick={handleContinueToSad}
               >
                 Retry
               </button>
             }
           >
-            {genError} None of your saved diagrams were affected.
+            {genError} Your saved diagrams are intact.
           </Banner>
         </div>
       )}

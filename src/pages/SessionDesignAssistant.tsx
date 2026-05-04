@@ -642,8 +642,6 @@ export default function SessionDesignAssistant() {
                 phase={phase}
                 stage={currentSession.stage}
                 onPhaseChange={setPhase}
-                onContinueToSad={handleContinueToSad}
-                onSkipDiagram={handleSkipDiagram}
                 sessionLabel={sessionPlateLabel}
                 stageLabel={stageLabel}
               />

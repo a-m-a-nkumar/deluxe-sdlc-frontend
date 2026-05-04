@@ -3,17 +3,22 @@
  *
  *   ┌──── Plate 00 ─── DRAWING ────  Plate 01–10 ─── SPECIFICATION ────┐
  *   │                                                                  │
- *   │  DRAWN · session-name   ⌁   STAGE · DIAGRAM_READY                │
- *   │                                                       [continue] │
+ *   │                                  SESSION · name  ⌁  STAGE · …    │
  *   └──────────────────────────────────────────────────────────────────┘
  *
  * The SAD tab is gated by stage: it stays disabled until the user has
- * either saved a diagram or explicitly skipped that step. The cartouche
- * in the right rail is the module's signature element — it makes
- * "where am I in this drafting?" answerable at a glance.
+ * walked through the hub footer's "Continue to SAD" button. The
+ * cartouche in the right rail is the module's signature element —
+ * it makes "where am I in this drafting?" answerable at a glance.
+ *
+ * The Skip-Diagram and Continue-to-SAD buttons used to live here, but
+ * the redesigned hub now owns both flows: per-row Skip on each diagram
+ * row, plus a single "Continue to SAD →" button in the hub's footer.
+ * Surfacing the same actions twice was redundant and confused the
+ * primary path, so we removed them from this strip.
  */
 
-import { ChevronRight, Layers, FileText } from "lucide-react";
+import { Layers, FileText } from "lucide-react";
 import type { DesignStage } from "@/services/designSessionApi";
 import { Cartouche } from "./Cartouche";
 
@@ -23,8 +28,6 @@ interface Props {
   phase: DesignPhase;
   stage: DesignStage;
   onPhaseChange: (next: DesignPhase) => void;
-  onContinueToSad?: () => void;
-  onSkipDiagram?: () => void;
   /** Short, all-caps session label rendered in the cartouche. */
   sessionLabel: string;
   /** Pretty stage label rendered in the cartouche. */
@@ -44,8 +47,6 @@ export function PhaseSwitcher({
   phase,
   stage,
   onPhaseChange,
-  onContinueToSad,
-  onSkipDiagram,
   sessionLabel,
   stageLabel,
 }: Props) {
@@ -72,7 +73,11 @@ export function PhaseSwitcher({
           data-active={phase === "sad" && sadEnabled}
           disabled={!sadEnabled}
           onClick={() => sadEnabled && onPhaseChange("sad")}
-          title={sadEnabled ? undefined : "Save the diagram (or skip it) to unlock the SAD plates"}
+          title={
+            sadEnabled
+              ? undefined
+              : "Click Continue to SAD on the diagram hub to unlock this tab"
+          }
         >
           <FileText className="h-3 w-3 inline mr-1.5 -mt-0.5" />
           Plates 01–10 · Specification
@@ -86,17 +91,6 @@ export function PhaseSwitcher({
             { label: "Stage", value: stageLabel },
           ]}
         />
-        {phase === "diagram" && stage === "DIAGRAM_READY" && onContinueToSad && (
-          <button type="button" className="design-btn-mark" onClick={onContinueToSad}>
-            Continue to SAD
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        )}
-        {phase === "diagram" && stage === "NEW" && onSkipDiagram && (
-          <button type="button" className="design-btn-ghost" onClick={onSkipDiagram}>
-            Skip diagram
-          </button>
-        )}
       </div>
     </div>
   );

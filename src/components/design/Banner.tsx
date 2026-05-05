@@ -1,17 +1,13 @@
 /**
- * Banner — editorial info / recoverable-error / blocking-error notices.
+ * Banner — inline notice for info / recoverable error / blocking error.
  *
- * Replaces all OS toasts and modal popups in the redesign. Three variants:
- *   • info        — non-blocking notice (stale state reconcile, etc.)
- *   • recoverable — has a Retry; user can usually self-recover
- *   • blocking    — cannot proceed without resolution; uses crimson-deep + ⚠
- *
- * The visual language lives in `design-theme.css`. This component composes
- * title + body + optional action area (slot for buttons / links).
+ * Replaces OS toasts and modal popups with an editorial-coloured inline strip.
+ * Built on shadcn <Alert> + canonical Velox tokens (no design-* classes).
  */
 
 import { AlertTriangle, Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 export type BannerVariant = "info" | "recoverable" | "blocking";
@@ -27,6 +23,15 @@ interface Props {
   focusOnMount?: boolean;
   className?: string;
 }
+
+const VARIANT_CLASSES: Record<BannerVariant, string> = {
+  info:
+    "border-l-4 border-l-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] [&>svg]:text-[hsl(var(--primary))]",
+  recoverable:
+    "border-l-4 border-l-[hsl(var(--audit-warn))] bg-[hsl(var(--audit-warn)/0.08)] [&>svg]:text-[hsl(var(--audit-warn))]",
+  blocking:
+    "border-l-4 border-l-destructive bg-destructive/10 [&>svg]:text-destructive",
+};
 
 const ICON: Record<BannerVariant, typeof Info> = {
   info: Info,
@@ -44,27 +49,32 @@ export const Banner = ({
 }: Props) => {
   const Icon = ICON[variant];
   return (
-    <div
-      className={cn("design-banner", className)}
-      data-variant={variant}
+    <Alert
       role={variant === "info" ? "status" : "alert"}
       tabIndex={focusOnMount ? -1 : undefined}
       ref={(el) => { if (focusOnMount && el) el.focus(); }}
+      className={cn(VARIANT_CLASSES[variant], "py-3", className)}
     >
-      <Icon
-        className="w-4 h-4 mt-0.5 flex-shrink-0"
-        aria-hidden
-        style={{ color: "currentColor" }}
-      />
-      <div className="flex-1 min-w-0">
-        {title && <span className="design-banner__title">{title}</span>}
-        {children && <div className="design-banner__body">{children}</div>}
-      </div>
-      {actions && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {actions}
+      <Icon className="w-4 h-4" aria-hidden />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {title && (
+            <div className="text-sm font-semibold text-[hsl(var(--ink-body))] mb-0.5">
+              {title}
+            </div>
+          )}
+          {children && (
+            <div className="text-sm text-[hsl(var(--ink-muted))] leading-relaxed">
+              {children}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+        {actions && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {actions}
+          </div>
+        )}
+      </div>
+    </Alert>
   );
 };

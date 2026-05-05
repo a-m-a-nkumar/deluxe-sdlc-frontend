@@ -49,7 +49,7 @@ const navigationItems = [
   },
   {
     icon: Palette,
-    label: "Design Assistant",
+    label: "Architecture",
     description: "Technical architecture planning",
     id: "design",
     path: "/design-assistant",
@@ -271,7 +271,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                     <Button
                       variant="ghost"
                       className={`w-full justify-start h-auto p-3 text-left hover:bg-accent`}
-                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : undefined}
+                      style={isActive ? { backgroundColor: 'hsl(var(--primary-selected))' } : undefined}
                     >
                       <div className="flex items-start gap-3 w-full">
                         <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -300,7 +300,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                     <Button
                       variant="ghost"
                       className={`w-full h-10 p-0 justify-center hover:bg-accent`}
-                      style={isActive ? { backgroundColor: 'rgba(184, 218, 222, 0.34)' } : undefined}
+                      style={isActive ? { backgroundColor: 'hsl(var(--primary-selected))' } : undefined}
                       title={item.label}
                     >
                       <item.icon className="w-4 h-4" />

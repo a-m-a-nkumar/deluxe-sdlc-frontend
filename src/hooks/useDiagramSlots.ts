@@ -55,22 +55,27 @@ const SAD_SECTION_BY_TYPE: Record<DiagramType, number> = {
   security: 6,
 };
 
-/** Stable display labels — kept in the hook so screens stay in sync. */
-export const TYPE_LABEL: Record<DiagramType, { plate: string; title: string; subtitle: string; marginalia: string }> = {
+/** Stable display labels — kept in the hook so screens stay in sync.
+ *  `num` is the leading numeral on the canonical `.usage-section-mark`.
+ *  `eyebrow` is the all-caps trailing text. */
+export const TYPE_LABEL: Record<DiagramType, { num: string; eyebrow: string; title: string; subtitle: string; marginalia: string }> = {
   logical: {
-    plate: "Plate · 01",
+    num: "01",
+    eyebrow: "Logical view",
     title: "Logical · What & Why",
     subtitle: "Vendor-agnostic capabilities and the data flowing between them.",
     marginalia: "Vendor-agnostic capabilities and the data flowing between them. Audience: developers, architects, business stakeholders.",
   },
   infrastructure: {
-    plate: "Plate · 02",
+    num: "02",
+    eyebrow: "Infrastructure view",
     title: "Infrastructure · Where & How",
     subtitle: "AWS services, networks, and how the pieces wire up.",
     marginalia: "AWS services, networks, and how the deployed pieces wire up. Audience: DevOps, SRE, platform.",
   },
   security: {
-    plate: "Plate · 03",
+    num: "03",
+    eyebrow: "Security view",
     title: "Security · Who & Protected",
     subtitle: "Trust boundaries, controls, and access policies.",
     marginalia: "Trust boundaries, controls, and access policies. Audience: security, auditors, compliance.",

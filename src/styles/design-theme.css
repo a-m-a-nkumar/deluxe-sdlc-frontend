@@ -1,80 +1,52 @@
 /*
- * Design Assistant theme — "Drafting table on parchment, Deluxe red ink".
+ * Design Assistant theme — canonical-Velox compatibility layer.
  *
- * Scoped via the .design-surface class so the rest of the app stays intact.
- * Aligned with Deluxe brand: --primary (355 84% 45%) = crimson, used the
- * way an architect's red revision-mark pencil is used on vellum — sparingly,
- * and only when something matters.
+ * Scoped via the `.design-surface` class. The legacy `--design-*` tokens
+ * are preserved (so the DesignDashboard / LucidDashboard out-of-scope
+ * dashboards keep working), but their VALUES now resolve to canonical
+ * Velox tokens from `src/index.css`. The result: every component that
+ * uses these classes inherits the canonical look without changing JSX.
  *
- * Tokens stay in the `--design-*` namespace so we don't collide with the
- * app-wide shadcn variables (--primary, --background, etc.). Each component
- * inside .design-surface paints itself from these tokens, never from the
- * generic ones.
+ * What changed in the Stage-5 refactor:
+ *   • Surface: parchment / cream / cyanotype-grid → canonical pink-on-white
+ *   • Type:    Spectral / Familjen / JetBrains   → Helvetica Neue + system mono
+ *   • Depth:   letterpress offset shadows         → quiet shadcn shadow-sm
+ *   • Radius:  2px sharp                          → 4px (rounded-sm)
+ *   • Motion:  bespoke rise / stagger / pulse     → simple fade or none
  *
- * The four pillars:
- *   1. Typography — Spectral (serif headings), Familjen Grotesk (body),
- *      JetBrains Mono (plate numbers, eyebrows, cartouches).
- *   2. Colour — graphite ink, parchment paper, Deluxe crimson as the only
- *      action accent. No purple. No saffron. No multi-color.
- *   3. Depth — borders only, with a single 2px ink rule for emphasis.
- *      No drop shadows; "stamp" shadows (offset solid colour) for buttons
- *      so pressure reads as ink-on-paper.
- *   4. Motion — one orchestrated entrance per plate, then stillness.
+ * See `.interface-design/system.md` §10 for the full mapping table.
  */
 
 .design-surface {
-  /* --- Foundation tokens --- */
-  --design-ink: 218 55% 16%;            /* graphite-navy, deep brand ink */
-  --design-ink-soft: 218 30% 32%;       /* secondary text */
-  --design-ink-muted: 218 15% 48%;      /* tertiary / metadata */
-  --design-paper: 350 100% 97.5%;       /* Deluxe blush off-white */
-  --design-paper-deep: 350 60% 95%;     /* card / inset surface */
-  --design-paper-warm: 36 35% 92%;      /* margin / aside surface */
+  /* --- Foundation tokens (now aliased to canonical Velox) --- */
+  --design-ink: var(--ink-body);             /* was 218 55% 16% (navy) */
+  --design-ink-soft: var(--ink-body);        /* was 218 30% 32% */
+  --design-ink-muted: var(--ink-muted);      /* was 218 15% 48% */
+  --design-paper: var(--background);         /* was 350 100% 97.5% — same value, just routed through canonical token */
+  --design-paper-deep: var(--card);          /* was 350 60% 95% (cream) → pure white card */
+  --design-paper-warm: var(--card);          /* was 36 35% 92% (cream/parchment) — forbidden in canonical; collapsed to card */
 
-  --design-rule: 218 30% 78%;           /* hairline borders */
-  --design-rule-strong: 218 45% 28%;    /* 2px emphasis rules */
+  --design-rule: var(--border);              /* was 218 30% 78% — now hairline gray-200 */
+  --design-rule-strong: var(--ink-body);     /* was 218 45% 28% (deep navy) — now ink */
 
-  --design-mark: 355 84% 45%;           /* Deluxe crimson — the accent */
-  --design-mark-soft: 355 100% 95%;     /* Deluxe primary-light blush */
-  --design-mark-deep: 355 80% 32%;      /* hover state for the accent */
+  --design-mark: var(--primary);             /* crimson — same token, different name */
+  --design-mark-soft: var(--primary-light);  /* crimson blush */
+  --design-mark-deep: var(--primary);        /* hover collapses to primary; opacity handled in rules */
 
-  --design-sepia: 30 40% 38%;           /* margin notes */
-  --design-emerald: 158 60% 30%;        /* audit GREEN */
-  --design-amber: 30 90% 42%;           /* audit AMBER */
+  --design-sepia: var(--ink-muted);          /* was 30 40% 38% — now muted body */
+  --design-emerald: var(--audit-pass);       /* SAD audit pass — scoped exception */
+  --design-amber: var(--audit-warn);         /* SAD audit warn — scoped exception */
 
-  /* --- Surface --- */
+  /* --- Surface — canonical pink-on-white, no cyanotype grid --- */
   color: hsl(var(--design-ink));
-  background:
-    radial-gradient(circle at 12% 0%, hsl(355 100% 96% / 0.55), transparent 55%),
-    radial-gradient(circle at 90% 100%, hsl(218 50% 90% / 0.45), transparent 50%),
-    hsl(var(--design-paper));
-  font-family:
-    "Familjen Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    sans-serif;
-  font-feature-settings: "ss01", "cv11";
-  letter-spacing: -0.005em;
+  background: hsl(var(--design-paper));
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0;
   position: relative;
-}
-
-/* Faint cyanotype grid layered behind content, fades at the edges. */
-.design-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(hsl(var(--design-rule) / 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--design-rule) / 0.22) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: -1px -1px;
-  mask-image: radial-gradient(ellipse at center, black 55%, transparent 92%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 92%);
-  z-index: 0;
 }
 
 .design-surface > * {
   position: relative;
-  z-index: 1;
 }
 
 /* ─── Typography ─────────────────────────────────────────────────────── */
@@ -83,7 +55,7 @@
 .design-surface h2,
 .design-surface h3,
 .design-surface .design-heading {
-  font-family: "Spectral", "Iowan Old Style", Georgia, serif;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 600;
   letter-spacing: -0.012em;
   color: hsl(var(--design-ink));
@@ -94,7 +66,7 @@
 .design-surface h3 { font-size: 1.2rem;   line-height: 1.3;  }
 
 .design-surface .design-eyebrow {
-  font-family: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -103,7 +75,7 @@
 
 .design-surface .design-mono,
 .design-surface .design-plate-num {
-  font-family: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-feature-settings: "ss05", "cv01";
 }
 
@@ -113,8 +85,8 @@
 }
 
 .design-surface .design-marginalia {
-  font-family: "Spectral", Georgia, serif;
-  font-style: italic;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal;
   color: hsl(var(--design-sepia));
   font-size: 0.85rem;
   line-height: 1.45;
@@ -128,8 +100,8 @@
   gap: 0.5rem;
   padding: 0.3rem 0.7rem;
   border: 1px solid hsl(var(--design-ink) / 0.7);
-  border-radius: 2px;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -157,7 +129,7 @@
   background: hsl(var(--design-paper-deep));
   border: 1px solid hsl(var(--design-rule) / 0.6);
   border-top: 2px solid hsl(var(--design-rule-strong));
-  border-radius: 2px;
+  border-radius: 4px;
   box-shadow: none;
 }
 
@@ -171,12 +143,12 @@
   background: hsl(var(--design-ink));
   color: hsl(var(--design-paper));
   border: 1px solid hsl(var(--design-ink));
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.45rem 0.9rem;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
   transition: transform 120ms ease, background 160ms ease, box-shadow 160ms ease;
   white-space: nowrap;
@@ -189,8 +161,8 @@
   background: hsl(var(--design-mark));
   color: hsl(0 0% 100%);
   border-color: hsl(var(--design-mark));
-  transform: translate(-1px, -1px);
-  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+  transform: none;
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.05);
 }
 
 .design-surface .design-btn-primary:disabled {
@@ -202,8 +174,8 @@
   background: transparent;
   color: hsl(var(--design-ink));
   border: 1px solid hsl(var(--design-rule));
-  border-radius: 2px;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -230,12 +202,12 @@
   background: hsl(var(--design-mark));
   color: hsl(0 0% 100%);
   border: 1px solid hsl(var(--design-mark));
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.45rem 0.9rem;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
   display: inline-flex;
@@ -246,8 +218,8 @@
 .design-surface .design-btn-mark:hover:not(:disabled) {
   background: hsl(var(--design-mark-deep));
   border-color: hsl(var(--design-mark-deep));
-  transform: translate(-1px, -1px);
-  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+  transform: none;
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.05);
 }
 
 .design-surface .design-btn-mark:disabled {
@@ -275,7 +247,7 @@
   background: hsl(var(--design-paper));
   color: hsl(var(--design-ink));
   border: 1.5px solid hsl(var(--design-ink));
-  box-shadow: 2px 2px 0 hsl(var(--design-ink) / 0.85);
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.05);
   cursor: pointer;
   padding: 0;
   transition:
@@ -290,13 +262,13 @@
   background: hsl(var(--design-mark));
   color: hsl(var(--design-paper));
   border-color: hsl(var(--design-mark-deep));
-  box-shadow: 3px 3px 0 hsl(var(--design-ink) / 0.85);
-  transform: translate(-1px, -1px);
+  box-shadow: 0 2px 4px hsl(0 0% 0% / 0.08);
+  transform: none;
 }
 
 .design-surface .design-hint-dismiss:active {
   box-shadow: 0 0 0 hsl(var(--design-ink) / 0);
-  transform: translate(2px, 2px);
+  transform: none;
 }
 
 .design-surface .design-hint-dismiss:focus-visible {
@@ -309,7 +281,7 @@
 .design-surface .design-tab {
   position: relative;
   padding: 0.6rem 1rem 0.5rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.7rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -431,7 +403,7 @@
   font-size: 0.85rem;
   letter-spacing: 0.005em;
   max-width: 80%;
-  box-shadow: 1.5px 2px 0 hsl(var(--design-mark) / 0.55);
+  box-shadow: 0 1px 2px hsl(var(--primary) / 0.18);
   /* Force unbroken strings (URLs, long tokens) to wrap inside the bubble
    * instead of expanding it horizontally and triggering a parent scroll. */
   overflow-wrap: anywhere;
@@ -454,9 +426,9 @@
 .design-surface .design-chat-input {
   background: hsl(var(--design-paper-deep));
   border: 1px solid hsl(var(--design-rule));
-  border-radius: 2px;
+  border-radius: 4px;
   padding: 0.55rem 0.7rem;
-  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.88rem;
   color: hsl(var(--design-ink));
   width: 100%;
@@ -483,7 +455,7 @@
   font-size: 0.82rem;
 }
 .design-surface .design-table thead th {
-  font-family: "JetBrains Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -581,7 +553,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -608,13 +580,13 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.18rem 0.5rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   line-height: 1.2;
-  border-radius: 2px;
+  border-radius: 4px;
   white-space: nowrap;
 }
 
@@ -662,12 +634,12 @@
   background: hsl(var(--design-amber));
 }
 
-/* The "(saved)" suffix on a soft-skipped Done row — italic Spectral whisper
- * appended after the badge text. Rendered as a sibling element with this
- * class, since attribute-based pseudo-content can't carry the italic font. */
+/* The "(saved)" suffix on a soft-skipped Done row — small upright tag
+ * appended after the badge text. (Was an italic Spectral whisper before
+ * the canonical-Velox refactor.) */
 .design-surface .design-status-badge__suffix {
-  font-family: "Spectral", Georgia, serif;
-  font-style: italic;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal;
   font-weight: 400;
   font-size: 0.7rem;
   letter-spacing: 0;
@@ -698,7 +670,7 @@
 }
 
 .design-surface .design-banner__title {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -708,8 +680,8 @@
 }
 
 .design-surface .design-banner__body {
-  font-family: "Spectral", Georgia, serif;
-  font-style: italic;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal;
   color: hsl(var(--design-ink));
   font-size: 0.85rem;
   line-height: 1.5;
@@ -797,7 +769,7 @@
 
 .design-surface .design-row-status__eyebrow {
   grid-area: eyebrow;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.18em;
@@ -816,7 +788,7 @@
 
 .design-surface .design-row-status__title {
   grid-area: title;
-  font-family: "Spectral", Georgia, serif;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 600;
   font-size: 1.2rem;
   line-height: 1.3;
@@ -827,8 +799,8 @@
 
 .design-surface .design-row-status__marg {
   grid-area: marg;
-  font-family: "Spectral", Georgia, serif;
-  font-style: italic;
+  font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-style: normal;
   font-size: 0.85rem;
   line-height: 1.45;
   color: hsl(var(--design-sepia));
@@ -846,7 +818,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-top: 0.6rem;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 500;
   letter-spacing: 0.04em;

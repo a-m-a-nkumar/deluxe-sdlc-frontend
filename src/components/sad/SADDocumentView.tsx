@@ -527,7 +527,7 @@ export function SADDocumentView({
                   value={editBuffer}
                   onChange={(e) => setEditBuffer(e.target.value)}
                   className="design-chat-input w-full"
-                  style={{ minHeight: "320px", fontFamily: "JetBrains Mono, ui-monospace, monospace", fontSize: "0.85rem", lineHeight: 1.55 }}
+                  style={{ minHeight: "320px", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", fontSize: "0.85rem", lineHeight: 1.55 }}
                   spellCheck={false}
                 />
                 {editError && (

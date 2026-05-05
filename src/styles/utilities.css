@@ -21,25 +21,18 @@
   border-radius: 3px;
 }
 
-/* --- Text colors --- */
-.text-muted-label {
-  color: #727272;
-}
-
-.text-icon-gray {
-  color: #858585;
-}
-
-.text-sub-label {
-  color: #747474;
-}
-
+/* --- Text colors ---
+   All five greys consolidated to two tokens (--ink-body / --ink-muted).
+   See .interface-design/system.md §2 for token definitions. */
+.text-muted-label,
+.text-icon-gray,
+.text-sub-label,
 .text-small-label {
-  color: #6C6C6C;
+  color: hsl(var(--ink-muted));
 }
 
 .text-body-dark {
-  color: #3B3B3B;
+  color: hsl(var(--ink-body));
 }
 
 .text-primary-red {

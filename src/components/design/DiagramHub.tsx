@@ -3,13 +3,18 @@
  *
  * Three rows (Logical / Infrastructure / Security) showing per-type slot
  * status, with row-level Generate/Skip/Reopen actions and a footer that
- * gates `Generate SAD →` based on aggregate state. The aria-live region
+ * gates `Continue to SAD →` based on aggregate state. The aria-live region
  * in the footer announces every status change as a full sentence so
  * screen-readers hear the receipt P1 demands.
+ *
+ * Canonical Velox vocabulary: numbered section-mark, gradient hero
+ * heading, stat-card rows, shadcn buttons. Same register as the
+ * Organization Usage page.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Banner } from "./Banner";
 import { DiagramHubRow } from "./DiagramHubRow";
 import {
@@ -95,56 +100,50 @@ export const DiagramHub = ({
     : null;
 
   return (
-    <div className="design-surface flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* ── Header strip ── */}
-      <div
-        className="px-6 py-5 border-b design-rise"
-        style={{ borderColor: "hsl(var(--design-rule) / 0.55)" }}
-      >
-        <div className="design-eyebrow">Plate · 00 — Drawing</div>
-        <h1
-          className="design-heading mt-1"
-          style={{ fontSize: "1.875rem", lineHeight: 1.18 }}
-        >
+      <div className="px-6 py-6 border-b border-border">
+        <div className="usage-section-mark mb-2">
+          <span className="usage-section-num">00</span>
+          <span>Drawing</span>
+        </div>
+        <h1 className="usage-num-display text-3xl sm:text-4xl font-bold tracking-tight text-[hsl(var(--ink-body))]">
           Architecture diagrams
         </h1>
-        <p
-          className="design-marginalia mt-1"
-          style={{ fontSize: "0.95rem", maxWidth: "44rem" }}
-        >
+        <p className="mt-2 text-sm text-[hsl(var(--ink-muted))] max-w-2xl leading-relaxed">
           Author up to three views of the same system. Each one lands in its
-          own section of the SAD — never substituted for another.
+          own section of the architecture document — never substituted for
+          another.
         </p>
       </div>
 
       {/* ── Body — rows + (optional) blocking banner ── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="design-stagger">
+        <div className="px-6 py-5 space-y-4">
           {blockedByInProgress && blockedByInProgress.length > 0 && (
-            <div className="px-6 pt-4">
-              <Banner
-                variant="recoverable"
-                title="Save your edits before generating"
-              >
-                You have {blockedByInProgress.length === 1
-                  ? "an unsaved diagram open"
-                  : `${blockedByInProgress.length} diagrams currently being edited`}.
-                Save or close before generating the SAD —{" "}
-                {blockedByInProgress.map((t, i) => (
-                  <span key={t}>
-                    {i > 0 && ", "}
-                    <button
-                      type="button"
-                      className="design-btn-link"
-                      onClick={() => onOpenEditor(t)}
-                    >
-                      open {TYPE_LABEL[t].title.split(" · ")[0]} →
-                    </button>
-                  </span>
-                ))}
-                .
-              </Banner>
-            </div>
+            <Banner
+              variant="recoverable"
+              title="Save your edits before generating"
+            >
+              You have {blockedByInProgress.length === 1
+                ? "an unsaved diagram open"
+                : `${blockedByInProgress.length} diagrams currently being edited`}.
+              Save or close before generating the architecture document —{" "}
+              {blockedByInProgress.map((t, i) => (
+                <span key={t}>
+                  {i > 0 && ", "}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 align-baseline"
+                    onClick={() => onOpenEditor(t)}
+                  >
+                    open {TYPE_LABEL[t].title.split(" · ")[0]} →
+                  </Button>
+                </span>
+              ))}
+              .
+            </Banner>
           )}
 
           {DIAGRAM_TYPE_ORDER.map((t) => (
@@ -168,68 +167,47 @@ export const DiagramHub = ({
       </div>
 
       {/* ── Footer strip ── */}
-      <div
-        className="design-hub-footer px-6 py-3 border-t flex items-center justify-between gap-4"
-        style={{ borderColor: "hsl(var(--design-rule) / 0.55)" }}
-      >
+      <div className="px-6 py-3 border-t border-border bg-card flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <span
-            className="design-mono"
-            style={{
-              fontSize: "0.68rem",
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "hsl(var(--design-ink-muted))",
-            }}
-          >
+          <span className="usage-eyebrow">
             Tool · {slots.state.tool ? TOOL_LABEL[slots.state.tool] : "—"}
           </span>
-          <button
-            type="button"
-            className="design-btn-link"
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0"
             onClick={onChangeTool}
           >
             Change tool
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
           {generateHint && (
             <span
-              className="design-marginalia"
-              style={{ fontSize: "0.78rem", maxWidth: "22rem" }}
+              className="text-xs text-[hsl(var(--ink-muted))] max-w-[22rem]"
               aria-hidden
             >
               {generateHint}
             </span>
           )}
-          <button
-            type="button"
-            className="design-btn-mark"
+          <Button
+            variant="default"
             disabled={generateDisabled}
             onClick={onGenerateSad}
             title={generateHint ?? undefined}
+            className="transition-all hover:shadow-md"
           >
             Continue to SAD
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+          </Button>
         </div>
 
         {/* aria-live receipt — invisible, polite */}
         <div
           aria-live="polite"
           aria-atomic="true"
-          style={{
-            position: "absolute",
-            width: 1,
-            height: 1,
-            margin: -1,
-            padding: 0,
-            overflow: "hidden",
-            clip: "rect(0,0,0,0)",
-            whiteSpace: "nowrap",
-            border: 0,
-          }}
+          className="sr-only"
         >
           {liveMessage}
         </div>

@@ -38,12 +38,12 @@ interface Props {
 }
 
 const STAGE_LABEL: Record<DesignStage, string> = {
-  NEW: "NEW",
-  DIAGRAM_GATHERING: "DRAFT · DRAWING",
-  DIAGRAM_READY: "DRAWING · DONE",
-  SAD_GATHERING: "GATHER",
-  SAD_GENERATING: "DRAFTING",
-  SAD_REFINING: "SPEC · LIVE",
+  NEW: "New",
+  DIAGRAM_GATHERING: "Drawing",
+  DIAGRAM_READY: "Diagram ready",
+  SAD_GATHERING: "Researching",
+  SAD_GENERATING: "Generating",
+  SAD_REFINING: "SAD ready",
 };
 
 const STAGE_DOT: Record<DesignStage, string> = {
@@ -235,16 +235,14 @@ export function DesignSessionSidebar({
                       </div>
                     ) : (
                       <>
-                        <div className="design-heading text-[0.95rem] leading-tight truncate">
+                        <div className="text-[0.95rem] font-semibold leading-tight truncate text-[hsl(var(--ink-body))]">
                           {s.name}
                         </div>
-                        <div className="design-eyebrow mt-1.5 inline-flex items-center gap-1.5">
+                        <div className="mt-1 inline-flex items-center gap-1.5 text-xs text-[hsl(var(--ink-muted))]">
                           <span className={`design-dot ${STAGE_DOT[stage]}`} />
                           <span>{STAGE_LABEL[stage] ?? stage}</span>
-                          <span style={{ color: "hsl(var(--design-ink-muted))" }}>·</span>
-                          <span className="design-mono normal-case tracking-normal">
-                            {formatRelative(s.last_activity_ts)}
-                          </span>
+                          <span aria-hidden>·</span>
+                          <span>{formatRelative(s.last_activity_ts)}</span>
                         </div>
                       </>
                     )}

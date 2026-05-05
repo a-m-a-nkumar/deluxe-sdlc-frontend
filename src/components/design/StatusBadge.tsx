@@ -1,23 +1,20 @@
 /**
- * StatusBadge — mono-caps status pill driven by `data-state`.
+ * StatusBadge — uppercase status pill driven by SlotStatus.
  *
- * The visual language lives in `design-theme.css` under `.design-status-badge`.
- * This component is a thin wrapper that maps SlotStatus to (a) the badge
- * label, (b) the data-state attribute, and (c) the optional italic "(saved)"
- * suffix on a soft-skipped Done row.
+ * Built on shadcn <Badge> with canonical Velox tokens (no design-* classes).
+ * Editorial vocabulary preserved (uppercase + tracking) per system.md §3.
  *
  * Following P1 (state is the receipt) the aria-label is a full sentence so
  * screen readers hear the receipt, not just the word.
  */
 
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { SlotStatus } from "@/hooks/useDiagramSlots";
 
 interface Props {
   state: SlotStatus;
-  /** Human-readable type name, used to compose the aria-label receipt
-   *  ("Status: Logical diagram done, last saved 14:35"). */
   contextLabel?: string;
-  /** Optional savedAt epoch — used for the aria-label receipt only. */
   savedAt?: number;
 }
 
@@ -28,6 +25,21 @@ const LABEL: Record<SlotStatus, string> = {
   skipped: "Skipped",
   skipped_saved: "Skipped",
   failed: "Failed",
+};
+
+const STATE_CLASSES: Record<SlotStatus, string> = {
+  pending:
+    "bg-transparent border-border text-[hsl(var(--ink-muted))]",
+  in_progress:
+    "bg-[hsl(var(--primary)/0.08)] border-[hsl(var(--primary)/0.30)] text-[hsl(var(--primary))]",
+  done:
+    "bg-[hsl(var(--audit-pass)/0.10)] border-[hsl(var(--audit-pass)/0.35)] text-[hsl(var(--audit-pass))]",
+  skipped:
+    "bg-transparent border-border text-[hsl(var(--ink-muted))]",
+  skipped_saved:
+    "bg-transparent border-border text-[hsl(var(--ink-muted))]",
+  failed:
+    "bg-destructive/10 border-destructive/30 text-destructive",
 };
 
 const formatTime = (epochMs: number) =>
@@ -58,16 +70,19 @@ const ariaSentence = (state: SlotStatus, ctx?: string, savedAt?: number) => {
 
 export const StatusBadge = ({ state, contextLabel, savedAt }: Props) => {
   return (
-    <span
-      className="design-status-badge"
-      data-state={state}
+    <Badge
+      variant="outline"
+      className={cn(
+        "uppercase tracking-[0.14em] text-[10px] font-semibold px-2 py-0.5",
+        STATE_CLASSES[state],
+      )}
       role="status"
       aria-label={ariaSentence(state, contextLabel, savedAt)}
     >
       <span aria-hidden>{LABEL[state]}</span>
       {state === "skipped_saved" && (
-        <span className="design-status-badge__suffix" aria-hidden>(saved)</span>
+        <span className="ml-1 normal-case tracking-normal opacity-70" aria-hidden>(saved)</span>
       )}
-    </span>
+    </Badge>
   );
 };

@@ -21,7 +21,7 @@
  * level that does the SVG export + session save.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -233,6 +233,27 @@ export default function SessionDesignAssistant() {
   // ---- Persist project selection in localStorage (mirrors analyst flow) ----
   useEffect(() => {
     if (projectId) DesignSessionLocal.setProjectId(projectId);
+  }, [projectId]);
+
+  // ---- Reset session state when the user switches projects ----
+  // Without this, the sidebar refetches sessions for the new project but
+  // the main view keeps rendering the old project's session (currentSession,
+  // chat history, SAD sections, diagram XML). Track the previous projectId
+  // and clear all session-derived state when it actually changes.
+  const prevProjectIdRef = useRef<string | null>(projectId);
+  useEffect(() => {
+    const prev = prevProjectIdRef.current;
+    if (prev !== null && prev !== projectId) {
+      setCurrentSessionId(null);
+      setCurrentSession(null);
+      setSessionDiagramXml(undefined);
+      setSectionsList(null);
+      setSelectedSection(null);
+      setChatMessages([]);
+      setPhase("diagram");
+      DesignSessionLocal.setSessionId(null);
+    }
+    prevProjectIdRef.current = projectId;
   }, [projectId]);
 
   // ---- Load session list ----

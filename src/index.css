@@ -104,6 +104,18 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Ink — body and muted text. Replaces the five drift greys
+       in utilities.css (#727272/#858585/#747474/#6C6C6C/#3B3B3B). */
+    --ink-body: 0 0% 23%;   /* #3B3B3B */
+    --ink-muted: 0 0% 45%;  /* #727272 */
+
+    /* SAD audit status — scoped exception tokens. The canonical
+       Velox palette has no warning/info hues, but the SAD audit
+       feature uses pass/warn pips to communicate functional state.
+       Use only inside the SAD audit feature; never as decoration. */
+    --audit-pass: 158 60% 30%;
+    --audit-warn: 30 90% 42%;
   }
 
   /* ============================================================
@@ -158,6 +170,14 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Ink — body and muted text. */
+    --ink-body: 0 0% 23%;   /* #3B3B3B */
+    --ink-muted: 0 0% 45%;  /* #727272 */
+
+    /* SAD audit status — scoped exception tokens (see Deluxe theme). */
+    --audit-pass: 158 60% 30%;
+    --audit-warn: 30 90% 42%;
   }
 
   /* Fallback — default to deluxe if no data-theme set */
@@ -172,6 +192,11 @@
     --stats-red: 355 84% 45%;
     --progress-red: 355 84% 45%;
     --radius: 0.5rem;
+
+    --ink-body: 0 0% 23%;
+    --ink-muted: 0 0% 45%;
+    --audit-pass: 158 60% 30%;
+    --audit-warn: 30 90% 42%;
   }
 
   .dark {
@@ -218,6 +243,14 @@
     --chat-bg: 240 5.9% 10%;
     --progress-red: 220 61% 27%;
     --heading-primary: 0 0% 76.9%;
+
+    /* Ink — body and muted text in dark mode. */
+    --ink-body: 0 0% 90%;
+    --ink-muted: 0 0% 65%;
+
+    /* SAD audit status — dark-mode variants. */
+    --audit-pass: 158 50% 55%;
+    --audit-warn: 30 85% 60%;
   }
 }
 

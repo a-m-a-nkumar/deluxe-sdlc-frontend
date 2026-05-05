@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Menu, FolderKanban, LogOut, Link as LinkIcon, CheckCircle, AlertTriangle, RefreshCw } from "lucide-react";
+import { ChevronDown, Menu, FolderKanban, LogOut, Link as LinkIcon, CheckCircle, AlertTriangle, RefreshCw, User as UserIcon, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -198,6 +198,16 @@ export const TopHeader = ({ onMenuClick, isMobile }: TopHeaderProps) => {
                     </p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
+                  <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/organization-usage")} className="cursor-pointer">
+                  <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Organization Usage</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
 
                 {/* Atlassian status row */}

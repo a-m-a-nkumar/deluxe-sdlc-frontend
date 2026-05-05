@@ -8,7 +8,7 @@ import { apiPost } from "@/services/api";
 import { getAccessToken } from "@/services/authService";
 import {
   ChevronRight, ChevronLeft, Loader2, CheckCircle2,
-  Download, Copy, RefreshCw, FileCode2, FolderTree,
+  Download, Copy, FileCode2, FolderTree,
   Database, Cloud, Shield, Layers, Server, Package,
   GitBranch, ExternalLink, Lock, Unlock, FileUp,
 } from "lucide-react";
@@ -792,9 +792,6 @@ export function TerraformGeneratorCore() {
                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
-                  <RefreshCw className="w-4 h-4 mr-1" /> Regenerate
-                </Button>
                 <Button variant="outline"
                   onClick={() => setShowPushPanel((v) => !v)}
                   disabled={isGenerating || Object.keys(files).length === 0}

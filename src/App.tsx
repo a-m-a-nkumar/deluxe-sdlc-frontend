@@ -20,6 +20,8 @@ import PairProgramming from "./pages/PairProgramming";
 import TestingPage from "./pages/TestingPage";
 import HarnessPage from "./pages/HarnessPage";
 import FigmaPage from "./pages/FigmaPage";
+import MyProfile from "./pages/MyProfile";
+import OrganizationUsage from "./pages/OrganizationUsage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -160,6 +162,22 @@ const App = () => {
                     <ModuleProtectedRoute moduleId="figma">
                       <FigmaPage />
                     </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <MyProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/organization-usage"
+                  element={
+                    <ProtectedRoute>
+                      <OrganizationUsage />
+                    </ProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

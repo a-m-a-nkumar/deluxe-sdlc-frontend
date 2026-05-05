@@ -351,9 +351,9 @@ export function SADDocumentView({
           <section
             key={meta.number}
             id={`design-plate-${meta.number}`}
-            className="scroll-mt-24"
+            className="scroll-mt-24 bg-card border border-[hsl(var(--border-zone))] rounded-lg p-6 mb-6 shadow-sm"
           >
-            <header className="flex items-start justify-between gap-4 pb-4 mb-5 border-b" style={{ borderColor: "hsl(var(--design-rule) / 0.65)" }}>
+            <header className="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-border">
               <div className="min-w-0 flex-1">
                 <div className="design-eyebrow">
                   Plate · {String(meta.number).padStart(2, "0")} of {list.sections.length}
@@ -452,20 +452,23 @@ export function SADDocumentView({
               </div>
             </header>
 
-            {/* Audit notes (only when there are issues) — hidden in edit mode */}
+            {/* Audit notes (only when there are issues) — hidden in edit mode.
+                Tier-3 white card with a 4px crimson left stripe — the card is
+                visible by silhouette (not by fill) per system.md §2 and
+                Stage 1 critique B2 (the previous pink-on-pink card vanished). */}
             {!isEditing && sec?.audit?.issues?.length ? (
               <aside
-                className="mb-5 design-plate design-plate--mark p-3"
-                style={{ background: "hsl(var(--design-mark-soft))" }}
+                className="mb-5 p-4 rounded-md bg-card border border-[hsl(var(--border-zone))] border-l-4 border-l-[hsl(var(--primary))]"
+                role="region"
+                aria-label="Audit notes"
               >
-                <div className="design-eyebrow mb-1.5">Audit notes</div>
-                <ul className="space-y-1.5 text-[0.85rem]">
+                <div className="text-[10px] uppercase tracking-[0.16em] font-semibold text-[hsl(var(--primary))] mb-2">
+                  Audit notes
+                </div>
+                <ul className="space-y-2 text-sm text-[hsl(var(--ink-body))]">
                   {sec.audit.issues.map((i, idx) => (
-                    <li key={idx} className="flex gap-2.5">
-                      <span
-                        className="design-mono text-xs uppercase shrink-0"
-                        style={{ color: "hsl(var(--design-mark))" }}
-                      >
+                    <li key={idx} className="flex gap-3">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] font-semibold shrink-0 text-[hsl(var(--primary))] pt-0.5">
                         {i.code}
                       </span>
                       <span>{i.msg}</span>

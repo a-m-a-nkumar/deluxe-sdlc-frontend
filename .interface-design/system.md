@@ -26,14 +26,50 @@ All values from `src/index.css` (`:root[data-theme="deluxe"]`) unless flagged **
 
 | Token | HSL | Hex | Role |
 |---|---|---|---|
-| `--background` | `350 100% 97.5%` | `#FFF0F4` | Page background (faint pink wash) |
-| `--card` | `0 0% 100%` | `#FFFFFF` | Card / elevated surface — main content lives here |
-| `--popover` | `0 0% 100%` | `#FFFFFF` | Popovers, dropdowns, dialogs |
-| `--muted` | `210 40% 96.1%` | `#F1F5F9` | Inset / subdued surface |
-| `--accent` | `350 100% 97.5%` | `#FFF0F4` | Hover wash; matches background |
-| `--border` | `214.3 31.8% 91.4%` | `#E2E8F0` | Hairline borders |
+| `--background` | `350 100% 97.5%` | `#FFF0F4` | App-shell page background — faint pink wash. Used on dashboard pages (BRD, Jira, Org Usage) where many cards sit on the wash |
+| `--surface-canvas` **(new)** | `0 0% 100%` | `#FFFFFF` | Module canvas — pure white reading/editing area for document or canvas modules (Design Assistant SAD viewer + diagram editor). When this is in play, the pink page sits behind the canvas as a frame, not as the reading surface |
+| `--surface-panel` **(new)** | `40 19% 97%` | `#F9F8F6` | Side rails, chat panels, secondary asides. One step warmer than the canvas so adjacent zones differentiate without needing a heavy border |
+| `--card` | `0 0% 100%` | `#FFFFFF` | Floating card on a non-white surface (e.g. stat card on pink page; chat-message bubble on `--surface-panel`). On a `--surface-canvas` page the card needs an explicit border to register |
+| `--popover` | `0 0% 100%` | `#FFFFFF` | Popovers, dropdowns, dialogs — always paired with a soft shadow |
+| `--muted` | `210 40% 96.1%` | `#F1F5F9` | Cool slate inset (rare). Prefer `--surface-panel` for warm-tone panels |
+| `--accent` | `350 100% 97.5%` | `#FFF0F4` | Hover wash on neutral elements; matches `--background` |
+| `--border` | `214.3 31.8% 91.4%` | `#E2E8F0` | **Hairline** for form fields, table-row separators, inputs, fine inline dividers |
+| `--border-zone` **(new)** | `38 17% 91%` | `#EDEAE5` | **Zone divider** between functional areas (chat ↔ document, sidebar ↔ canvas, header strip ↔ body). Slightly warmer + slightly stronger than `--border` so the eye reads it as a structural divider, not a form-field outline |
 | `--input` | `214.3 31.8% 91.4%` | `#E2E8F0` | Form-control border |
 | `--ring` | `355 84% 45%` | crimson | Focus ring colour |
+
+### Surface elevation — the placement model
+
+Five elevation tiers. Tier 0 is the app shell, tiers 1–4 are how content is layered inside a module body. The mistake to avoid is putting two adjacent functional zones on the same tier without a `--border-zone` divider — the eye loses the boundary.
+
+| Tier | Token | Used for |
+|---|---|---|
+| **0 — App shell** | `--background` (pink) | Page-level frame: wordmark strip, top header, the strip behind a module's title bar. Visible only at the edges of a focused module |
+| **1 — Module canvas** | `--surface-canvas` (white) for document / editor modules · OR · `--background` (pink) for dashboard modules | The primary reading or editing area. Document/editor modules (Design Assistant SAD viewer, diagram editor) override to white. Dashboard modules (BRD, Jira, Org Usage) keep the pink page as their canvas because cards on pink read fine |
+| **2 — Side panel / aside** | `--surface-panel` (warm off-white) | Side rails, chat panels, Confluence-page lists, any aside that runs alongside the primary content. ALWAYS visibly separated from tier 1 — by elevation difference + a 1px `--border-zone` hairline |
+| **3 — Floating card** | `--card` (white) | A rectangle that needs to feel "lifted" from a tier 2 panel — chat-message bubbles, Audit-Notes block, individual session rows, hub stat-cards. On tier 1 white canvas, requires an explicit `border border-border` to register; on tier 2 panel, the white-on-warm contrast does the work |
+| **4 — Popover / floating** | `--popover` + `shadow-md` | Modals, dialogs, dropdowns, hover-cards. Always paired with a soft shadow — this is the only tier where shadows do the elevation work |
+
+### Surface placement rules
+
+These rules operationalise tiers above. Stage 1 critique flagged the same handful of failures appearing across screens; these rules pre-empt them.
+
+1. **Two adjacent functional zones must differ.** Either by elevation tier OR by a visible `--border-zone` hairline. **Preferably both.** Same-tier adjacent zones with no border = the bug that broke Page A's sidebar/canvas/buttons-row and Page B's chat/document split.
+
+2. **Primary fill buttons (`bg-primary`) sit only on tier 1 (white canvas) or tier 0 (pink page).** Never on `--primary-light`, `--accent`, or any tier 2/3 with a pink-leaning tone — the button's pink fill collides with the panel's pink tone and the silhouette disappears. If a primary button must live on tier 2, the tier-2 surface must be the warm-neutral `--surface-panel`, not pink.
+
+3. **Document/editor modules override to white canvas.** When a module is reading-or-editing-focused, set the module body to `--surface-canvas`. The pink `--background` recedes to being a frame visible only at the page edges (under the top wordmark strip + outside the module's bounding box). This is the Design Assistant's case — it's a document module, not a dashboard.
+
+4. **Shadows are tools for elevation, not decoration.** Use `shadow-sm` only when a tier 3 card needs to "hover" above its tier 2 context (chat bubbles on a panel; popovers; the active sidebar row). Don't apply shadows as ambient "card identity" on flat layouts — let the surface tier or border do that work.
+
+5. **`--border-zone` for structural dividers, `--border` for form chrome.** The two are visually distinct (`--border-zone` is warm-tone and slightly stronger). Mixing them produces a fussy "every line is the same line" feel. Rule of thumb: if removing the line would make two functional regions blur together, it's `--border-zone`. If it's drawing the outline of an input, table cell, or table row, it's `--border`.
+
+6. **The Design Assistant's surface map (Stage 6 will apply this).**
+   - App shell strip behind the module → tier 0 `--background`.
+   - Diagram editor + SAD viewer body → tier 1 `--surface-canvas`.
+   - Confluence-pages panel, chat panel, session sidebar → tier 2 `--surface-panel` with a `--border-zone` hairline against the canvas.
+   - Audit-notes block, chat bubbles, individual stat cards → tier 3 `--card` (with explicit border on white canvas, with `shadow-sm` on warm panel).
+   - Tabs / toolbars / dropdowns the user opens → tier 4 `--popover` + shadow.
 
 ### Ink (text)
 
@@ -253,6 +289,10 @@ Be precise: the editorial *vocabulary* is canonical (numbered section marks, eye
 - **No invented info / warning / error hues** beyond `--destructive`, `.badge-success`, and the `--audit-pass` / `--audit-warn` SAD-scoped exceptions.
 - **No new colour palette tokens** beyond what's listed in §2.
 - **No inline cyan `rgba(184, 218, 222, 0.34)`** for sidebar active state. Use `hsl(var(--primary-selected))`.
+- **No primary fill (`bg-primary`) on `--primary-light` or `--accent`.** The pink-on-pink stack collapses the button silhouette. Primary fill sits on tier 1 white canvas or tier 0 pink page only.
+- **No two adjacent functional zones on the same elevation tier** without a `--border-zone` hairline between them. This was the root cause of the Page A "sidebar/canvas/buttons-row are one wash" failure and the Page B "chat ≡ document" failure.
+- **No cream / parchment as a panel surface.** Tier 2 panels are `--surface-panel` (warm off-white `#F9F8F6`), not cream. The previous `--design-paper-warm` (cream `#E8E0D0` / similar) is forbidden.
+- **No `shadow` as decoration.** Shadows are reserved for tier 3 cards lifting off a tier 2 panel and tier 4 popovers. A flat layout doesn't get shadows just because the design feels "too plain".
 
 ---
 

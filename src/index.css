@@ -110,6 +110,12 @@
     --ink-body: 0 0% 23%;   /* #3B3B3B */
     --ink-muted: 0 0% 45%;  /* #727272 */
 
+    /* Surface elevation — tiers 1/2 + zone-divider hairline.
+       See .interface-design/system.md §2 "Surface elevation". */
+    --surface-canvas: 0 0% 100%;     /* #FFFFFF — module canvas */
+    --surface-panel: 40 19% 97%;     /* #F9F8F6 — side rails / chat panels */
+    --border-zone: 38 17% 91%;       /* #EDEAE5 — zone divider hairline */
+
     /* SAD audit status — scoped exception tokens. The canonical
        Velox palette has no warning/info hues, but the SAD audit
        feature uses pass/warn pips to communicate functional state.
@@ -175,6 +181,12 @@
     --ink-body: 0 0% 23%;   /* #3B3B3B */
     --ink-muted: 0 0% 45%;  /* #727272 */
 
+    /* Surface elevation — same scale as Deluxe (the off-white panel
+       reads neutral against either pink or navy app-shell). */
+    --surface-canvas: 0 0% 100%;
+    --surface-panel: 40 19% 97%;
+    --border-zone: 38 17% 91%;
+
     /* SAD audit status — scoped exception tokens (see Deluxe theme). */
     --audit-pass: 158 60% 30%;
     --audit-warn: 30 90% 42%;
@@ -195,6 +207,9 @@
 
     --ink-body: 0 0% 23%;
     --ink-muted: 0 0% 45%;
+    --surface-canvas: 0 0% 100%;
+    --surface-panel: 40 19% 97%;
+    --border-zone: 38 17% 91%;
     --audit-pass: 158 60% 30%;
     --audit-warn: 30 90% 42%;
   }
@@ -247,6 +262,11 @@
     /* Ink — body and muted text in dark mode. */
     --ink-body: 0 0% 90%;
     --ink-muted: 0 0% 65%;
+
+    /* Surface elevation — dark mode panel one shade lighter than canvas. */
+    --surface-canvas: 222.2 84% 4.9%;
+    --surface-panel: 217.2 32.6% 12%;
+    --border-zone: 217.2 32.6% 20%;
 
     /* SAD audit status — dark-mode variants. */
     --audit-pass: 158 50% 55%;

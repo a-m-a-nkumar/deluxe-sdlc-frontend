@@ -110,10 +110,8 @@ export const DiagramHub = ({
         <h1 className="usage-num-display text-3xl sm:text-4xl font-bold tracking-tight text-[hsl(var(--ink-body))]">
           Architecture diagrams
         </h1>
-        <p className="mt-2 text-sm text-[hsl(var(--ink-muted))] max-w-2xl leading-relaxed">
-          Author up to three views of the same system. Each one lands in its
-          own section of the architecture document — never substituted for
-          another.
+        <p className="mt-2 text-sm text-[hsl(var(--ink-muted))] leading-relaxed whitespace-nowrap">
+          Author up to three views of the same system. Each one lands in its own section of the architecture document.
         </p>
       </div>
 

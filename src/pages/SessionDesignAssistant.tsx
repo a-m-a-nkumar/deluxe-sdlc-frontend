@@ -850,25 +850,26 @@ function SADPhasePane({
       className="flex-1 min-h-0"
     >
       <Panel defaultSize={65} minSize={35} className="flex flex-col min-h-0">
-        <main className="flex flex-col min-h-0 flex-1">
-          <div
-            className="px-6 py-3 flex items-center justify-between border-b design-rise"
-            style={ruleBorder}
-          >
+        <main className="flex flex-col min-h-0 flex-1 bg-[hsl(var(--surface-canvas))]">
+          <div className="px-6 py-3 flex items-center justify-between border-b border-[hsl(var(--border-zone))]">
             <div>
-              <div className="design-eyebrow">Document</div>
-              <div className="design-heading text-base mt-0.5">Deluxe SAD</div>
+              <div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-[hsl(var(--ink-muted))]">
+                Document
+              </div>
+              <div className="text-base font-bold text-[hsl(var(--ink-body))] mt-0.5">
+                Deluxe SAD
+              </div>
             </div>
-            <button
-              type="button"
-              className="design-btn-mark"
+            <Button
+              variant="default"
+              size="sm"
               disabled={auditing}
               onClick={onAudit}
               title="Run audit on every section"
             >
-              <FileBarChart2 className="h-3.5 w-3.5" />
+              <FileBarChart2 className="h-3.5 w-3.5 mr-1.5" />
               {auditing ? "Auditing…" : "Audit document"}
-            </button>
+            </Button>
           </div>
           <div className="flex-1 overflow-auto min-h-0">
             {sectionsList ? (
@@ -883,9 +884,11 @@ function SADPhasePane({
                 onSectionsChanged={onSectionChange}
               />
             ) : (
-              <div className="p-6 text-sm" style={{ color: "hsl(var(--design-ink-soft))" }}>
-                <div className="design-eyebrow">Reading pane</div>
-                <p className="design-marginalia mt-2">Loading the SAD…</p>
+              <div className="p-6 text-sm text-[hsl(var(--ink-muted))]">
+                <div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-[hsl(var(--ink-muted))]">
+                  Reading pane
+                </div>
+                <p className="mt-2">Loading the SAD…</p>
               </div>
             )}
           </div>

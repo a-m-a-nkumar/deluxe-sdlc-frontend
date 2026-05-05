@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { RefreshCw, FileText, CheckSquare, Square, Wand2, Code2, Download, ChevronDown, AlertCircle, Maximize2, Minimize2, BookText, ExternalLink, Pencil, PlusCircle, Clock, Layers, Server, Shield } from "lucide-react";
+import { RefreshCw, FileText, CheckSquare, Square, Wand2, Code2, Download, ChevronDown, AlertCircle, Maximize2, Minimize2, BookText, ExternalLink, Pencil, PlusCircle, Clock, Layers, Loader2, Server, Shield } from "lucide-react";
 import type { DesignDiagramType } from "@/services/designApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -748,9 +748,9 @@ export const DesignDashboard = ({
           className="flex-1 min-h-0"
         >
 
-          {/* Left — saved diagram list */}
+          {/* Left — saved diagram list (tier 2 surface) */}
           <Panel defaultSize={36} minSize={22} maxSize={55}>
-            <div className="h-full flex flex-col p-5 overflow-hidden">
+            <div className="h-full flex flex-col p-5 overflow-hidden bg-[hsl(var(--surface-panel))] border-r border-[hsl(var(--border-zone))]">
               <div className="flex items-baseline justify-between mb-3 flex-shrink-0">
                 <div>
                   <div className="design-eyebrow">Plate · 02 — Edit · Library</div>
@@ -1112,9 +1112,9 @@ export const DesignDashboard = ({
         className="flex-1 min-h-0"
       >
 
-        {/* ══ LEFT PANEL — Plate · 01 · Page selector ══ */}
+        {/* ══ LEFT PANEL — Plate · 01 · Page selector (tier 2 surface) ══ */}
         <Panel defaultSize={28} minSize={18} maxSize={45}>
-        <div className="h-full flex flex-col px-5 py-4 overflow-hidden">
+        <div className="h-full flex flex-col px-5 py-4 overflow-hidden bg-[hsl(var(--surface-panel))] border-r border-[hsl(var(--border-zone))]">
 
           {/* Panel header */}
           <div className="flex items-baseline justify-between mb-3 flex-shrink-0">
@@ -1751,48 +1751,50 @@ export const DesignDashboard = ({
                 />
               </div>
 
-              {/* Buttons below diagram */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
+              {/* Bottom action row — tier-1 with top zone-divider hairline.
+                  Outline-crimson buttons read clearly on white canvas
+                  (Stage 4 §3: secondary CTA on tier-1 = bg-card + border-primary). */}
+              <div className="pt-3 border-t border-[hsl(var(--border-zone))] grid grid-cols-2 gap-2">
+                <Button
                   type="button"
-                  className="design-btn-ghost justify-center"
+                  variant="outline"
+                  size="sm"
+                  className="bg-card border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] justify-center"
                   onClick={() => setIsFullscreen(true)}
                 >
-                  <Maximize2 className="w-3 h-3" />
+                  <Maximize2 className="w-3 h-3 mr-1.5" />
                   Full screen
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="design-btn-ghost justify-center"
+                  variant="outline"
+                  size="sm"
+                  className="bg-card border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] justify-center"
                   onClick={handleDownloadXML}
                 >
-                  <Download className="w-3 h-3" />
+                  <Download className="w-3 h-3 mr-1.5" />
                   Download XML
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="design-btn-ghost justify-center"
+                  variant="outline"
+                  size="sm"
+                  className="bg-card border-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] justify-center"
                   onClick={handleSaveDiagram}
                   disabled={isSavingDiagram || !confluenceSpaceKey}
                 >
                   {isSavingDiagram ? (
                     <>
-                      <div
-                        className="w-3 h-3 animate-spin rounded-full border-2"
-                        style={{
-                          borderColor: "currentColor",
-                          borderTopColor: "transparent",
-                        }}
-                      />
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
                       Saving
                     </>
                   ) : (
                     <>
-                      <FileText className="w-3 h-3" />
+                      <FileText className="w-3 h-3 mr-1.5" />
                       Save to Confluence
                     </>
                   )}
-                </button>
+                </Button>
                 {!hideDocumentSteps && (
                   <button
                     type="button"

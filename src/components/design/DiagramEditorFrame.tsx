@@ -2,16 +2,22 @@
  * DiagramEditorFrame — focused single-diagram authoring surface.
  *
  * Wraps the existing DesignDashboard (Draw.io) or LucidDashboard (Lucid)
- * as its body, scoped to the active diagram type. Adds the slim editorial
- * header strip from screen 10c with `Save & close` and `× Close`, plus the
+ * as its body, scoped to the active diagram type. Adds the slim header
+ * strip from screen 10c with `Save & close` and `× Close`, plus the
  * dirty-warning marginalia when closing with unsaved changes.
+ *
+ * Surface treatment (per .interface-design/system.md §2 "Surface elevation"):
+ *   • tier 1 (--surface-canvas)  — module body, framed by the pink page edges
+ *   • tier 1 (border-zone)       — header strip & action-row hairlines
+ *   • tier-3 buttons             — shadcn <Button> variants
  *
  * Per P5 ("Returning never destroys"), closing without save restores the
  * pre-edit slot state (Pending or Done).
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Save, X } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Banner } from "./Banner";
 import { DesignDashboard } from "@/components/dashboard/DesignDashboard";
 import { LucidDashboard } from "@/components/dashboard/LucidDashboard";
@@ -114,8 +120,6 @@ export const DiagramEditorFrame = ({
 
   // Heuristic dirty-tracking: any keystroke or click inside the editor body
   // marks dirty until next save. Coarse but correct for the trust contract.
-  // Reopening a Done slot starts non-dirty; this listener flips it on first
-  // interaction.
   const editorRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = editorRef.current;
@@ -130,43 +134,26 @@ export const DiagramEditorFrame = ({
   }, []);
 
   return (
-    <div className="design-surface flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 flex flex-col p-5 overflow-hidden">
-        <div
-          className="design-plate design-plate--mark flex-1 flex flex-col overflow-hidden design-rise"
-        >
-          {/* ── Slim editorial header ── */}
-          <div
-            className="px-5 py-4 border-b flex items-start justify-between gap-4 flex-shrink-0"
-            style={{ borderColor: "hsl(var(--design-rule) / 0.55)" }}
-          >
+    <div className="flex-1 flex flex-col overflow-hidden bg-background">
+      <div className="flex-1 flex flex-col p-4 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[hsl(var(--surface-canvas))] border border-[hsl(var(--border-zone))] rounded-lg">
+          {/* ── Slim header strip ── */}
+          <div className="px-6 py-4 border-b border-[hsl(var(--border-zone))] flex items-start justify-between gap-4 flex-shrink-0">
             <div className="min-w-0">
-              <div className="design-eyebrow">{headerEyebrow}</div>
-              <h1
-                className="design-heading mt-1"
-                style={{ fontSize: "1.5rem", lineHeight: 1.22 }}
-              >
+              <div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-[hsl(var(--ink-muted))]">
+                {headerEyebrow}
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--ink-body))] mt-1">
                 {label.title}
               </h1>
-              <div
-                className="design-marginalia mt-1 flex items-center gap-2 flex-wrap"
-                style={{ fontSize: "0.82rem" }}
-              >
+              <div className="text-xs text-[hsl(var(--ink-muted))] mt-1 flex items-center gap-2 flex-wrap">
                 {slot.savedAt ? (
-                  <span
-                    className="design-mono"
-                    style={{
-                      fontStyle: "normal",
-                      fontSize: "0.78rem",
-                      letterSpacing: "0.04em",
-                      color: "hsl(var(--design-ink-muted))",
-                    }}
-                  >
+                  <span className="font-mono tabular-nums">
                     Saved at {formatTime(slot.savedAt)}
                     {dirty && " · Edited"}
                   </span>
                 ) : dirty ? (
-                  <span style={{ color: "hsl(var(--design-mark-deep))" }}>
+                  <span className="text-[hsl(var(--primary))] font-medium">
                     Unsaved changes
                   </span>
                 ) : (
@@ -176,20 +163,20 @@ export const DiagramEditorFrame = ({
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
+              <Button
                 ref={closeRef}
-                type="button"
-                className="design-btn-ghost"
+                variant="ghost"
+                size="sm"
                 onClick={handleCloseRequest}
                 aria-label="Close editor (Esc)"
                 title="Close (Esc)"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5 mr-1.5" />
                 Close
-              </button>
-              <button
-                type="button"
-                className="design-btn-mark"
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
                 onClick={handleSave}
                 disabled={saving}
                 aria-label="Save and close (⌘+Enter)"
@@ -197,48 +184,42 @@ export const DiagramEditorFrame = ({
               >
                 {saving ? (
                   <>
-                    <span
-                      className="w-3 h-3 animate-spin rounded-full border-2"
-                      style={{
-                        borderColor: "currentColor",
-                        borderTopColor: "transparent",
-                      }}
-                    />
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                     Saving
                   </>
                 ) : (
                   <>
-                    <Save className="w-3.5 h-3.5" />
+                    <Save className="w-3.5 h-3.5 mr-1.5" />
                     Save & close
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* ── Dirty warning (inline, no modal) ── */}
           {showDirtyWarning && (
-            <div className="px-5 pt-3 flex-shrink-0">
+            <div className="px-6 pt-3 flex-shrink-0">
               <Banner
                 variant="recoverable"
                 title="Unsaved changes"
                 actions={
                   <>
-                    <button
-                      type="button"
-                      className="design-btn-ghost"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       autoFocus
                       onClick={() => setShowDirtyWarning(false)}
                     >
                       Keep editing
-                    </button>
-                    <button
-                      type="button"
-                      className="design-btn-link"
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
                       onClick={handleCloseAnyway}
                     >
                       Close anyway
-                    </button>
+                    </Button>
                   </>
                 }
               >
@@ -250,18 +231,14 @@ export const DiagramEditorFrame = ({
 
           {/* ── Save error (inline, no modal) ── */}
           {error && (
-            <div className="px-5 pt-3 flex-shrink-0">
+            <div className="px-6 pt-3 flex-shrink-0">
               <Banner
                 variant="recoverable"
                 title="Couldn't save"
                 actions={
-                  <button
-                    type="button"
-                    className="design-btn-mark"
-                    onClick={handleSave}
-                  >
+                  <Button variant="default" size="sm" onClick={handleSave}>
                     Try again
-                  </button>
+                  </Button>
                 }
               >
                 {error} Your changes are still in the editor.

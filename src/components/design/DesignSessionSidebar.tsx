@@ -101,11 +101,7 @@ export function DesignSessionSidebar({
   if (isCollapsed) {
     return (
       <aside
-        className="flex flex-col items-center gap-3 py-3 border-r w-12"
-        style={{
-          borderColor: "hsl(var(--design-rule) / 0.55)",
-          background: "hsl(var(--design-paper-warm) / 0.4)",
-        }}
+        className="flex flex-col items-center gap-3 py-3 w-12 bg-[hsl(var(--surface-panel))] border-r border-[hsl(var(--border-zone))]"
       >
         <button
           type="button"
@@ -133,16 +129,9 @@ export function DesignSessionSidebar({
 
   return (
     <aside
-      className="flex flex-col w-72 border-r min-h-0"
-      style={{
-        borderColor: "hsl(var(--design-rule) / 0.55)",
-        background: "hsl(var(--design-paper-warm) / 0.45)",
-      }}
+      className="flex flex-col w-72 min-h-0 bg-[hsl(var(--surface-panel))] border-r border-[hsl(var(--border-zone))]"
     >
-      <header
-        className="px-3 pt-4 pb-3 border-b design-rise"
-        style={{ borderColor: "hsl(var(--design-rule) / 0.55)" }}
-      >
+      <header className="px-3 pt-4 pb-3 border-b border-[hsl(var(--border-zone))]">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="design-eyebrow">Portfolio</div>
@@ -187,8 +176,11 @@ export function DesignSessionSidebar({
             return (
               <li key={s.id}>
                 <div
-                  className="design-row group"
-                  data-active={isCurrent}
+                  className={`group flex items-start gap-2 cursor-pointer rounded-md px-3 py-2 transition-colors ${
+                    isCurrent
+                      ? "bg-card shadow-sm border-l-4 border-l-[hsl(var(--primary))]"
+                      : "hover:bg-card border-l-4 border-l-transparent"
+                  }`}
                   onClick={() => !isEditing && onSelect(s.id)}
                 >
                   <FileText
@@ -288,13 +280,10 @@ export function DesignSessionSidebar({
       </div>
 
       {onExportDocx && (
-        <div
-          className="border-t px-3 py-2.5"
-          style={{ borderColor: "hsl(var(--design-rule) / 0.55)" }}
-        >
+        <div className="border-t border-[hsl(var(--border-zone))] px-3 py-2.5">
           <button
             type="button"
-            className="design-btn-ghost w-full justify-center"
+            className="design-btn-primary w-full justify-center"
             onClick={onExportDocx}
             title="Download the SAD as a DOCX"
           >

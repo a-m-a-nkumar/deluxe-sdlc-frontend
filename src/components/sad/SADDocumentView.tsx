@@ -26,6 +26,7 @@ import {
 } from "@/services/sadApi";
 import { blocksToMarkdown, markdownToBlocks } from "@/services/sadMarkdown";
 import { loadDiagramForSession } from "@/services/designApi";
+import { SectionErrorBoundary } from "@/components/design/SectionErrorBoundary";
 
 interface Props {
   sessionId: string;
@@ -536,11 +537,32 @@ export function SADDocumentView({
                 )}
               </div>
             ) : sec ? (
-              <div className="space-y-4 leading-relaxed">
-                {sec.content.map((b, i) => (
-                  <RenderBlock key={i} block={b} sessionId={sessionId} projectId={projectId} />
-                ))}
-              </div>
+              <SectionErrorBoundary
+                label={`Section ${meta.number}`}
+                onRetry={async () => {
+                  // Re-fetch the section from the server. If the content
+                  // changed since last load (e.g. someone amended in
+                  // another tab) the boundary unmounts the old subtree
+                  // and the new one renders cleanly.
+                  try {
+                    const fresh = await getSadSection(sessionId, meta.number);
+                    setSections((prev) => ({ ...prev, [meta.number]: fresh }));
+                  } catch (e) {
+                    console.error("[SADDocumentView] refresh-one failed", e);
+                  }
+                }}
+              >
+                <div className="space-y-4 leading-relaxed">
+                  {(Array.isArray(sec.content) ? sec.content : []).map((b, i) => (
+                    <RenderBlock
+                      key={i}
+                      block={b}
+                      sessionId={sessionId}
+                      projectId={projectId}
+                    />
+                  ))}
+                </div>
+              </SectionErrorBoundary>
             ) : (
               <div className="design-marginalia py-3">Section content unavailable.</div>
             )}
@@ -564,46 +586,61 @@ function RenderBlock({
   sessionId: string;
   projectId: string;
 }) {
+  // Defensive defaulting: revert / regenerate paths can land malformed
+  // blocks (e.g. an `ordered_list` with `items: undefined` from a
+  // corrupted previous_versions stack). Never throw — render an empty
+  // shell instead and let the section-level error boundary catch
+  // anything we couldn't anticipate.
+  if (!block || typeof block !== "object" || typeof (block as { type?: unknown }).type !== "string") {
+    return null;
+  }
   switch (block.type) {
     case "paragraph":
-      return <p className="text-[0.95rem] leading-relaxed">{block.text}</p>;
+      return <p className="text-[0.95rem] leading-relaxed">{block.text ?? ""}</p>;
     case "heading": {
-      const Tag = (`h${Math.min(Math.max(block.level, 2), 5)}` as unknown) as keyof JSX.IntrinsicElements;
-      return <Tag className="design-heading mt-2">{block.text}</Tag>;
+      const rawLevel = typeof block.level === "number" && Number.isFinite(block.level) ? block.level : 3;
+      const Tag = (`h${Math.min(Math.max(rawLevel, 2), 5)}` as unknown) as keyof JSX.IntrinsicElements;
+      return <Tag className="design-heading mt-2">{block.text ?? ""}</Tag>;
     }
-    case "ordered_list":
+    case "ordered_list": {
+      const items = Array.isArray(block.items) ? block.items : [];
       return (
         <ol className="space-y-1.5 text-[0.92rem] pl-5 list-decimal">
-          {block.items.map((it, i) => (
+          {items.map((it, i) => (
             <li key={i} className="leading-relaxed">{it}</li>
           ))}
         </ol>
       );
-    case "bullet_list":
+    }
+    case "bullet_list": {
+      const items = Array.isArray(block.items) ? block.items : [];
       return (
         <ul className="space-y-1.5 text-[0.92rem] pl-5 list-[square]">
-          {block.items.map((it, i) => (
+          {items.map((it, i) => (
             <li key={i} className="leading-relaxed">{it}</li>
           ))}
         </ul>
       );
-    case "table":
+    }
+    case "table": {
+      const headers = Array.isArray(block.headers) ? block.headers : [];
+      const rows = Array.isArray(block.rows) ? block.rows : [];
       return (
         <div className="overflow-x-auto">
           <table className="design-table">
             <thead>
               <tr>
-                {block.headers.map((h, i) => (
+                {headers.map((h, i) => (
                   <th key={i}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {block.rows.map((row, ri) => (
+              {rows.map((row, ri) => (
                 <tr key={ri}>
-                  {row.map((cell, ci) => (
+                  {(Array.isArray(row) ? row : []).map((cell, ci) => (
                     <td key={ci} className="whitespace-pre-wrap">
-                      {String(cell)}
+                      {String(cell ?? "")}
                     </td>
                   ))}
                 </tr>
@@ -612,6 +649,7 @@ function RenderBlock({
           </table>
         </div>
       );
+    }
     case "diagram": {
       const kind = block.alt?.toLowerCase().includes("security")
         ? "security"

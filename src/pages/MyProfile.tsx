@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Calendar, Clock, Mail, Sparkles, User as UserIcon } from "lucide-react";
+import { Activity, Calendar, Clock, Mail, ShieldCheck, Sparkles, User as UserIcon } from "lucide-react";
+import type { AccessRole } from "@/services/usageApi";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,16 @@ const relativeTime = (iso: string | null) => {
   const yr = Math.floor(day / 365);
   return `${yr}y ago`;
 };
+
+const ACCESS_ROLE_LABEL: Record<AccessRole, string> = {
+  BOTH: "Tech + Business",
+  TECH: "Tech",
+  BUSINESS: "Business",
+  NONE: "No group access",
+};
+
+const formatAccessRole = (role?: AccessRole | null): string =>
+  ACCESS_ROLE_LABEL[(role ?? "NONE") as AccessRole];
 
 const getInitials = (email?: string, name?: string | null) => {
   const source = name || email || "";
@@ -218,7 +229,7 @@ const MyProfile = () => {
           </div>
 
           {/* Meta row */}
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Card className="usage-rise stagger-5 p-5 flex items-start gap-3">
               <div className="rounded-md bg-primary/10 p-2">
                 <Calendar className="h-4 w-4 text-primary" />
@@ -229,6 +240,24 @@ const MyProfile = () => {
                 </div>
                 <div className="mt-1 text-sm font-medium text-foreground">
                   {isLoading ? <Skeleton className="h-4 w-32" /> : formatDateTime(data?.created_at ?? null)}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="usage-rise stagger-6 p-5 flex items-start gap-3">
+              <div className="rounded-md bg-primary/10 p-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+                  Access role
+                </div>
+                <div className="mt-1 text-sm font-medium text-foreground">
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-24" />
+                  ) : (
+                    formatAccessRole(data?.access_role)
+                  )}
                 </div>
               </div>
             </Card>

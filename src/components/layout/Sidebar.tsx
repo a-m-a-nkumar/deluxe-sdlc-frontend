@@ -6,6 +6,7 @@ import {
   Palette,
   PenTool,
   HelpCircle,
+  MessageSquare,
   ChevronLeft,
   X,
   Code2,
@@ -322,6 +323,19 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           >
             <HelpCircle className={`w-4 h-4 ${(isMobile || !collapsed) ? 'mr-2' : ''}`} />
             {(isMobile || !collapsed) && <span className="text-sm text-body-dark font-normal">Support</span>}
+          </Button>
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${collapsed ? 'p-3 h-10' : 'h-9 p-3'} hover:bg-accent text-sm text-body-dark font-normal`}
+            title={collapsed ? "Contact Us" : undefined}
+            onClick={() => window.open(
+              "https://teams.microsoft.com/l/channel/19%3AMgIrzDDHGuFgwnCDRjAveNIqeWlO74-q8uMcD7Y8hWw1%40thread.tacv2/Velox%20Support?groupId=e3bd59c5-a621-4e18-b49e-58f2184e0f30&tenantId=1f7c1878-7408-4f86-b429-cf17f96a717c",
+              "_blank",
+              "noopener,noreferrer",
+            )}
+          >
+            <MessageSquare className={`w-4 h-4 ${(isMobile || !collapsed) ? 'mr-2' : ''}`} />
+            {(isMobile || !collapsed) && <span className="text-sm text-body-dark font-normal">Contact Us</span>}
           </Button>
         </div>
       </div>

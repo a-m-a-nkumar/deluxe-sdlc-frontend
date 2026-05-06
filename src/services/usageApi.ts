@@ -21,6 +21,10 @@ export interface UsageEvent {
   timestamp: string;     // ISO
 }
 
+/** Derived from Azure AD group membership and refreshed on every
+ *  authenticated request. See backend `compute_access_role()`. */
+export type AccessRole = "BOTH" | "TECH" | "BUSINESS" | "NONE";
+
 export interface UserUsage {
   user_id: string;
   email: string;
@@ -29,6 +33,8 @@ export interface UserUsage {
   last_login: string | null;
   token_usage: number;
   is_active?: boolean;
+  /** Tier derived from Azure AD group membership ('BOTH' | 'TECH' | 'BUSINESS' | 'NONE'). */
+  access_role?: AccessRole;
   /** Future: per-module breakdown for this user. */
   modules?: ModuleUsage[];
   /** Future: most recent events for this user. */

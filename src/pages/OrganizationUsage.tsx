@@ -32,6 +32,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import {
   fetchOrganizationUsage,
+  type AccessRole,
   type ModuleUsage,
   type UserUsage,
 } from "@/services/usageApi";
@@ -99,6 +100,50 @@ const getInitials = (email: string, name?: string | null) => {
       .join("")
       .toUpperCase()
       .slice(0, 2) || source[0].toUpperCase()
+  );
+};
+
+// Access role chip — derived from Azure AD group membership and refreshed
+// every authenticated request server-side. Four tiers: BOTH / TECH /
+// BUSINESS / NONE. Visual treatment is restrained — same eyebrow vocabulary
+// as everything else on this page so it doesn't compete with the spend lane.
+const ACCESS_ROLE_DISPLAY: Record<
+  AccessRole,
+  { label: string; className: string }
+> = {
+  BOTH: {
+    label: "Tech + Business",
+    className: "border-primary/35 bg-primary/10 text-primary",
+  },
+  TECH: {
+    label: "Tech",
+    className: "border-primary/30 bg-primary/[0.06] text-primary",
+  },
+  BUSINESS: {
+    label: "Business",
+    className:
+      "border-foreground/20 bg-muted text-foreground/80",
+  },
+  NONE: {
+    label: "No groups",
+    className:
+      "border-muted-foreground/20 bg-transparent text-muted-foreground",
+  },
+};
+
+const AccessRoleChip = ({ role }: { role?: AccessRole | null }) => {
+  const resolved = (role ?? "NONE") as AccessRole;
+  const { label, className } = ACCESS_ROLE_DISPLAY[resolved];
+  return (
+    <span
+      className={cn(
+        "mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+        className,
+      )}
+      title={`Access role: ${label}`}
+    >
+      {label}
+    </span>
   );
 };
 
@@ -463,6 +508,7 @@ const UserActivitySheet = ({
               {displayName}
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{user.email}</p>
+            <AccessRoleChip role={user.access_role} />
             <div className="usage-baseline-rule mt-2.5 max-w-[60%]" />
           </div>
         </div>
@@ -627,6 +673,7 @@ const RosterRow = ({
             {displayName}
           </div>
           <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+          <AccessRoleChip role={user.access_role} />
         </div>
       </div>
 

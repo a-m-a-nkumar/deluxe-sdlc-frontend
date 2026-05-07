@@ -1418,19 +1418,14 @@ export function TerraformGeneratorCore() {
               </Button>
               <div className="flex gap-2">
 <Button variant="outline"
-                  onClick={() => { setShowFetchPanel((v) => !v); setShowPushPanel(false); setShowScanPanel(false); }}
-                >
-                  <GitBranch className="w-4 h-4 mr-1" /> Load from Bitbucket
-                </Button>
-                <Button variant="outline"
-                  onClick={() => { setShowScanPanel((v) => !v); setShowPushPanel(false); setShowFetchPanel(false); }}
+                  onClick={() => { setShowScanPanel((v) => !v); setShowPushPanel(false); }}
                   disabled={isGenerating || Object.keys(files).length === 0}
                 >
                   <Shield className="w-4 h-4 mr-1" />
                   {scanResults?.status === "passed" ? "Scan ✓" : scanResults?.status === "failed" ? `Scan (${scanResults.failed} issues)` : "Security Scan"}
                 </Button>
                 <Button variant="outline"
-                  onClick={() => { setShowPushPanel((v) => !v); setShowFetchPanel(false); setShowScanPanel(false); }}
+                  onClick={() => { setShowPushPanel((v) => !v); setShowScanPanel(false); }}
                   disabled={isGenerating || Object.keys(files).length === 0}
                 >
                   <GitBranch className="w-4 h-4 mr-1" /> Push to Repository
@@ -1443,160 +1438,6 @@ export function TerraformGeneratorCore() {
                 </Button>
               </div>
             </div>
-
-            {/* ── Load from Bitbucket Panel ────────────────────────────── */}
-            {showFetchPanel && (
-              <Card className="border-2 border-dashed border-blue-300 dark:border-blue-700">
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <GitBranch className="w-4 h-4 text-blue-600" />
-                    <span className="font-semibold text-sm">Load existing Terraform files from Bitbucket</span>
-                    <span className="text-xs text-muted-foreground ml-1">— edit and push back when done</span>
-                  </div>
-
-                  {/* Step 1 — Connect */}
-                  {!fetchConnected ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Atlassian Login Email <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="email"
-                            placeholder="t479892@deluxe.com"
-                            value={fetchBbEmail}
-                            onChange={(e) => setFetchBbEmail(e.target.value)}
-                            className="w-full border rounded px-3 py-2 text-sm bg-background"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">Email from id.atlassian.com</p>
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Bitbucket API Token <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="password"
-                            placeholder="ATATT3xF..."
-                            value={fetchBbToken}
-                            onChange={(e) => setFetchBbToken(e.target.value)}
-                            className="w-full border rounded px-3 py-2 text-sm bg-background"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">Scope: <code className="bg-muted px-1 rounded">read:repository:bitbucket</code></p>
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1 block">
-                            Workspace <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="deluxe-development or full URL"
-                            value={fetchWs}
-                            onChange={(e) => setFetchWs(e.target.value)}
-                            className="w-full border rounded px-3 py-2 text-sm bg-background"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">Slug or full bitbucket.org URL</p>
-                        </div>
-                      </div>
-                      <div className="flex justify-end">
-                        <Button variant="outline" size="sm" onClick={connectFetchBitbucket} disabled={isFetchConnecting || !fetchBbEmail || !fetchBbToken || !fetchWs}>
-                          {isFetchConnecting
-                            ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Connecting...</>
-                            : "Connect to Bitbucket"
-                          }
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between text-sm text-green-700 bg-green-50 dark:bg-green-950/30 border border-green-200 rounded px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                        Connected to workspace <strong>{fetchConnected}</strong>
-                      </span>
-                      <button
-                        className="text-xs text-muted-foreground underline ml-4"
-                        onClick={() => { setFetchConnected(null); setFetchRepos([]); setFetchBranches([]); setFetchWs(""); setFetchRepo(""); }}
-                      >
-                        Disconnect
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Step 2 — Pick repo / branch */}
-                  {fetchConnected && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Repository *</label>
-                        {isFetchLoadingRepos ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading...
-                          </div>
-                        ) : (
-                          <select
-                            className="w-full border rounded px-3 py-2 text-sm bg-background"
-                            value={fetchRepo}
-                            onChange={(e) => {
-                              setFetchRepo(e.target.value);
-                              setFetchBranches([]);
-                              if (e.target.value) loadFetchBranches(fetchWs, e.target.value);
-                            }}
-                          >
-                            <option value="">Select repository...</option>
-                            {fetchRepos.map(r => (
-                              <option key={r.slug} value={r.slug}>{r.name}</option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Branch</label>
-                        {isFetchLoadingBranches ? (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading...
-                          </div>
-                        ) : (
-                          <select
-                            className="w-full border rounded px-3 py-2 text-sm bg-background"
-                            value={fetchBranch}
-                            onChange={(e) => setFetchBranch(e.target.value)}
-                            disabled={!fetchRepo}
-                          >
-                            {fetchBranches.length === 0 && <option value="main">main</option>}
-                            {fetchBranches.map(b => <option key={b} value={b}>{b}</option>)}
-                          </select>
-                        )}
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <label className="text-xs text-muted-foreground mb-1 block">Subfolder (optional)</label>
-                        <input
-                          className="w-full border rounded px-3 py-2 text-sm bg-background"
-                          value={fetchPath}
-                          onChange={(e) => setFetchPath(e.target.value)}
-                          placeholder="e.g. terraform/  — leave empty to fetch entire repo"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Only .tf, .tfvars, and .hcl files are loaded</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {fetchConnected && (
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={handleFetchFromBitbucket}
-                        disabled={isFetching || !fetchWs || !fetchRepo}
-                      >
-                        {isFetching
-                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading files...</>
-                          : <><GitBranch className="w-4 h-4 mr-2" /> Load Files</>
-                        }
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* ── Checkov Scan Panel ──────────────────────────────────── */}
             {showScanPanel && (

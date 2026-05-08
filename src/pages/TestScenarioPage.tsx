@@ -206,8 +206,7 @@ const TestScenarioPage = () => {
           </div>
         ) : (
           <textarea
-            className="w-full font-mono text-sm text-gray-800 border border-[#DEDCDC] rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed"
-            className="min-h-[calc(100vh-160px)]"
+            className="w-full font-mono text-sm text-gray-800 border border-[#DEDCDC] rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-primary resize-none leading-relaxed min-h-[calc(100vh-160px)]"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Test scenarios will appear here..."

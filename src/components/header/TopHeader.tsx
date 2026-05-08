@@ -27,6 +27,26 @@ import { useAppState } from "@/contexts/AppStateContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+// Email allowlist for the Organization Usage menu item. Compared
+// case-insensitively against the user's Azure AD email.
+// Includes BOTH T-IDs (DB form) and personal aliases (Azure JWT email
+// claim form) — the backend hands back whichever the IdP populated.
+const ORG_USAGE_ADMIN_EMAILS: ReadonlySet<string> = new Set([
+  // T-IDs
+  "t475411@deluxe.com",
+  "t476079@deluxe.com",
+  "t475412@deluxe.com",
+  "t479888@deluxe.com",
+  // Aliases
+  "swetha.surendran@deluxe.com",
+  "thilak.balakrishnan@deluxe.com",
+  "vadivel.mohanakrishnan@deluxe.com",
+  "aman.kumar@deluxe.com",
+]);
+
+const isOrgUsageAdmin = (email: string | null | undefined): boolean =>
+  !!email && ORG_USAGE_ADMIN_EMAILS.has(email.toLowerCase());
+
 interface TopHeaderProps {
   onMenuClick?: () => void;
   isMobile?: boolean;
@@ -204,10 +224,12 @@ export const TopHeader = ({ onMenuClick, isMobile }: TopHeaderProps) => {
                   <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/organization-usage")} className="cursor-pointer">
-                  <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Organization Usage</span>
-                </DropdownMenuItem>
+                {isOrgUsageAdmin(user?.email) && (
+                  <DropdownMenuItem onClick={() => navigate("/organization-usage")} className="cursor-pointer">
+                    <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Organization Usage</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
 
                 {/* Atlassian status row */}

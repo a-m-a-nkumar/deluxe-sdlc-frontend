@@ -702,12 +702,12 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                             </div>
                             <div className="p-4 space-y-4">
                                 <img
-                                    src="/{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png"
+                                    src={`${import.meta.env.BASE_URL}{B5C30B42-E023-400C-BA9C-AD2EF4C824F4}.png`}
                                     alt="VS Code Copilot showing MCP command picker with enhance-prompt"
                                     className="w-full rounded-lg border border-gray-200 shadow-sm"
                                 />
                                 <img
-                                    src="/{72543988-0535-4525-B016-137D2CDCAD85}.png"
+                                    src={`${import.meta.env.BASE_URL}{72543988-0535-4525-B016-137D2CDCAD85}.png`}
                                     alt="VS Code with MCP config and Copilot chat showing enhance task"
                                     className="w-full rounded-lg border border-gray-200 shadow-sm"
                                 />

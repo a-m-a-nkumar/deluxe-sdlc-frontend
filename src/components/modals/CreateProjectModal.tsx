@@ -82,6 +82,8 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   const [spacesHasMore, setSpacesHasMore] = useState(false);
   const [spacesStart, setSpacesStart] = useState(0);
   const [loadingMoreSpaces, setLoadingMoreSpaces] = useState(false);
+  const [confluenceSearch, setConfluenceSearch] = useState("");
+  const [searchingSpaces, setSearchingSpaces] = useState(false);
   const spacesListRef = useRef<HTMLDivElement | null>(null);
   const [selectedJiraProject, setSelectedJiraProject] = useState("");
   const [selectedConfluenceSpace, setSelectedConfluenceSpace] = useState("");
@@ -228,12 +230,38 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
   }, [accessToken, spacesStart, spacesHasMore, loadingMoreSpaces]);
 
   const handleSpacesScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // Don't lazy-load while searching — search hits the backend directly
+    // and returns all matches in one shot.
+    if (confluenceSearch) return;
     const el = e.currentTarget;
-    // Load more when scrolled within 50px of the bottom
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 50) {
       loadMoreSpaces();
     }
-  }, [loadMoreSpaces]);
+  }, [loadMoreSpaces, confluenceSearch]);
+
+  // Debounced server-side search for Confluence spaces. Without this,
+  // typing "sdlc" only filters the currently-loaded 100 spaces — anything
+  // on a not-yet-fetched page would show "No space found." even though
+  // it exists. Backend's /confluence/spaces?search=... returns matches
+  // across the full space set.
+  useEffect(() => {
+    if (!accessToken || !isAtlassianLinked) return;
+    const trimmed = confluenceSearch.trim();
+    const handle = setTimeout(async () => {
+      setSearchingSpaces(true);
+      try {
+        const data = await integrationsApi.getConfluenceSpaces(accessToken, 0, 100, trimmed);
+        setConfluenceSpaces(data?.spaces || []);
+        setSpacesHasMore(trimmed ? false : (data?.hasMore ?? false));
+        setSpacesStart(100);
+      } catch (err) {
+        console.error("Error searching Confluence spaces:", err);
+      } finally {
+        setSearchingSpaces(false);
+      }
+    }, trimmed ? 300 : 0);
+    return () => clearTimeout(handle);
+  }, [confluenceSearch, accessToken, isAtlassianLinked]);
 
   useEffect(() => {
     if (open) {
@@ -634,7 +662,15 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
 
                         {/* Confluence Space Selector */}
                         <FormItem>
-                          <Popover open={confluencePopoverOpen} onOpenChange={setConfluencePopoverOpen}>
+                          <Popover
+                            open={confluencePopoverOpen}
+                            onOpenChange={(next) => {
+                              setConfluencePopoverOpen(next);
+                              // Clear search when closing so the next open
+                              // shows the full list, not the previous filter.
+                              if (!next && confluenceSearch) setConfluenceSearch("");
+                            }}
+                          >
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
@@ -657,10 +693,16 @@ export const CreateProjectModal = ({ open, onOpenChange, projects, isLoadingProj
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white" align="start">
-                              <Command>
-                                <CommandInput placeholder="Search Confluence spaces..." />
+                              <Command shouldFilter={false}>
+                                <CommandInput
+                                  placeholder="Search Confluence spaces..."
+                                  value={confluenceSearch}
+                                  onValueChange={setConfluenceSearch}
+                                />
                                 <CommandList onScroll={handleSpacesScroll}>
-                                  <CommandEmpty>No space found.</CommandEmpty>
+                                  <CommandEmpty>
+                                    {searchingSpaces ? "Searching..." : "No space found."}
+                                  </CommandEmpty>
                                   <CommandGroup>
                                     {confluenceSpaces.map(space => (
                                       <CommandItem

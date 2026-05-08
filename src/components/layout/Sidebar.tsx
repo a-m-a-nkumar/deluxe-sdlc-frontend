@@ -178,14 +178,14 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
         >
           {THEME === "siriusai" && (collapsed && !isMobile) && (
             <img
-              src="/Logo - S Only (2).png"
+              src={`${import.meta.env.BASE_URL}Logo - S Only (2).png`}
               alt="SiriusAI"
               className="h-[32px] w-auto"
             />
           )}
           {THEME === "siriusai" && (!collapsed || isMobile) && (
             <img
-              src="/Logo - SiriusAI (2).png"
+              src={`${import.meta.env.BASE_URL}Logo - SiriusAI (2).png`}
               alt="SiriusAI"
               className="h-[32px] w-auto"
             />

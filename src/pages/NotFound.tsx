@@ -10,7 +10,7 @@ const Logo = () => {
   if (THEME === "siriusai") {
     return (
       <img
-        src="/Logo - SiriusAI (2).png"
+        src={`${import.meta.env.BASE_URL}Logo - SiriusAI (2).png`}
         alt="SiriusAI"
         className="h-8 object-contain"
       />

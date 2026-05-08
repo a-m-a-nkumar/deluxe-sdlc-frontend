@@ -5,6 +5,14 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Build ID baked into the bundle. Used at runtime to detect stale
+  // localStorage state (old MSAL accounts, old session metadata) after
+  // a deploy and force a one-time clear+reload. Each build gets a fresh
+  // value, so any client carrying a different ID knows its state is
+  // out of date.
+  define: {
+    __BUILD_ID__: JSON.stringify(process.env.BUILD_ID || `${Date.now()}`),
+  },
   server: {
     host: "::",
     port: 8080,

@@ -185,7 +185,7 @@ export const testGenerationApi = {
     featureFiles: FeatureFile[],
     token: string,
     branch: string = 'test/auto-generated',
-    basePath: string = 'tests/features',
+    basePath: string = 'Include/features',
     createPr: boolean = true
   ): Promise<PushToGitHubResponse> => {
     const response = await fetch(`${API_BASE_URL}/api/test/push-to-github`, {

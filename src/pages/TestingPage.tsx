@@ -498,7 +498,7 @@ export const TestingPage = () => {
         featureFiles,
         accessToken,
         githubBranch,
-        "tests/features",
+        "Include/features",
         true
       );
       setPushedToGitHub(true);
@@ -1012,11 +1012,11 @@ export const TestingPage = () => {
 
                   {featureFiles.length > 0 && (
                     <div className="text-xs text-gray-400">
-                      <span className="font-medium">{featureFiles.length} .feature file{featureFiles.length !== 1 ? "s" : ""}</span> will be pushed to <span className="font-mono">tests/features/</span>:
+                      <span className="font-medium">{featureFiles.length} .feature file{featureFiles.length !== 1 ? "s" : ""}</span> will be pushed to <span className="font-mono">Include/features/</span>:
                       <div className="mt-1 space-y-0.5">
                         {featureFiles.map((f, i) => (
                           <div key={i} className="font-mono text-[11px] text-gray-500">
-                            tests/features/{f.filename}
+                            Include/features/{f.filename}
                           </div>
                         ))}
                       </div>
@@ -1076,7 +1076,7 @@ export const TestingPage = () => {
                           </p>
                           <ol className="text-xs text-green-600 mt-1.5 space-y-1 list-decimal list-inside">
                             <li>Pull the <span className="font-mono font-medium">{githubBranch}</span> branch in your Katalon project</li>
-                            <li>The .feature files will appear under <span className="font-mono">tests/features/</span></li>
+                            <li>The .feature files will appear under <span className="font-mono">Include/features/</span></li>
                             <li>Open Katalon Studio and import the feature files</li>
                             <li>Katalon will auto-generate Groovy step definition stubs</li>
                             <li>Implement the step definitions and run your BDD test suite</li>
@@ -1472,11 +1472,11 @@ export const TestingPage = () => {
                     </div>
                     {featureFiles.length > 0 && (
                       <div className="text-xs text-gray-400">
-                        <span className="font-medium">{featureFiles.length} .feature file{featureFiles.length !== 1 ? "s" : ""}</span> will be pushed to <span className="font-mono">tests/features/</span>:
+                        <span className="font-medium">{featureFiles.length} .feature file{featureFiles.length !== 1 ? "s" : ""}</span> will be pushed to <span className="font-mono">Include/features/</span>:
                         <div className="mt-1 space-y-0.5">
                           {featureFiles.map((f, i) => (
                             <div key={i} className="font-mono text-[11px] text-gray-500">
-                              tests/features/{f.filename}
+                              Include/features/{f.filename}
                             </div>
                           ))}
                         </div>
@@ -1532,7 +1532,7 @@ export const TestingPage = () => {
                             </p>
                             <ol className="text-xs text-green-600 mt-1.5 space-y-1 list-decimal list-inside">
                               <li>Pull the <span className="font-mono font-medium">{githubBranch}</span> branch in your Katalon project</li>
-                              <li>The .feature files will appear under <span className="font-mono">tests/features/</span></li>
+                              <li>The .feature files will appear under <span className="font-mono">Include/features/</span></li>
                               <li>Open Katalon Studio and import the feature files</li>
                               <li>Katalon will auto-generate Groovy step definition stubs</li>
                               <li>Implement the step definitions and run your BDD test suite</li>

@@ -367,6 +367,26 @@ export const ConfluenceDashboard = () => {
                   </Button>
                   )}
 
+                  {/* Generate Test Scenarios — visible to both tech and business users */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          variant="outline"
+                          className="bg-blue-600 text-white border border-blue-600 text-sm font-normal flex items-center gap-2 hover:bg-blue-700 hover:text-white hover:border-blue-700 transition-colors"
+                          onClick={() => selectedPageId && navigate(`/test-generation/${selectedPageId}`)}
+                          disabled={!selectedPageId}
+                        >
+                          <FlaskConical className="w-4 h-4" />
+                          <span className="hidden sm:inline">Generate Test Scenarios</span>
+                          <span className="sm:hidden">Test</span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {!selectedPageId && (
+                      <TooltipContent>Select a Confluence page first</TooltipContent>
+                    )}
+                  </Tooltip>
 
                 </div>
               </div>

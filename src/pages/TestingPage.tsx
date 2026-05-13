@@ -525,7 +525,7 @@ export const TestingPage = () => {
 
         {/* ── Page Header ── */}
         <div className="px-6 sm:px-8 py-5 border-b border-gray-200 bg-white">
-          <div className="max-w-4xl">
+          <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-1">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary">
                 <FlaskConical className="w-4 h-4 text-white" />
@@ -538,7 +538,7 @@ export const TestingPage = () => {
           </div>
         </div>
 
-        <div className="px-6 sm:px-8 py-6 max-w-4xl">
+        <div className="px-6 sm:px-8 py-6 max-w-4xl mx-auto">
 
           {/* ── MCP Setup Selection ── */}
           {mcpSetup === "pending" && (

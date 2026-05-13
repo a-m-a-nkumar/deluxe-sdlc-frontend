@@ -33,6 +33,17 @@ interface BRDSection {
   content?: string;
 }
 
+/**
+ * Optional pointer the BRD Sync page hands off to BRD Assistant so the
+ * BRD chat is seeded from a Confluence page (e.g. a published code summary)
+ * instead of a file upload.
+ */
+export interface ReferenceDocument {
+  type: "confluence_page_id";
+  pageId: string;
+  title: string;
+}
+
 interface AppStateContextType {
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
@@ -74,6 +85,8 @@ interface AppStateContextType {
   setIsSyncInProgress: (syncing: boolean) => void;
   syncMessage: string;
   setSyncMessage: (message: string) => void;
+  referenceDocument: ReferenceDocument | null;
+  setReferenceDocument: (doc: ReferenceDocument | null) => void;
 }
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -140,6 +153,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   const [newlyCreatedJiraIssueId, setNewlyCreatedJiraIssueId] = useState<string | null>(null);
   const [isSyncInProgress, setIsSyncInProgress] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
+  const [referenceDocument, setReferenceDocument] = useState<ReferenceDocument | null>(null);
 
   const setChatMessages = (view: keyof AppStateContextType["chatMessages"], messages: ChatMessageType[]) => {
     setChatMessagesState(prev => ({
@@ -193,6 +207,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         setIsSyncInProgress,
         syncMessage,
         setSyncMessage,
+        referenceDocument,
+        setReferenceDocument,
       }}
     >
       {children}

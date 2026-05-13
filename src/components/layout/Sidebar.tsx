@@ -13,6 +13,8 @@ import {
   FlaskConical,
   Workflow,
   Loader2,
+  GitCompareArrows,
+  GitPullRequest,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { THEME } from "@/config/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiGet } from "@/services/api";
@@ -85,6 +92,8 @@ const navigationItems = [
   },
 ];
 
+type NavItem = (typeof navigationItems)[number];
+
 
 interface SidebarProps {
   showBackButton?: boolean;
@@ -103,9 +112,13 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
   const [supportHtml, setSupportHtml] = useState("");
   const [supportLoading, setSupportLoading] = useState(false);
   const [pendingScroll, setPendingScroll] = useState<string | null>(null);
+  const [codeIntelOpen, setCodeIntelOpen] = useState(false);
 
   // Filter navigation items based on user's group memberships
   const visibleItems = navigationItems.filter((item) => hasModuleAccess(item.id));
+  // Code Intelligence is rendered as one entry in TOOLS that opens a chooser
+  // modal (BRD Sync / PR Sync). Gate on access to either sub-route.
+  const canSeeCodeIntelligence = hasModuleAccess("brd-sync") || hasModuleAccess("pr-sync");
 
   // Map current page to heading text to search for in the user guide
   const MODULE_HEADING_MAP: Record<string, string> = {
@@ -167,6 +180,78 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
       }
     }
   };
+
+  // Chooser content used inside the "Code Intelligence" popover.
+  const codeIntelChooser = (
+    <PopoverContent
+      side="right"
+      align="start"
+      sideOffset={10}
+      className="w-80 p-0 overflow-hidden border-border"
+    >
+      <div className="px-4 py-3 border-b border-border bg-primary/[0.04]">
+        <div className="usage-section-mark">
+          <GitCompareArrows className="h-3.5 w-3.5 text-primary" />
+          <span>Code Intelligence</span>
+        </div>
+        <div className="mt-1.5 text-[11px] text-muted-foreground">
+          Keep BRDs and shipping code in lockstep.
+        </div>
+      </div>
+
+      <div className="p-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            setCodeIntelOpen(false);
+            if (isMobile) onMobileClose?.();
+            navigate("/brd-sync");
+          }}
+          className="w-full text-left flex items-start gap-3 p-3 rounded-md hover:bg-primary/[0.06] transition-colors group"
+        >
+          <span className="grid place-items-center w-9 h-9 rounded-md bg-primary/10 ring-1 ring-primary/15 flex-shrink-0 mt-0.5">
+            <GitCompareArrows className="w-4 h-4 text-primary" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-semibold text-foreground">BRD Sync</div>
+              <span className="text-[9px] font-bold tracking-[0.14em] uppercase px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live
+              </span>
+            </div>
+            <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+              Reconcile BRDs with code summaries from your IDE.
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setCodeIntelOpen(false);
+            if (isMobile) onMobileClose?.();
+            navigate("/pr-sync");
+          }}
+          className="w-full text-left flex items-start gap-3 p-3 rounded-md hover:bg-primary/[0.06] transition-colors group"
+        >
+          <span className="grid place-items-center w-9 h-9 rounded-md bg-muted ring-1 ring-border flex-shrink-0 mt-0.5">
+            <GitPullRequest className="w-4 h-4 text-muted-foreground" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-semibold text-foreground">PR Sync</div>
+              <span className="text-[9px] font-bold tracking-[0.14em] uppercase px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                Soon
+              </span>
+            </div>
+            <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+              Walk a Bitbucket PR diff and propose BRD edits.
+            </div>
+          </div>
+        </button>
+      </div>
+    </PopoverContent>
+  );
 
   return (
     <div className={`${isMobile ? 'w-60' : (collapsed ? 'w-16' : 'w-60')} h-full bg-sidebar-bg border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden`}>
@@ -287,6 +372,31 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                   </Link>
                 );
               })}
+              {canSeeCodeIntelligence && (
+                <Popover open={codeIntelOpen} onOpenChange={setCodeIntelOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-auto p-3 text-left hover:bg-accent relative"
+                      style={currentView === "brd-sync" || currentView === "pr-sync"
+                        ? { backgroundColor: 'hsl(var(--primary-selected))' }
+                        : undefined}
+                    >
+                      <div className="flex items-start gap-3 w-full">
+                        <GitCompareArrows className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0 pr-4">
+                          <div className="text-sm text-body-dark font-normal">Code Intelligence</div>
+                          <div className="text-xs font-normal text-icon-gray">
+                            BRD Sync &amp; PR Sync
+                          </div>
+                        </div>
+                      </div>
+                      <span className="ci-trigger-mark" aria-hidden />
+                    </Button>
+                  </PopoverTrigger>
+                  {codeIntelChooser}
+                </Popover>
+              )}
             </div>
           )}
           {collapsed && !isMobile && (
@@ -309,6 +419,24 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
                   </Link>
                 );
               })}
+              {canSeeCodeIntelligence && (
+                <Popover open={codeIntelOpen} onOpenChange={setCodeIntelOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-10 p-0 justify-center hover:bg-accent relative"
+                      style={currentView === "brd-sync" || currentView === "pr-sync"
+                        ? { backgroundColor: 'hsl(var(--primary-selected))' }
+                        : undefined}
+                      title="Code Intelligence"
+                    >
+                      <GitCompareArrows className="w-4 h-4" />
+                      <span className="ci-trigger-mark" aria-hidden style={{ top: 6, right: 8 }} />
+                    </Button>
+                  </PopoverTrigger>
+                  {codeIntelChooser}
+                </Popover>
+              )}
             </div>
           )}
         </div>
@@ -369,6 +497,7 @@ export const Sidebar = ({ showBackButton, onBack, collapsed, onToggleCollapse, c
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

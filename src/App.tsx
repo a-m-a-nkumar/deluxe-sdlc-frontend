@@ -22,6 +22,9 @@ import HarnessPage from "./pages/HarnessPage";
 import FigmaPage from "./pages/FigmaPage";
 import MyProfile from "./pages/MyProfile";
 import OrganizationUsage from "./pages/OrganizationUsage";
+import BRDSyncPage from "./pages/BRDSyncPage";
+import BRDComparisonPage from "./pages/BRDComparisonPage";
+import PRSyncPlaceholder from "./pages/PRSyncPlaceholder";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -178,6 +181,31 @@ const App = () => {
                     <ProtectedRoute>
                       <OrganizationUsage />
                     </ProtectedRoute>
+                  }
+                />
+                {/* Code Intelligence */}
+                <Route
+                  path="/brd-sync"
+                  element={
+                    <ModuleProtectedRoute moduleId="brd-sync">
+                      <BRDSyncPage />
+                    </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/brd-comparison"
+                  element={
+                    <ModuleProtectedRoute moduleId="brd-sync">
+                      <BRDComparisonPage />
+                    </ModuleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pr-sync"
+                  element={
+                    <ModuleProtectedRoute moduleId="pr-sync">
+                      <PRSyncPlaceholder />
+                    </ModuleProtectedRoute>
                   }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

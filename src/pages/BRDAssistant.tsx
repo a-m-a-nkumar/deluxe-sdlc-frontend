@@ -6,8 +6,23 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAppState } from "@/contexts/AppStateContext";
 import { toast } from "sonner";
 import { fetchProjectBrdSession, fetchBrdSections, fetchBrdHistory } from "@/services/projectApi";
+import { fetchConfluencePage } from "@/services/brdSyncApi";
 import { SessionManager } from "@/services/chatbotApi";
 import { FileText, Sparkles, ArrowRight, Upload, MessageSquare, ArrowLeftRight } from "lucide-react";
+
+// Strip Confluence storage HTML to plain-text so it can ride inside contentPreview.
+const stripStorageHtml = (storage: string | undefined): string => {
+  if (!storage) return "";
+  return storage
+    .replace(/<ac:structured-macro[^>]*>[\s\S]*?<\/ac:structured-macro>/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+};
 
 const BRDAssistant = () => {
   const navigate = useNavigate();
@@ -20,11 +35,51 @@ const BRDAssistant = () => {
     setBrdId,
     setPendingUploadResponse,
     addUploadedFileBatch,
-    clearUploadedFileBatches
+    clearUploadedFileBatches,
+    referenceDocument,
+    setReferenceDocument,
   } = useAppState();
 
   const [isRestoringSession, setIsRestoringSession] = useState(false);
   const [brdMode, setBrdMode] = useState<"pending" | "agent-pm" | "analyst">("pending");
+
+  // When BRD Sync handed off a code-summary Confluence page, fetch it and inject
+  // as a synthetic upload batch so Agent PM uses it as initial context.
+  useEffect(() => {
+    if (!referenceDocument) return;
+    if (referenceDocument.type !== "confluence_page_id") return;
+    if (!selectedProject) return;
+
+    let cancelled = false;
+    const { pageId, title } = referenceDocument;
+    // Auto-switch to Agent PM so the seeded context is actually used.
+    setBrdMode("agent-pm");
+
+    (async () => {
+      try {
+        const page = await fetchConfluencePage(pageId);
+        const text = stripStorageHtml(page.body?.storage?.value);
+        if (!text) {
+          toast.error("Code summary appears empty — nothing to seed.");
+          return;
+        }
+        if (cancelled) return;
+        addUploadedFileBatch({
+          id: `code-summary-${pageId}`,
+          files: [{ name: title, size: `${Math.ceil(text.length / 1024)} KB` }],
+          contentPreview: text,
+          timestamp: new Date().toISOString(),
+        });
+        toast.success(`Seeded BRD chat with code summary: ${title}`);
+      } catch (e: any) {
+        if (!cancelled) toast.error(e?.message || "Failed to load code summary.");
+      } finally {
+        if (!cancelled) setReferenceDocument(null);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [referenceDocument, selectedProject, addUploadedFileBatch, setReferenceDocument]);
 
   // Reset to card selection when user clicks "BRD Assistant" in sidebar again
   useEffect(() => {

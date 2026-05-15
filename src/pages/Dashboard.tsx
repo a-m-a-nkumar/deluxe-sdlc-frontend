@@ -2,11 +2,21 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { ProjectOverview } from "@/components/dashboard/ProjectOverview";
 import { useAuth } from "@/contexts/AuthContext";
 import AccessDenied from "./AccessDenied";
+import ServiceUnavailable from "./ServiceUnavailable";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, permissionsUnavailable } = useAuth();
 
-  // User is authenticated but has no module access
+  // Backend's Graph fallback was unreachable — transient, retryable. Render
+  // a distinct page rather than the permanent AccessDenied (which would
+  // mislead overage users into thinking they were denied when really we
+  // just couldn't check).
+  if (permissionsUnavailable) {
+    return <ServiceUnavailable />;
+  }
+
+  // User is authenticated but has no module access (genuine — they're not in
+  // any SDLC Azure AD group).
   if (user && user.allowedModules.length === 0) {
     return <AccessDenied />;
   }

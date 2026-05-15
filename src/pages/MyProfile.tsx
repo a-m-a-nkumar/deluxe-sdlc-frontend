@@ -1,13 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Activity, Calendar, Clock, Mail, ShieldCheck, Sparkles, User as UserIcon } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Activity, Calendar, CheckCircle, Clock, Link as LinkIcon, Mail, ShieldCheck,
+  Sparkles, Trash2, Triangle, User as UserIcon,
+} from "lucide-react";
 import type { AccessRole } from "@/services/usageApi";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchMyUsage } from "@/services/usageApi";
+import { integrationsApi } from "@/services/integrationsApi";
+import { LinkLucidModal } from "@/components/modals/LinkLucidModal";
 
 const formatDateTime = (iso: string | null) => {
   if (!iso) return "—";
@@ -87,7 +93,10 @@ const compact = (n: number) => {
 };
 
 const MyProfile = () => {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
+  const queryClient = useQueryClient();
+  const [isLucidModalOpen, setIsLucidModalOpen] = useState(false);
+  const [isUnlinkingLucid, setIsUnlinkingLucid] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["my-usage", user?.id],
@@ -96,7 +105,29 @@ const MyProfile = () => {
     staleTime: 1000 * 60,
   });
 
+  const { data: lucidStatus } = useQuery({
+    queryKey: ["lucid-status", user?.id],
+    queryFn: () => integrationsApi.getLucidStatus(accessToken!),
+    enabled: !!accessToken && !!user,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const tokenCount = useCountUp(data?.token_usage ?? 0);
+
+  const handleLucidLinked = () => {
+    queryClient.invalidateQueries({ queryKey: ["lucid-status"] });
+  };
+
+  const handleUnlinkLucid = async () => {
+    if (!accessToken) return;
+    setIsUnlinkingLucid(true);
+    try {
+      await integrationsApi.unlinkLucidAccount(accessToken);
+      queryClient.invalidateQueries({ queryKey: ["lucid-status"] });
+    } finally {
+      setIsUnlinkingLucid(false);
+    }
+  };
 
   return (
     <MainLayout currentView="my-profile">
@@ -277,6 +308,75 @@ const MyProfile = () => {
             </Card>
           </div>
 
+          {/* Integrations — third-party API keys the user has linked. */}
+          <div className="mt-10 usage-rise stagger-6">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+              <LinkIcon className="h-3.5 w-3.5 text-primary" />
+              <span>Integrations</span>
+            </div>
+            <Card className="p-6">
+              {/* Lucid */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="rounded-md bg-primary/10 p-2 flex-shrink-0">
+                    <Triangle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">Lucid</span>
+                      {lucidStatus?.linked && lucidStatus?.key_valid && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200">
+                          <CheckCircle className="h-3 w-3" /> Connected
+                        </span>
+                      )}
+                      {lucidStatus?.linked && !lucidStatus?.key_valid && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 border border-amber-200">
+                          Key invalid — re-link
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground max-w-md">
+                      Personal Lucid REST API key. Used to fetch diagrams you generate in
+                      Lucid AI back into the Architecture session so they can be embedded
+                      in the SAD.
+                    </p>
+                    {lucidStatus?.linked_at && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Linked {relativeTime(lucidStatus.linked_at)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {lucidStatus?.linked ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsLucidModalOpen(true)}
+                      >
+                        Update key
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleUnlinkLucid}
+                        disabled={isUnlinkingLucid}
+                        title="Unlink Lucid"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" onClick={() => setIsLucidModalOpen(true)}>
+                      <LinkIcon className="mr-2 h-4 w-4" /> Link Lucid
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </div>
+
           {isError && (
             <div className="mt-6 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
               Couldn't load your usage right now. Please try again later.
@@ -284,6 +384,13 @@ const MyProfile = () => {
           )}
         </div>
       </div>
+
+      <LinkLucidModal
+        isOpen={isLucidModalOpen}
+        onClose={() => setIsLucidModalOpen(false)}
+        onSuccess={handleLucidLinked}
+        isUpdateMode={!!lucidStatus?.linked}
+      />
     </MainLayout>
   );
 };

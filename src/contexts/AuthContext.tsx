@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import msalInstance, { ensureMsalInitialized, loginWithAzureAD, getUserInfo, logout as azureLogout, getAccessToken, isAuthenticated as checkAzureAuth } from "@/services/authService";
-import { fetchBackendUserInfo } from "@/services/authApi";
+import { fetchBackendUserInfo, GraphUnavailableError } from "@/services/authApi";
 import { toast } from "sonner";
 
 // Inactivity timeout — auto-logout after 5 minutes of no activity
@@ -28,6 +28,10 @@ interface AuthContextType {
   isLoading: boolean;
   hasModuleAccess: (moduleId: string) => boolean;
   isBusinessUser: boolean;
+  /** True when the backend returned 503 from /api/user/info — Graph fallback
+   *  is temporarily down for an overage user. Distinct from `user with empty
+   *  allowedModules` which is the permanent AccessDenied state. */
+  permissionsUnavailable: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,15 +40,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [permissionsUnavailable, setPermissionsUnavailable] = useState(false);
 
   // Ask the backend who this user is (source of truth for RBAC).
-  // Falls back to empty modules if the call fails — user will see AccessDenied.
+  //
+  // Three outcomes:
+  //   1. 200 → user has SDLC groups (allowed_modules populated) → home
+  //   2. 200 with allowed_modules=[] → user has no SDLC groups → AccessDenied
+  //   3. 503 → Graph fallback failed (overage user, transient) → "service
+  //      temporarily unavailable" page. NOT the permanent AccessDenied — these
+  //      are different states and users deserve to be told which one they're
+  //      in. `fetchBackendUserInfo` already retries 3× before surfacing 503.
   const buildUserFromBackend = async (
     msalUser: { id: string; email: string; name: string; groups: string[] },
     token: string,
   ): Promise<User> => {
     try {
       const backend = await fetchBackendUserInfo(token);
+      setPermissionsUnavailable(false);
       return {
         id: msalUser.id,
         email: backend.email || msalUser.email,
@@ -53,7 +66,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         allowedModules: backend.allowed_modules || [],
       };
     } catch (err) {
+      if (err instanceof GraphUnavailableError) {
+        console.warn("[AUTH] Graph fallback unavailable — surfacing transient state, not AccessDenied");
+        setPermissionsUnavailable(true);
+        return {
+          ...msalUser,
+          allowedModules: [],
+        };
+      }
       console.error("[AUTH] Failed to fetch user info from backend — denying access:", err);
+      setPermissionsUnavailable(false);
       return {
         ...msalUser,
         allowedModules: [],
@@ -192,6 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         hasModuleAccess,
         isBusinessUser: !!user?.groups.includes(BUSINESS_GROUP_OID),
+        permissionsUnavailable,
       }}
     >
       {children}

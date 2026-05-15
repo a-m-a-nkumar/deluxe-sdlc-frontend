@@ -21,7 +21,7 @@
  * marks, and the same letterpress stamp buttons used elsewhere.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
@@ -54,7 +54,12 @@ import {
   generateLucidPromptStream,
   getLucidAuthUrl,
   getLucidStatus,
+  listLucidDocuments,
+  importLucidDocument,
+  fetchLucidPreviewBlobUrl,
+  type LucidDocumentSummary,
 } from "@/services/lucidApi";
+import { integrationsApi } from "@/services/integrationsApi";
 import { cn } from "@/lib/utils";
 
 type DiagramType = "logical" | "infrastructure" | "security";
@@ -103,9 +108,20 @@ interface LucidDashboardProps {
    * picked at the hub. The 3-card type picker is hidden, the type is
    * pinned to this value, and ProgressStrip / IssuePlate reflect it. */
   lockedDiagramType?: DiagramType;
+  /** Active design session id. Required for the Plate 04 import flow
+   * (fetches a Lucid diagram and writes it to this session's slot).
+   * When absent, the import plate renders a "no active session" hint. */
+  sessionId?: string;
+  /** Fired after a successful Lucid import so the parent (e.g. the
+   * diagram hub) can refresh slot statuses to reflect the new artifact. */
+  onLucidImported?: (artifactKey: string, diagramType: DiagramType) => void;
 }
 
-export const LucidDashboard = ({ lockedDiagramType }: LucidDashboardProps = {}) => {
+export const LucidDashboard = ({
+  lockedDiagramType,
+  sessionId,
+  onLucidImported,
+}: LucidDashboardProps = {}) => {
   const { accessToken } = useAuth();
   const { toast } = useToast();
   const { selectedProject } = useAppState();
@@ -130,6 +146,19 @@ export const LucidDashboard = ({ lockedDiagramType }: LucidDashboardProps = {}) 
 
   const [isLucidConnected, setIsLucidConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // ── Plate 04 (Import) state ─────────────────────────────────────────
+  // Personal-API-key based import: after the user creates the diagram in
+  // lucid.app, they search/pick their doc here and pull it back as SVG.
+  const [hasLucidApiKey, setHasLucidApiKey] = useState<boolean | null>(null); // null = loading
+  const [importSearch, setImportSearch] = useState("");
+  const [importDocs, setImportDocs] = useState<LucidDocumentSummary[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [isFetchingPreview, setIsFetchingPreview] = useState(false);
+  const [previewArtifactKey, setPreviewArtifactKey] = useState<string | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const [diagramTypeState, setDiagramTypeState] = useState<DiagramType>(
     lockedDiagramType ?? "infrastructure",
@@ -222,6 +251,109 @@ export const LucidDashboard = ({ lockedDiagramType }: LucidDashboardProps = {}) 
       .then(setIsLucidConnected)
       .catch(() => setIsLucidConnected(false));
   }, []);
+
+  // Check whether the user has linked their personal Lucid REST API key
+  // in Profile. Drives whether Plate 04 (Import) shows the picker or a
+  // "link your key in profile" CTA.
+  useEffect(() => {
+    if (!accessToken) {
+      setHasLucidApiKey(false);
+      return;
+    }
+    integrationsApi
+      .getLucidStatus(accessToken)
+      .then((s) => setHasLucidApiKey(s.linked && s.key_valid))
+      .catch(() => setHasLucidApiKey(false));
+  }, [accessToken]);
+
+  // After a successful import, fetch the saved SVG with the bearer token
+  // and convert to a same-origin blob URL the <img> can render.
+  // The preview endpoint requires auth, which <img src> cannot carry —
+  // same pattern the SAD viewer uses for its diagram blocks.
+  useEffect(() => {
+    if (!previewArtifactKey || !sessionId || !accessToken) {
+      setPreviewBlobUrl(null);
+      return;
+    }
+    let revokeTarget: string | null = null;
+    let cancelled = false;
+    fetchLucidPreviewBlobUrl(accessToken, sessionId, diagramType)
+      .then((url) => {
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        revokeTarget = url;
+        setPreviewBlobUrl(url);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("[LucidDashboard] preview blob fetch failed:", err);
+        setPreviewBlobUrl(null);
+      });
+    return () => {
+      cancelled = true;
+      if (revokeTarget) URL.revokeObjectURL(revokeTarget);
+    };
+  }, [previewArtifactKey, sessionId, diagramType, accessToken]);
+
+  // Suggested search title: the type + the project name so the doc the
+  // user just generated in Lucid AI tends to be at the top of the list.
+  const suggestedSearch = useMemo(() => {
+    const typeLabel = DIAGRAM_TYPES.find((t) => t.key === diagramType)?.title ?? "";
+    const projectLabel = selectedProject?.project_name ?? "";
+    return [typeLabel, projectLabel].filter(Boolean).join(" — ");
+  }, [diagramType, selectedProject?.project_name]);
+
+  // When the user opens / refreshes the picker, fetch their docs.
+  const fetchImportDocs = useCallback(async () => {
+    if (!hasLucidApiKey) return;
+    setIsLoadingDocs(true);
+    setImportError(null);
+    try {
+      const result = await listLucidDocuments(importSearch, suggestedSearch);
+      setImportDocs(result.documents);
+    } catch (err: any) {
+      setImportError(err.message || "Failed to list Lucid documents");
+      setImportDocs([]);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  }, [hasLucidApiKey, importSearch, suggestedSearch]);
+
+  // Fetch + preview the chosen doc. The server writes to S3 and patches
+  // the slot — the preview just streams the saved SVG back.
+  const handleFetchAndPreview = useCallback(async () => {
+    if (!sessionId || !selectedDocId) return;
+    setIsFetchingPreview(true);
+    setImportError(null);
+    try {
+      const picked = importDocs.find((d) => d.document_id === selectedDocId);
+      const result = await importLucidDocument({
+        session_id: sessionId,
+        document_id: selectedDocId,
+        diagram_type: diagramType,
+        document_title: picked?.title,
+      });
+      setPreviewArtifactKey(result.artifact_key);
+      if (onLucidImported) onLucidImported(result.artifact_key, diagramType);
+      toast({
+        title: "Diagram imported",
+        description: `Saved ${picked?.title ?? "the diagram"} to ${diagramType} slot.`,
+      });
+    } catch (err: any) {
+      setImportError(err.message || "Failed to import Lucid diagram");
+    } finally {
+      setIsFetchingPreview(false);
+    }
+  }, [sessionId, selectedDocId, importDocs, diagramType, onLucidImported, toast]);
+
+  // Reset import state when type changes (a fresh slot = fresh import).
+  useEffect(() => {
+    setSelectedDocId(null);
+    setPreviewArtifactKey(null);
+    setImportError(null);
+  }, [diagramType, sessionId]);
 
   // OAuth callback ?lucid=connected | ?lucid=error
   useEffect(() => {
@@ -420,6 +552,24 @@ export const LucidDashboard = ({ lockedDiagramType }: LucidDashboardProps = {}) 
               onCreate={handleCreateDiagram}
               diagramUrl={diagramUrl}
               generatedPrompt={generatedPrompt}
+            />
+
+            <ImportPlate
+              hasLucidApiKey={hasLucidApiKey}
+              sessionId={sessionId}
+              diagramType={diagramType}
+              importSearch={importSearch}
+              setImportSearch={setImportSearch}
+              importDocs={importDocs}
+              isLoadingDocs={isLoadingDocs}
+              onRefreshDocs={fetchImportDocs}
+              selectedDocId={selectedDocId}
+              setSelectedDocId={setSelectedDocId}
+              isFetchingPreview={isFetchingPreview}
+              onFetchAndPreview={handleFetchAndPreview}
+              previewArtifactKey={previewArtifactKey}
+              previewBlobUrl={previewBlobUrl}
+              importError={importError}
             />
           </div>
         </Panel>
@@ -1163,6 +1313,208 @@ const IssuePlate = ({
         <ExternalLink className="w-3.5 h-3.5" />
         Open diagram in Lucidchart
       </a>
+    )}
+  </div>
+);
+
+// ──────────────────────────────────────────────────────────────────────
+// Plate 04 — Import diagram from Lucid via personal API key
+// ──────────────────────────────────────────────────────────────────────
+
+interface ImportPlateProps {
+  hasLucidApiKey: boolean | null;
+  sessionId?: string;
+  diagramType: DiagramType;
+  importSearch: string;
+  setImportSearch: (s: string) => void;
+  importDocs: LucidDocumentSummary[];
+  isLoadingDocs: boolean;
+  onRefreshDocs: () => void;
+  selectedDocId: string | null;
+  setSelectedDocId: (id: string | null) => void;
+  isFetchingPreview: boolean;
+  onFetchAndPreview: () => void;
+  previewArtifactKey: string | null;
+  previewBlobUrl: string | null;
+  importError: string | null;
+}
+
+const ImportPlate = ({
+  hasLucidApiKey,
+  sessionId,
+  diagramType,
+  importSearch,
+  setImportSearch,
+  importDocs,
+  isLoadingDocs,
+  onRefreshDocs,
+  selectedDocId,
+  setSelectedDocId,
+  isFetchingPreview,
+  onFetchAndPreview,
+  previewArtifactKey,
+  previewBlobUrl,
+  importError,
+}: ImportPlateProps) => (
+  <div className="design-plate p-4 space-y-3">
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="design-eyebrow">PLATE · 04 — IMPORT DIAGRAM</div>
+        <div className="design-heading text-sm mt-1">
+          Pull your Lucid diagram back into this session
+        </div>
+      </div>
+    </div>
+
+    {hasLucidApiKey === null && (
+      <div className="text-xs design-marginalia">Checking Lucid connection…</div>
+    )}
+
+    {hasLucidApiKey === false && (
+      <div className="text-xs design-marginalia">
+        No Lucid API key on file. Add one in{" "}
+        <a href="/profile" className="underline" style={{ color: "hsl(var(--design-mark))" }}>
+          Profile → Integrations → Lucid
+        </a>{" "}
+        to enable diagram import.
+      </div>
+    )}
+
+    {hasLucidApiKey && !sessionId && (
+      <div className="text-xs design-marginalia">
+        Open this Lucid tab from inside an active design session to import a diagram.
+      </div>
+    )}
+
+    {hasLucidApiKey && sessionId && (
+      <>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search Lucid documents (defaults to suggested title)…"
+            value={importSearch}
+            onChange={(e) => setImportSearch(e.target.value)}
+            className="flex-1 design-input"
+            style={{ fontSize: "0.85rem", padding: "0.45rem 0.6rem" }}
+          />
+          <button
+            className="design-btn-ghost"
+            onClick={onRefreshDocs}
+            disabled={isLoadingDocs}
+            title="Fetch documents from Lucid"
+          >
+            {isLoadingDocs ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+
+        {importDocs.length === 0 && !isLoadingDocs && (
+          <div className="text-xs design-marginalia">
+            No Lucid documents fetched yet. Click <b>Refresh</b> to list your recent diagrams.
+          </div>
+        )}
+
+        {importDocs.length > 0 && (
+          <div
+            className="border rounded max-h-48 overflow-y-auto"
+            style={{ borderColor: "hsl(var(--design-rule))" }}
+          >
+            {importDocs.map((doc) => (
+              <label
+                key={doc.document_id}
+                className="flex items-center gap-2 px-3 py-2 cursor-pointer border-b text-sm"
+                style={{
+                  borderColor: "hsl(var(--design-rule))",
+                  background:
+                    selectedDocId === doc.document_id
+                      ? "hsl(var(--design-mark) / 0.06)"
+                      : "transparent",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="lucid-doc-pick"
+                  checked={selectedDocId === doc.document_id}
+                  onChange={() => setSelectedDocId(doc.document_id)}
+                />
+                <span className="flex-1 truncate">{doc.title}</span>
+                {doc.last_modified && (
+                  <span
+                    className="design-mono"
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "hsl(var(--design-ink-muted))",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {new Date(doc.last_modified).toLocaleString()}
+                  </span>
+                )}
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            className="design-btn-mark"
+            onClick={onFetchAndPreview}
+            disabled={!selectedDocId || isFetchingPreview}
+          >
+            {isFetchingPreview ? "Fetching…" : "Fetch & Save"}
+          </button>
+          <span className="design-marginalia text-xs">
+            Saves to the <b>{diagramType}</b> slot for this session.
+          </span>
+        </div>
+
+        {importError && (
+          <div
+            className="text-xs rounded px-3 py-2"
+            style={{
+              background: "hsl(var(--destructive) / 0.08)",
+              color: "hsl(var(--destructive))",
+              border: "1px solid hsl(var(--destructive) / 0.3)",
+            }}
+          >
+            {importError}
+          </div>
+        )}
+
+        {previewArtifactKey && sessionId && (
+          <div className="space-y-2">
+            <div
+              className="design-eyebrow"
+              style={{ fontSize: "0.65rem", letterSpacing: "0.14em" }}
+            >
+              SAVED PREVIEW
+            </div>
+            <div
+              className="border rounded overflow-hidden bg-white"
+              style={{ borderColor: "hsl(var(--design-rule))" }}
+            >
+              {previewBlobUrl ? (
+                <img
+                  src={previewBlobUrl}
+                  alt={`Lucid ${diagramType} diagram preview`}
+                  className="block w-full h-auto"
+                  style={{ maxHeight: "420px", objectFit: "contain" }}
+                />
+              ) : (
+                <div
+                  className="design-marginalia text-xs p-4 text-center"
+                  style={{ color: "hsl(var(--design-ink-muted))" }}
+                >
+                  Loading preview…
+                </div>
+              )}
+            </div>
+            <div className="design-marginalia text-xs">
+              The diagram has been saved to the session. It will be embedded in
+              the SAD when you generate / regenerate sections 4 / 6 / 7.
+            </div>
+          </div>
+        )}
+      </>
     )}
   </div>
 );

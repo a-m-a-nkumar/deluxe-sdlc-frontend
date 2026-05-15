@@ -116,3 +116,98 @@ export const createLucidViaMcp = async (
   }
   return response.json();
 };
+
+
+// =============================================================================
+// Personal-API-key import flow (Plate 04 in LucidDashboard)
+// =============================================================================
+// After the user generates a diagram in lucid.app, these endpoints let us
+// pull it back into the platform: list their recent docs, then fetch the
+// chosen one as SVG and persist it to the session's diagram slot so the SAD
+// generator embeds it like a drawio diagram.
+
+export interface LucidDocumentSummary {
+  document_id: string;
+  title: string;
+  last_modified?: string | null;
+}
+
+export interface ListLucidDocumentsResponse {
+  documents: LucidDocumentSummary[];
+  suggested_search: string | null;
+}
+
+export const listLucidDocuments = async (
+  search?: string,
+  suggest?: string,
+): Promise<ListLucidDocumentsResponse> => {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (suggest) params.set("suggest", suggest);
+  const url = params.toString()
+    ? `${BASE}/api/design/lucid/documents?${params}`
+    : `${BASE}/api/design/lucid/documents`;
+  const response = await apiGet(url);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || "Failed to list Lucid documents");
+  }
+  return response.json();
+};
+
+export interface ImportLucidRequest {
+  session_id: string;
+  document_id: string;
+  diagram_type: "logical" | "infrastructure" | "security";
+  document_title?: string;
+}
+
+export interface ImportLucidResponse {
+  artifact_key: string;
+  diagram_type: "logical" | "infrastructure" | "security";
+  preview_url: string;
+  saved_at: number;
+  document_id: string;
+  document_title?: string | null;
+}
+
+export const importLucidDocument = async (
+  req: ImportLucidRequest,
+): Promise<ImportLucidResponse> => {
+  const response = await apiPost(`${BASE}/api/design/lucid/import`, req);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || "Failed to import Lucid document");
+  }
+  return response.json();
+};
+
+/** Returns a URL the <img> or <object> tag can hit directly.
+ *  Note: the backend preview endpoint requires Bearer auth, which <img src>
+ *  cannot carry. Prefer `fetchLucidPreviewBlobUrl` for in-app previews. */
+export const lucidPreviewUrl = (
+  sessionId: string,
+  diagramType: "logical" | "infrastructure" | "security",
+): string => `${BASE}/api/design/lucid/preview/${sessionId}/${diagramType}`;
+
+/** Fetch the saved Lucid SVG with the Azure AD bearer token, wrap as a Blob,
+ *  and return an object URL the caller can pass to <img src>. The caller is
+ *  responsible for revoking the URL via URL.revokeObjectURL on unmount /
+ *  re-fetch to avoid leaking the in-memory blob.
+ *
+ *  Mirrors the SAD viewer's `fetchSadDiagramBlobUrl` pattern in sadApi.ts. */
+export const fetchLucidPreviewBlobUrl = async (
+  token: string,
+  sessionId: string,
+  diagramType: "logical" | "infrastructure" | "security",
+): Promise<string> => {
+  const response = await fetch(
+    `${BASE}/api/design/lucid/preview/${encodeURIComponent(sessionId)}/${encodeURIComponent(diagramType)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok) {
+    throw new Error(`Lucid preview failed: ${response.status} ${response.statusText}`);
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+};

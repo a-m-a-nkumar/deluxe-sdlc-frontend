@@ -48,6 +48,30 @@ export interface UploadBRDToConfluenceRequest {
     page_title?: string;
 }
 
+export interface LinkLucidRequest {
+    api_key: string;
+}
+
+export interface LucidStatus {
+    linked: boolean;
+    key_valid: boolean;
+    linked_at?: string | null;
+}
+
+export interface LucidDocument {
+    documentId: string;
+    title: string;
+    lastModified?: string;
+    [key: string]: any;
+}
+
+export interface LucidImportResult {
+    artifact_key: string;
+    diagram_type: 'logical' | 'infrastructure' | 'security';
+    preview_url: string;
+    saved_at: number;
+}
+
 export interface UploadBRDToConfluenceResponse {
     status: string;
     message: string;
@@ -91,6 +115,39 @@ export const integrationsApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    /**
+     * Link user's Lucid account via personal REST API key.
+     * Backend validates the key against Lucid /users/me before persisting
+     * KMS-encrypted to the users table.
+     */
+    linkLucidAccount: async (request: LinkLucidRequest, token: string): Promise<void> => {
+        if (!token) throw new Error('Authentication required');
+        await axios.post(`${API_BASE_URL}/api/integrations/lucid/link`, request, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
+
+    /**
+     * Check whether the user has a stored (and recently-valid) Lucid API key.
+     */
+    getLucidStatus: async (token: string): Promise<LucidStatus> => {
+        if (!token) throw new Error('Authentication required');
+        const resp = await axios.get(`${API_BASE_URL}/api/integrations/lucid/status`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return resp.data;
+    },
+
+    /**
+     * Drop the user's stored Lucid API key. Idempotent.
+     */
+    unlinkLucidAccount: async (token: string): Promise<void> => {
+        if (!token) throw new Error('Authentication required');
+        await axios.delete(`${API_BASE_URL}/api/integrations/lucid/unlink`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
     },
 
     /**

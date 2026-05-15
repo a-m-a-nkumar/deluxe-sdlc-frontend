@@ -331,13 +331,12 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                         <h2 className="text-base font-semibold text-gray-700 px-2">Pre-requisites</h2>
                         <div className="h-px flex-1 pp-divider-right" />
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                         {[
                             { icon: "🐍", label: "Python 3.10+", sub: "with pip3" },
-                            { icon: "🔧", label: "Git installed", sub: "with SSH keys" },
                             { icon: "💻", label: "VS Code ≥1.114", sub: "or Cursor / Claude Code" },
-                            { icon: "🔑", label: "SSH configured", sub: "for Bitbucket" },
                             { icon: "🤖", label: "GitHub Copilot", sub: "or Claude Code" },
+                            { icon: "📦", label: "MCP wheel file", sub: "downloaded (Step 2)" },
                         ].map((item) => (
                             <div key={item.label} className="rounded-lg p-3 text-center pp-feature-card">
                                 <div className="text-xl mb-1">{item.icon}</div>
@@ -345,13 +344,6 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                 <div className="text-[10px] text-gray-400 mt-0.5">{item.sub}</div>
                             </div>
                         ))}
-                    </div>
-                    <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 flex items-start gap-2">
-                        <span className="text-sm">🔑</span>
-                        <p className="text-xs text-amber-800">
-                            <strong>SSH is mandatory</strong> for installing the MCP package. Set up SSH keys for Bitbucket before proceeding.
-                            Go to <strong>Bitbucket → Personal settings → SSH keys</strong> and add your public key.
-                        </p>
                     </div>
                 </section>
 
@@ -383,45 +375,95 @@ export const PairProgrammingDashboard = ({ onBack }: PairProgrammingDashboardPro
                                         <OsToggle os={os} setOs={setOs} />
                                     </div>
 
-                                    {/* Option A: Global Install */}
-                                    <div className="mb-5">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install</span>
-                                        </div>
-                                        {os === "windows" ? (
-                                            <>
-                                                <p className="text-xs text-gray-500 mb-1">Installs the command directly into your system PATH:</p>
-                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-xs text-gray-500 mb-1">macOS requires <code className="bg-gray-100 px-1 rounded text-xs">pipx</code> for global installs:</p>
-                                                <CodeBlock language="bash" code={`brew install pipx && pipx ensurepath\n# Restart your terminal, then:\n\n# Using SSH (recommended)\npipx install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npipx install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
-                                            </>
-                                        )}
-                                    </div>
+                                    {/*
+                                        Options A and B (direct Bitbucket install via SSH/HTTPS) are
+                                        commented out because most users don't yet have access to the
+                                        `deluxe-development/sdlc_mcp` private repo. Re-enable when:
+                                          - all engineers have repo read access, OR
+                                          - the package is published to internal JFrog Artifactory
+                                            (then replace these with `pip install prompt-enhancer-mcp`
+                                            against the internal index URL).
 
-                                    {/* Option B: Virtual Environment */}
+                                        --- Option A: Global Install (via git+ssh / git+https) ---
+                                        <div className="mb-5">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install</span>
+                                            </div>
+                                            (snip — see git history for the previous git+ssh / git+https commands)
+                                        </div>
+
+                                        --- Option B: Virtual Environment (via git+ssh / git+https) ---
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Option B — Virtual Environment</span>
+                                            </div>
+                                            (snip — see git history)
+                                        </div>
+                                    */}
+
+                                    {/* Install from downloaded .whl (no Bitbucket access required) — primary install path */}
                                     <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Option B — Virtual Environment</span>
+                                        <p className="text-sm text-gray-700 mb-3">
+                                            Download the pre-built MCP wheel and install it locally — no Bitbucket access required.
+                                        </p>
+
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <a
+                                                href={`${import.meta.env.BASE_URL}downloads/prompt_enhancer_mcp-0.4.0-py3-none-any.whl`}
+                                                download="prompt_enhancer_mcp-0.4.0-py3-none-any.whl"
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition-colors"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Download wheel (v0.4.0)
+                                            </a>
+                                            <span className="text-xs text-gray-500">≈ 23 KB</span>
                                         </div>
 
-                                        {os === "windows" ? (
-                                            <>
-                                                <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
-                                                <CodeBlock language="bash" code={`python -m venv .venv\n.venv\\Scripts\\activate`} />
-                                                <p className="text-xs text-gray-500 mb-0">2. Install the package:</p>
-                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
-                                                <CodeBlock language="bash" code={`python3 -m venv .venv\nsource .venv/bin/activate`} />
-                                                <p className="text-xs text-gray-500 mb-0">2. Install the package:</p>
-                                                <CodeBlock language="bash" code={`# Using SSH (recommended)\npip3 install "git+ssh://git@bitbucket.org/deluxe-development/sdlc_mcp.git"\n\n# OR using HTTPS\npip3 install git+https://bitbucket.org/deluxe-development/sdlc_mcp.git`} />
-                                            </>
-                                        )}
+                                        {/* Option A: Global Install from wheel */}
+                                        <div className="mb-5">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Option A — Global Install</span>
+                                            </div>
+                                            {os === "windows" ? (
+                                                <>
+                                                    <p className="text-xs text-gray-500 mb-1">Replace the path with where you saved the downloaded wheel file:</p>
+                                                    <CodeBlock language="bash" code={`pip install "C:\\path\\to\\prompt_enhancer_mcp-0.4.0-py3-none-any.whl"`} />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-xs text-gray-500 mb-1">Replace the path with where you saved the downloaded wheel file:</p>
+                                                    <CodeBlock language="bash" code={`pip3 install "/path/to/prompt_enhancer_mcp-0.4.0-py3-none-any.whl"`} />
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Option B: Virtual Environment install from wheel */}
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Option B — Virtual Environment</span>
+                                            </div>
+                                            {os === "windows" ? (
+                                                <>
+                                                    <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
+                                                    <CodeBlock language="bash" code={`python -m venv .venv\n.venv\\Scripts\\activate`} />
+                                                    <p className="text-xs text-gray-500 mb-0">2. Install from the downloaded wheel (replace the path):</p>
+                                                    <CodeBlock language="bash" code={`pip install "C:\\path\\to\\prompt_enhancer_mcp-0.4.0-py3-none-any.whl"`} />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-xs text-gray-500 mb-0">1. Create and activate virtual environment:</p>
+                                                    <CodeBlock language="bash" code={`python3 -m venv .venv\nsource .venv/bin/activate`} />
+                                                    <p className="text-xs text-gray-500 mb-0">2. Install from the downloaded wheel (replace the path):</p>
+                                                    <CodeBlock language="bash" code={`pip3 install "/path/to/prompt_enhancer_mcp-0.4.0-py3-none-any.whl"`} />
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <p className="text-xs text-gray-500 mt-3 italic">
+                                            Tip: wrap the path in double quotes if it contains spaces (e.g. paths under <code className="bg-gray-100 px-1 rounded">OneDrive - Deluxe Corporation</code>).
+                                        </p>
                                     </div>
 
                                     <p className="text-xs text-gray-500 mt-3">Verify installation:</p>

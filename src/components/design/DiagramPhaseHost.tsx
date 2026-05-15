@@ -240,6 +240,7 @@ export const DiagramPhaseHost = ({
           type={type}
           tool={tool}
           slot={slots.slot(type)}
+          sessionId={sessionId}
           initialXml={editorInitialXml}
           onSaveAndClose={async () => {
             await handleSaveAndClose(type);

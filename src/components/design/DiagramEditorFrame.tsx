@@ -32,6 +32,10 @@ interface Props {
   type: DiagramType;
   tool: AuthoringTool;
   slot: DiagramSlot;
+  /** Active design session id. Forwarded to LucidDashboard so its Plate 04
+   * (Import) knows which session's diagram slot to write. Required for
+   * Lucid import; not used by the Draw.io path. */
+  sessionId?: string | null;
   /** Initial XML to seed the Draw.io editor with — present when reopening
    *  a Done slot. Undefined for first-time generation. */
   initialXml?: string;
@@ -53,6 +57,7 @@ export const DiagramEditorFrame = ({
   type,
   tool,
   slot,
+  sessionId,
   initialXml,
   onSaveAndClose,
   onClose,
@@ -258,7 +263,10 @@ export const DiagramEditorFrame = ({
                 lockedDiagramType={type}
               />
             ) : (
-              <LucidDashboard lockedDiagramType={type} />
+              <LucidDashboard
+                lockedDiagramType={type}
+                sessionId={sessionId ?? undefined}
+              />
             )}
           </div>
         </div>
